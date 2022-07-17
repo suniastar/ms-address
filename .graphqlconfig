@@ -1,0 +1,5 @@
+{
+  "name": "Address Management System",
+  "schemaPath": "src/main/resources/graphql/schema.graphqls",
+  "extensions": {}
+}
