@@ -29,15 +29,15 @@ import javax.persistence.Table
 @Table(name = "addresses")
 open class Address(
 
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    @JoinColumn(name = "street_id", unique = false, nullable = false)
+    open var street: Street = Street(),
+
     @Column(name = "house_number", unique = false, nullable = false, columnDefinition = "varchar(255)")
     open var houseNumber: String = "",
 
     @Column(name = "extra", unique = false, nullable = true, columnDefinition = "varchar(255)")
     open var extra: String? = null,
-
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "street_id", unique = false, nullable = false)
-    open var street: Street = Street(),
 
     ) : AbstractPersistable<UUID>() {
 
@@ -45,23 +45,23 @@ open class Address(
         other === null -> false
         other === this -> true
         other is Address -> super.equals(other) &&
-            houseNumber == other.houseNumber &&
-            extra == other.extra &&
-            street.id == other.street.id
+                street.id == other.street.id &&
+                houseNumber == other.houseNumber &&
+                extra == other.extra
         else -> false
     }
 
     override fun hashCode(): Int {
         var result = super.hashCode()
+        result = 31 * result + street.id.hashCode()
         result = 31 * result + houseNumber.hashCode()
         result = 31 * result + extra.hashCode()
-        result = 31 * result + street.id.hashCode()
         return result
     }
 
     override fun toString(): String = "Address(" +
-        "id='$id', " +
-        "houseNumber='$houseNumber', " +
-        "extra='$extra', " +
-        "street='${street.id}')"
+            "id='$id', " +
+            "street='${street.id}', " +
+            "houseNumber='$houseNumber', " +
+            "extra='$extra')"
 }

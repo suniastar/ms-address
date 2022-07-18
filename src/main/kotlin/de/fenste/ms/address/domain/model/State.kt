@@ -29,12 +29,12 @@ import javax.persistence.Table
 @Table(name = "states")
 open class State(
 
-    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
-
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "country_id", unique = false, nullable = false)
     open var country: Country = Country(),
+
+    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
+    open var name: String = "",
 
     ) : AbstractPersistable<UUID>() {
 
@@ -42,21 +42,21 @@ open class State(
         other === null -> false
         other === this -> true
         other is State -> super.equals(other) &&
-            name == other.name &&
-            country.id == other.country.id
+                country.id == other.country.id &&
+                name == other.name
         else -> false
     }
 
     override fun hashCode(): Int {
         var result = super.hashCode()
-        result = 31 * result + name.hashCode()
         result = 31 * result + country.id.hashCode()
+        result = 31 * result + name.hashCode()
         return result
     }
 
     override fun toString(): String = "State(" +
-        "id='$id', " +
-        "name='$name', " +
-        "state='${country.id}')"
+            "id='$id', " +
+            "country='${country.id}', " +
+            "name='$name')"
 }
 

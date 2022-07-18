@@ -29,12 +29,12 @@ import javax.persistence.Table
 @Table(name = "streets")
 open class Street(
 
-    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
-
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "post_code_id", unique = false, nullable = false)
     open var postCode: PostCode = PostCode(),
+
+    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
+    open var name: String = "",
 
     ) : AbstractPersistable<UUID>() {
 
@@ -42,21 +42,21 @@ open class Street(
         other === null -> false
         other === this -> true
         other is Street -> super.equals(other) &&
-            name == other.name &&
-            postCode.id == other.postCode.id
+                postCode.id == other.postCode.id &&
+                name == other.name
         else -> false
     }
 
     override fun hashCode(): Int {
         var result = super.hashCode()
-        result = 31 * result + name.hashCode()
         result = 31 * result + postCode.id.hashCode()
+        result = 31 * result + name.hashCode()
         return result
     }
 
     override fun toString(): String = "Street(" +
-        "id='$id', " +
-        "name='$name'," +
-        "postCode='${postCode.id}')"
+            "id='$id', " +
+            "postCode='${postCode.id}', " +
+            "name='$name')"
 }
 

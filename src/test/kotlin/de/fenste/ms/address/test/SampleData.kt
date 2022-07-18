@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.infrastructure.repositories
+package de.fenste.ms.address.test
 
 import de.fenste.ms.address.domain.model.Address
 import de.fenste.ms.address.domain.model.City
@@ -26,24 +26,24 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 
 object SampleData {
 
-    private var pCountries: Collection<Country>? = null
-    private var pStates: Collection<State>? = null
-    private var pCities: Collection<City>? = null
-    private var pPostCodes: Collection<PostCode>? = null
-    private var pStreets: Collection<Street>? = null
-    private var pAddresses: Collection<Address>? = null
+    private var pCountries: List<Country>? = null
+    private var pStates: List<State>? = null
+    private var pCities: List<City>? = null
+    private var pPostCodes: List<PostCode>? = null
+    private var pStreets: List<Street>? = null
+    private var pAddresses: List<Address>? = null
 
-    val countries: Collection<Country>
+    val countries: List<Country>
         get() = pCountries!!
-    val states: Collection<State>
+    val states: List<State>
         get() = pStates!!
-    val cities: Collection<City>
+    val cities: List<City>
         get() = pCities!!
-    val postCodes: Collection<PostCode>
+    val postCodes: List<PostCode>
         get() = pPostCodes!!
-    val streets: Collection<Street>
+    val streets: List<Street>
         get() = pStreets!!
-    val addresses: Collection<Address>
+    val addresses: List<Address>
         get() = pAddresses!!
 
     @Suppress("LongMethod")
@@ -267,24 +267,24 @@ object SampleData {
             )
         )
 
-        pCountries = setOf(
+        pCountries = listOf(
             cGermany,
             cFrance,
             cGB,
         )
-        pStates = setOf(
+        pStates = listOf(
             sBerlin,
             sBadenWuerttemberg,
             sIleDeFrance,
         )
-        pCities = setOf(
+        pCities = listOf(
             cBerlin,
             cSpandau,
             cKarlsruhe,
             cParis,
             cBirmingham
         )
-        pPostCodes = setOf(
+        pPostCodes = listOf(
             p10557,
             p10117,
             p13597,
@@ -292,7 +292,7 @@ object SampleData {
             p75007,
             pB100RJ,
         )
-        pStreets = setOf(
+        pStreets = listOf(
             sPlatzDerRepublik,
             sWillyBrandtStrasse,
             sFriedrichEbertPlatz,
@@ -301,7 +301,7 @@ object SampleData {
             sAnatoleFrance,
             sCoventryRoad,
         )
-        pAddresses = setOf(
+        pAddresses = listOf(
             aPlatzDerRepublik1,
             aPlatzDerRepublik2a,
             aWillyBrandtStrasse1,

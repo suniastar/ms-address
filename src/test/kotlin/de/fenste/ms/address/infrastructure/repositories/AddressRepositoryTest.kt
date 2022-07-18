@@ -16,13 +16,19 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.test.SampleData
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.data.domain.Sort
+import org.springframework.data.repository.findByIdOrNull
+import java.util.UUID
 import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 @DataJpaTest
 class AddressRepositoryTest(
@@ -30,7 +36,9 @@ class AddressRepositoryTest(
     @Autowired private val addressRepository: AddressRepository,
 ) {
     @BeforeEach
-    fun `set up`(): Unit = SampleData.reset(testEntityManager)
+    fun `set up`() {
+        SampleData.reset(testEntityManager)
+    }
 
     @Test
     fun `test findAll`() {
@@ -47,9 +55,17 @@ class AddressRepositoryTest(
     }
 
     @Test
-    fun `test findAllById`() {
-        val expected = listOf(SampleData.addresses.random(), SampleData.addresses.random())
-        val actual = addressRepository.findAllById(expected.map { it.id })
-        assertContentEquals(expected, actual)
+    fun `test findByIdOrNull with sample data`() {
+        val expected = SampleData.addresses.random()
+        val actual = addressRepository.findByIdOrNull(expected.id)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `test findByIdOrNull with not existing` () {
+        val uuid = UUID.randomUUID()
+        val actual = addressRepository.findByIdOrNull(uuid)
+        assertFalse(SampleData.addresses.map { it.id }.contains(uuid))
+        assertNull(actual)
     }
 }

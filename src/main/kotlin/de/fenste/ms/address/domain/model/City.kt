@@ -29,9 +29,6 @@ import javax.persistence.Table
 @Table(name = "cities")
 open class City(
 
-    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
-
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "country_id", unique = false, nullable = false)
     open var country: Country = Country(),
@@ -40,29 +37,32 @@ open class City(
     @JoinColumn(name = "state_id", unique = false, nullable = true)
     open var state: State? = null,
 
+    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
+    open var name: String = "",
+
     ) : AbstractPersistable<UUID>() {
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
         other is City -> super.equals(other) &&
-            name == other.name &&
-            country.id == other.country.id &&
-            state?.id == other.state?.id
+                country.id == other.country.id &&
+                state?.id == other.state?.id &&
+                name == other.name
         else -> false
     }
 
     override fun hashCode(): Int {
         var result = super.hashCode()
-        result = 31 * result + name.hashCode()
         result = 31 * result + country.id.hashCode()
         result = 31 * result + state?.id.hashCode()
+        result = 31 * result + name.hashCode()
         return result
     }
 
     override fun toString(): String = "City(" +
-        "id='$id', " +
-        "name='$name', " +
-        "country='${country.id}', " +
-        "state='${state?.id}')"
+            "id='$id', " +
+            "country='${country.id}', " +
+            "state='${state?.id}', " +
+            "name='$name')"
 }
