@@ -16,7 +16,7 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.responses.AddressDto
 import de.fenste.ms.address.infrastructure.repository.AddressRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired

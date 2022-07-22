@@ -16,7 +16,7 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.responses.AddressDto
 import de.fenste.ms.address.application.services.AddressService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
+@Suppress("unused")
 class AddressController(
     @Autowired private val addressService: AddressService,
 ) {

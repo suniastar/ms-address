@@ -16,7 +16,9 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
+import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
+import de.fenste.ms.address.application.dtos.responses.CountryDto
 import de.fenste.ms.address.application.services.CountryService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
+@Suppress("unused")
 class CountryController(
     @Autowired private val countryService: CountryService,
 ) {
@@ -32,7 +35,7 @@ class CountryController(
     fun countries(
         @Argument limit: Int? = null,
         @Argument offset: Int? = null,
-    ): List<CountryDto>? = countryService.countries(
+    ): List<CountryDto>? = countryService.list(
         limit = limit,
         offset = offset?.toLong(),
     )
@@ -42,9 +45,30 @@ class CountryController(
         @Argument id: String? = null,
         @Argument alpha2: String? = null,
         @Argument alpha3: String? = null,
-    ): CountryDto? = countryService.country(
+    ): CountryDto? = countryService.find(
         id = id?.let { UUID.fromString(id) },
         alpha2 = alpha2,
         alpha3 = alpha3,
+    )
+
+    @SchemaMapping(field = "createCountry", typeName = "Mutation")
+    fun createCountry(
+        @Argument country: CreateCountryDto,
+    ): CountryDto = countryService.create(
+        create = country,
+    )
+
+    @SchemaMapping(field = "updateCountry", typeName = "Mutation")
+    fun updateCountry(
+        @Argument country: UpdateCountryDto,
+    ): CountryDto = countryService.update(
+        update = country,
+    )
+
+    @SchemaMapping(field = "deleteCountry", typeName = "Mutation")
+    fun deleteCountry(
+        id: String,
+    ): Boolean = countryService.delete(
+        id = UUID.fromString(id),
     )
 }

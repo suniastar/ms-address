@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos
+package de.fenste.ms.address.application.dtos.responses
 
 import de.fenste.ms.address.domain.model.Country
 import org.jetbrains.exposed.sql.transactions.transaction

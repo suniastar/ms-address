@@ -16,7 +16,7 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.responses.PostCodeDto
 import de.fenste.ms.address.infrastructure.repository.PostCodeRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired

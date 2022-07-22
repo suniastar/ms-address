@@ -16,7 +16,7 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.application.dtos.responses.StateDto
 import de.fenste.ms.address.application.services.StateService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
+@Suppress("unused")
 class StateController(
     @Autowired private val stateService: StateService,
 ) {
