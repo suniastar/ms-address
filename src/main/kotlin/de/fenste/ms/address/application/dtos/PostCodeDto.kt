@@ -17,23 +17,20 @@
 package de.fenste.ms.address.application.dtos
 
 import de.fenste.ms.address.domain.model.PostCode
-import org.springframework.graphql.data.method.annotation.SchemaMapping
+import org.jetbrains.exposed.sql.transactions.transaction
 
-@SchemaMapping(typeName = "PostCode")
-data class PostCodeDto(
+@Suppress("unused")
+data class PostCodeDto(private val postCode: PostCode) {
 
-    @get:SchemaMapping(field = "id", typeName = "String")
-    val id: String,
+    val id: String
+        get() = postCode.id.value.toString()
 
-    @get:SchemaMapping(field = "code", typeName = "String")
-    val code: String,
+    val code: String
+        get() = postCode.code
 
-    @get:SchemaMapping(field = "state", typeName = "City")
-    val city: CityDto,
-) {
-    constructor(postCode: PostCode) : this(
-        id = postCode.id.value.toString(),
-        code = postCode.code,
-        city = CityDto(postCode.city),
-    )
+    val city: CityDto
+        get() = transaction { CityDto(postCode.city) }
+
+    val streets: List<StreetDto>?
+        get() = transaction { postCode.streets.map { s -> StreetDto(s) }.ifEmpty { null } }
 }

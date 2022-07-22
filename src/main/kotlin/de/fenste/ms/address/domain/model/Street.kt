@@ -16,6 +16,7 @@
 
 package de.fenste.ms.address.domain.model
 
+import de.fenste.ms.address.infrastructure.tables.AddressTable
 import de.fenste.ms.address.infrastructure.tables.StreetTable
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
@@ -28,6 +29,8 @@ class Street(id: EntityID<UUID>) : UUIDEntity(id) {
     var postCode by PostCode referencedOn StreetTable.postCode
 
     var name by StreetTable.name
+
+    val addresses by Address referrersOn AddressTable.street
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false

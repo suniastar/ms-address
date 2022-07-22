@@ -17,27 +17,20 @@
 package de.fenste.ms.address.application.dtos
 
 import de.fenste.ms.address.domain.model.Address
-import org.springframework.graphql.data.method.annotation.SchemaMapping
+import org.jetbrains.exposed.sql.transactions.transaction
 
-@SchemaMapping(typeName = "Address")
-data class AddressDto(
+@Suppress("unused")
+data class AddressDto(private val address: Address) {
 
-    @get:SchemaMapping(field = "id", typeName = "String")
-    val id: String,
+    val id: String
+        get() = address.id.value.toString()
 
-    @get:SchemaMapping(field = "houseNumber", typeName = "String")
-    val houseNumber: String,
+    val houseNumber: String
+        get() = address.houseNumber
 
-    @get:SchemaMapping(field = "extra", typeName = "String")
-    val extra: String?,
+    val extra: String?
+        get() = address.extra
 
-    @get:SchemaMapping(field = "street", typeName = "Street")
-    val street: StreetDto,
-) {
-    constructor(address: Address) : this(
-        id = address.id.value.toString(),
-        houseNumber = address.houseNumber,
-        extra = address.extra,
-        street = StreetDto(address.street),
-    )
+    val street: StreetDto
+        get() = transaction { StreetDto(address.street) }
 }

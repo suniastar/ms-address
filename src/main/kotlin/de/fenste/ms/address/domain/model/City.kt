@@ -17,6 +17,7 @@
 package de.fenste.ms.address.domain.model
 
 import de.fenste.ms.address.infrastructure.tables.CityTable
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import org.jetbrains.exposed.dao.UUIDEntity
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -30,6 +31,8 @@ class City(id: EntityID<UUID>) : UUIDEntity(id) {
     var state by State optionalReferencedOn CityTable.state
 
     var name by CityTable.name
+
+    val postCodes by PostCode referrersOn PostCodeTable.city
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false

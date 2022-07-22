@@ -17,32 +17,29 @@
 package de.fenste.ms.address.application.dtos
 
 import de.fenste.ms.address.domain.model.Country
-import org.springframework.graphql.data.method.annotation.SchemaMapping
+import org.jetbrains.exposed.sql.transactions.transaction
 
-@SchemaMapping(typeName = "Country")
-data class CountryDto(
+@Suppress("unused")
+data class CountryDto(private val country: Country) {
 
-    @get:SchemaMapping(field = "id", typeName = "Int")
-    val id: String,
+    val id: String
+        get() = country.id.value.toString()
 
-    @get:SchemaMapping(field = "alpha2", typeName = "String")
-    val alpha2: String,
+    val alpha2: String
+        get() = country.alpha2
 
-    @get:SchemaMapping(field = "alpha3", typeName = "String")
-    val alpha3: String,
+    val alpha3: String
+        get() = country.alpha3
 
-    @get:SchemaMapping(field = "name", typeName = "String")
-    val name: String,
+    val name: String
+        get() = country.name
 
-    @get:SchemaMapping(field = "localizedName", typeName = "String")
-    val localizedName: String,
-) {
+    val localizedName: String
+        get() = country.localizedName
 
-    constructor(country: Country) : this(
-        id = country.id.value.toString(),
-        alpha2 = country.alpha2,
-        alpha3 = country.alpha3,
-        name = country.name,
-        localizedName = country.localizedName,
-    )
+    val states: List<StateDto>?
+        get() = transaction { country.states.map { s -> StateDto(s) }.ifEmpty { null } }
+
+    val cities: List<CityDto>?
+        get() = transaction { country.cities.map { c -> CityDto(c) }.ifEmpty { null } }
 }
