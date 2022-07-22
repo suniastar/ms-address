@@ -30,17 +30,19 @@ class CityRepository {
     fun list(
         limit: Int? = null,
         offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CityTable.id to SortOrder.ASC)
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CityTable.id to SortOrder.ASC),
     ): SizedIterable<City> = when {
-        limit != null -> City
-            .all()
-            .orderBy(*order)
-            .limit(limit, offset)
-            .notForUpdate()
-        else -> City
-            .all()
-            .orderBy(*order)
-            .notForUpdate()
+        limit != null ->
+            City
+                .all()
+                .orderBy(*order)
+                .limit(limit, offset)
+                .notForUpdate()
+        else ->
+            City
+                .all()
+                .orderBy(*order)
+                .notForUpdate()
     }
 
     fun find(

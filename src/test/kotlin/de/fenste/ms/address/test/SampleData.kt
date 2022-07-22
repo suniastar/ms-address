@@ -251,7 +251,7 @@ object SampleData {
                 cSpandau,
                 cKarlsruhe,
                 cParis,
-                cBirmingham
+                cBirmingham,
             )
             pPostCodes = listOf(
                 p10557,

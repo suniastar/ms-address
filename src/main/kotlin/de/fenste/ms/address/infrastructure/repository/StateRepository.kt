@@ -30,17 +30,19 @@ class StateRepository {
     fun list(
         limit: Int? = null,
         offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(StateTable.id to SortOrder.ASC)
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(StateTable.id to SortOrder.ASC),
     ): SizedIterable<State> = when {
-        limit != null -> State
-            .all()
-            .orderBy(*order)
-            .limit(limit, offset)
-            .notForUpdate()
-        else -> State
-            .all()
-            .orderBy(*order)
-            .notForUpdate()
+        limit != null ->
+            State
+                .all()
+                .orderBy(*order)
+                .limit(limit, offset)
+                .notForUpdate()
+        else ->
+            State
+                .all()
+                .orderBy(*order)
+                .notForUpdate()
     }
 
     fun find(

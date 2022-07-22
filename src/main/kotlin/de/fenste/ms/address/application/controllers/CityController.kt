@@ -41,6 +41,6 @@ class CityController(
     fun city(
         @Argument id: String,
     ): CityDto? = cityService.city(
-        id = UUID.fromString(id)
+        id = UUID.fromString(id),
     )
 }

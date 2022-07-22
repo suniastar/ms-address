@@ -34,7 +34,6 @@ data class StateDto(
     constructor(state: State) : this(
         id = state.id.value.toString(),
         name = state.name,
-        country = CountryDto(state.country)
-
+        country = CountryDto(state.country),
     )
 }

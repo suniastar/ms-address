@@ -30,17 +30,19 @@ class CountryRepository {
     fun list(
         limit: Int? = null,
         offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CountryTable.id to SortOrder.ASC)
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CountryTable.id to SortOrder.ASC),
     ): SizedIterable<Country> = when {
-        limit != null -> Country
-            .all()
-            .orderBy(*order)
-            .limit(limit, offset)
-            .notForUpdate()
-        else -> Country
-            .all()
-            .orderBy(*order)
-            .notForUpdate()
+        limit != null ->
+            Country
+                .all()
+                .orderBy(*order)
+                .limit(limit, offset)
+                .notForUpdate()
+        else ->
+            Country
+                .all()
+                .orderBy(*order)
+                .notForUpdate()
     }
 
     fun find(
@@ -48,21 +50,24 @@ class CountryRepository {
         alpha2: String? = null,
         alpha3: String? = null,
     ): Country? = when {
-        id != null -> Country
-            .find { CountryTable.id eq id }
-            .limit(1)
-            .notForUpdate()
-            .firstOrNull()
-        alpha2 != null -> Country
-            .find { CountryTable.alpha2 eq alpha2 }
-            .limit(1)
-            .notForUpdate()
-            .firstOrNull()
-        alpha3 != null -> Country
-            .find { CountryTable.alpha3 eq alpha3 }
-            .limit(1)
-            .notForUpdate()
-            .firstOrNull()
+        id != null ->
+            Country
+                .find { CountryTable.id eq id }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+        alpha2 != null ->
+            Country
+                .find { CountryTable.alpha2 eq alpha2 }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+        alpha3 != null ->
+            Country
+                .find { CountryTable.alpha3 eq alpha3 }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
         else -> throw IllegalArgumentException("Either 'uuid', 'alpha2' or 'alpha3' must be specified.")
     }
 }

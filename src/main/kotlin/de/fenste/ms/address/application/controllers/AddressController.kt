@@ -41,6 +41,6 @@ class AddressController(
     fun address(
         @Argument id: String,
     ): AddressDto? = addressService.address(
-        id = UUID.fromString(id)
+        id = UUID.fromString(id),
     )
 }

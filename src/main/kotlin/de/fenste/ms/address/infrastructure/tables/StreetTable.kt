@@ -20,7 +20,9 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 
 object StreetTable : UUIDTable("streets") {
 
+    const val NAME_MAX_LENGTH = 255
+
     val postCode = reference("post_code_id", PostCodeTable)
 
-    val name = varchar("name", 255)
+    val name = varchar("name", NAME_MAX_LENGTH)
 }

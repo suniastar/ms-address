@@ -20,7 +20,9 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 
 object PostCodeTable : UUIDTable("post_codes") {
 
+    const val CODE_MAX_LENGTH = 255
+
     val city = reference("city_id", CityTable)
 
-    val code = varchar("name", 255)
+    val code = varchar("name", CODE_MAX_LENGTH)
 }

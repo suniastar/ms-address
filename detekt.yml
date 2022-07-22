@@ -3,7 +3,3 @@ complexity:
     excludes: [ '**/test/**' ]
   LongMethod:
     excludes: [ '**/test/**' ]
-
-style:
-  MagicNumber:
-    excludes: [ '**/infrastructure/table/**' ]

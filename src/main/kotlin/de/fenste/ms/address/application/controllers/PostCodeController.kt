@@ -41,6 +41,6 @@ class PostCodeController(
     fun postCode(
         @Argument id: String,
     ): PostCodeDto? = postCodeService.postCode(
-        id = UUID.fromString(id)
+        id = UUID.fromString(id),
     )
 }

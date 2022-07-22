@@ -20,9 +20,11 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 
 object CityTable : UUIDTable("cities") {
 
+    const val NAME_MAX_LENGTH = 255
+
     val country = reference("country_id", CountryTable)
 
     val state = optReference("state_id", StateTable)
 
-    val name = varchar("name", 255)
+    val name = varchar("name", NAME_MAX_LENGTH)
 }

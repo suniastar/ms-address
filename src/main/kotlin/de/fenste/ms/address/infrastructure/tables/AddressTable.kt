@@ -20,9 +20,12 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 
 object AddressTable : UUIDTable("addresses") {
 
+    const val HOUSE_NUMBER_MAX_LENGTH = 255
+    const val EXTRA_MAX_LENGTH = 255
+
     val street = reference("street_id", StreetTable)
 
-    val houseNumber = varchar("house_number", 255)
+    val houseNumber = varchar("house_number", HOUSE_NUMBER_MAX_LENGTH)
 
-    val extra = varchar("extra", 255).nullable()
+    val extra = varchar("extra", EXTRA_MAX_LENGTH).nullable()
 }

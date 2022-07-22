@@ -30,17 +30,19 @@ class AddressRepository {
     fun list(
         limit: Int? = null,
         offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(AddressTable.id to SortOrder.ASC)
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(AddressTable.id to SortOrder.ASC),
     ): SizedIterable<Address> = when {
-        limit != null -> Address
-            .all()
-            .orderBy(*order)
-            .limit(limit, offset)
-            .notForUpdate()
-        else -> Address
-            .all()
-            .orderBy(*order)
-            .notForUpdate()
+        limit != null ->
+            Address
+                .all()
+                .orderBy(*order)
+                .limit(limit, offset)
+                .notForUpdate()
+        else ->
+            Address
+                .all()
+                .orderBy(*order)
+                .notForUpdate()
     }
 
     fun find(

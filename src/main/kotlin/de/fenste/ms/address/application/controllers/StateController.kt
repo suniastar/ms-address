@@ -41,6 +41,6 @@ class StateController(
     fun state(
         @Argument id: String,
     ): StateDto? = stateService.state(
-        UUID.fromString(id),
+        id = UUID.fromString(id),
     )
 }

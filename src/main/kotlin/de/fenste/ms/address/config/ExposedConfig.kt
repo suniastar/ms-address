@@ -16,7 +16,6 @@
 
 package de.fenste.ms.address.config
 
-import de.fenste.ms.address.application.util.SampleDataImporter
 import de.fenste.ms.address.infrastructure.tables.AddressTable
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
@@ -35,14 +34,9 @@ import org.springframework.core.env.Environment
 @Configuration
 class ExposedConfig(
     @Autowired private val environment: Environment,
-    @Autowired private val sampleDataImporter: SampleDataImporter, // TODO remove
 ) : InitializingBean {
 
     override fun afterPropertiesSet() {
-        val driver = environment.getProperty(
-            "spring.datasource.driver-class-name",
-            "org.h2.Driver",
-        )
         val url = environment.getProperty(
             "spring.datasource.url",
             "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;",
@@ -56,7 +50,6 @@ class ExposedConfig(
             "",
         )
         TransactionManager.defaultDatabase = Database.connect(
-            driver = driver,
             url = url,
             user = user,
             password = password,
@@ -71,6 +64,5 @@ class ExposedConfig(
                 StreetTable,
             )
         }
-        sampleDataImporter.resetToSample()
     }
 }

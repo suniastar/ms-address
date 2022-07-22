@@ -20,11 +20,16 @@ import org.jetbrains.exposed.dao.id.UUIDTable
 
 object CountryTable : UUIDTable("countries") {
 
-    val alpha2 = varchar("alpha2", 2).uniqueIndex()
+    const val ALPHA2_MAX_LENGTH = 2
+    const val ALPHA3_MAX_LENGTH = 3
+    const val NAME_MAX_LENGTH = 255
+    const val LOCALIZED_NAME_MAX_LENGTH = 255
 
-    val alpha3 = varchar("alpha3", 3).uniqueIndex()
+    val alpha2 = varchar("alpha2", ALPHA2_MAX_LENGTH).uniqueIndex()
 
-    val name = varchar("name", 255)
+    val alpha3 = varchar("alpha3", ALPHA3_MAX_LENGTH).uniqueIndex()
 
-    val localizedName = varchar("localized_name", 255)
+    val name = varchar("name", NAME_MAX_LENGTH)
+
+    val localizedName = varchar("localized_name", LOCALIZED_NAME_MAX_LENGTH)
 }

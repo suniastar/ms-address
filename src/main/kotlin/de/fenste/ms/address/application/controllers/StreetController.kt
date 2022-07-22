@@ -26,7 +26,7 @@ import java.util.UUID
 
 @Controller
 class StreetController(
-    @Autowired private val streetService: StreetService
+    @Autowired private val streetService: StreetService,
 ) {
     @SchemaMapping(field = "streets", typeName = "Query")
     fun streets(
@@ -41,6 +41,6 @@ class StreetController(
     fun street(
         @Argument id: String,
     ): StreetDto? = streetService.street(
-        id = UUID.fromString(id)
+        id = UUID.fromString(id),
     )
 }

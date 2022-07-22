@@ -34,10 +34,11 @@ class Address(id: EntityID<UUID>) : UUIDEntity(id) {
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is Address -> id == other.id &&
-            street.id == other.street.id &&
-            houseNumber == other.houseNumber &&
-            extra == other.extra
+        other is Address ->
+            id == other.id &&
+                street.id == other.street.id &&
+                houseNumber == other.houseNumber &&
+                extra == other.extra
         else -> false
     }
 

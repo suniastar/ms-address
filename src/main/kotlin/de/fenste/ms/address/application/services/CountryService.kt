@@ -38,7 +38,6 @@ class CountryService(
             )
             .map { c -> CountryDto(c) }
             .ifEmpty { null }
-
     }
 
     fun country(

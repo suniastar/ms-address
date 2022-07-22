@@ -30,17 +30,19 @@ class PostCodeRepository {
     fun list(
         limit: Int? = null,
         offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(PostCodeTable.id to SortOrder.ASC)
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(PostCodeTable.id to SortOrder.ASC),
     ): SizedIterable<PostCode> = when {
-        limit != null -> PostCode
-            .all()
-            .orderBy(*order)
-            .limit(limit, offset)
-            .notForUpdate()
-        else -> PostCode
-            .all()
-            .orderBy(*order)
-            .notForUpdate()
+        limit != null ->
+            PostCode
+                .all()
+                .orderBy(*order)
+                .limit(limit, offset)
+                .notForUpdate()
+        else ->
+            PostCode
+                .all()
+                .orderBy(*order)
+                .notForUpdate()
     }
 
     fun find(

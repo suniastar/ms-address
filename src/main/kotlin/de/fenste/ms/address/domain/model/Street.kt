@@ -32,9 +32,10 @@ class Street(id: EntityID<UUID>) : UUIDEntity(id) {
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is Street -> id == other.id &&
-            postCode.id == other.postCode.id &&
-            name == other.name
+        other is Street ->
+            id == other.id &&
+                postCode.id == other.postCode.id &&
+                name == other.name
         else -> false
     }
 
@@ -50,4 +51,3 @@ class Street(id: EntityID<UUID>) : UUIDEntity(id) {
         "postCode='${postCode.id}', " +
         "name='$name')"
 }
-

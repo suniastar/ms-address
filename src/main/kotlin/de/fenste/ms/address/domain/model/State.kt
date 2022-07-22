@@ -32,9 +32,10 @@ class State(id: EntityID<UUID>) : UUIDEntity(id) {
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is State -> id == other.id &&
-            country.id == other.country.id &&
-            name == other.name
+        other is State ->
+            id == other.id &&
+                country.id == other.country.id &&
+                name == other.name
         else -> false
     }
 
@@ -50,4 +51,3 @@ class State(id: EntityID<UUID>) : UUIDEntity(id) {
         "country='${country.id}', " +
         "name='$name')"
 }
-
