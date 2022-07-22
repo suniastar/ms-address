@@ -14,22 +14,13 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.config
+package de.fenste.ms.address.infrastructure.tables
 
-import de.fenste.ms.address.application.util.SampleDataImporter
-import org.springframework.beans.factory.InitializingBean
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
+import org.jetbrains.exposed.dao.id.UUIDTable
 
-// TODO remove
-@Configuration
-@Profile("sample")
-class SampleDataConfig(
-    @Autowired private val sampleDataImporter: SampleDataImporter
-) : InitializingBean {
+object StreetTable : UUIDTable("streets") {
 
-    override fun afterPropertiesSet() {
-        sampleDataImporter.resetToSample()
-    }
+    val postCode = reference("post_code_id", PostCodeTable)
+
+    val name = varchar("name", 255)
 }

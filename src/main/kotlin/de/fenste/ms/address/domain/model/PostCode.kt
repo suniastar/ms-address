@@ -16,46 +16,37 @@
 
 package de.fenste.ms.address.domain.model
 
-import org.springframework.data.jpa.domain.AbstractPersistable
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
-@Entity
-@Table(name = "post_codes")
-open class PostCode(
+class PostCode(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object EntityClass : UUIDEntityClass<PostCode>(PostCodeTable)
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "city_id", unique = false, nullable = false)
-    open var city: City = City(),
+    var city by City referencedOn PostCodeTable.city
 
-    @Column(name = "code", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var code: String = "",
-
-    ) : AbstractPersistable<UUID>() {
+    var code by PostCodeTable.code
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is PostCode -> super.equals(other) &&
-                city.id == other.city.id &&
-                code == other.code
+        other is PostCode -> id == other.id &&
+            city.id == other.city.id &&
+            code == other.code
         else -> false
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
+        var result = id.hashCode()
         result = 31 * result + city.id.hashCode()
         result = 31 * result + code.hashCode()
         return result
     }
 
     override fun toString(): String = "PostCode(" +
-            "id='$id', " +
-            "city='${city.id}', " +
-            "code='$code')"
+        "id='$id', " +
+        "city='${city.id}', " +
+        "code='$code')"
 }

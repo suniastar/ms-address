@@ -1,38 +1,42 @@
+/*
+ * Copyright (c) 2022 Frederik Enste <frederik@fenste.de>.
+ *
+ * Licensed under the GNU General Public License, Version 3 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.fenste.ms.address.domain.model
 
 import de.fenste.ms.address.test.SampleData
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
+import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-@DataJpaTest
-class CityTest(
-    @Autowired private val testEntityManager: TestEntityManager,
-) {
-    private lateinit var copy : City
-    private lateinit var notSaved: City
+class CityTest {
+    private lateinit var copy: City
 
-    @BeforeEach
+    @BeforeTest
     fun `set up`() {
-        SampleData.reset(testEntityManager)
+        SampleData.reset()
 
-        copy = testEntityManager.find(City::class.java, SampleData.cities[0].id)
-
-        notSaved = with(SampleData.cities[1]) {
-            City(
-                country = country,
-                state = state,
-                name = name,
-            )
+        copy = transaction {
+            City.findById(SampleData.cities[0].id)!!
         }
     }
 
     @Test
-    fun `test equals`() {
+    fun `test equals`(): Unit = transaction {
         assertEquals(SampleData.cities[0], SampleData.cities[0])
         assertEquals(copy, copy)
         assertEquals(SampleData.cities[0], copy)
@@ -45,13 +49,10 @@ class CityTest(
 
         assertNotEquals<City?>(copy, null)
         assertNotEquals<City?>(null, SampleData.cities[0])
-
-        assertNotEquals(SampleData.cities[1], notSaved)
-        assertNotEquals(notSaved, SampleData.cities[1])
     }
 
     @Test
-    fun `test hashCode`() {
+    fun `test hashCode`(): Unit = transaction {
         assertEquals(SampleData.cities[0].hashCode(), SampleData.cities[0].hashCode())
         assertEquals(copy.hashCode(), copy.hashCode())
         assertEquals(SampleData.cities[0].hashCode(), copy.hashCode())
@@ -64,24 +65,15 @@ class CityTest(
 
         assertNotEquals(copy.hashCode(), null.hashCode())
         assertNotEquals(null.hashCode(), SampleData.cities[0].hashCode())
-
-        assertNotEquals(SampleData.cities[1].hashCode(), notSaved.hashCode())
-        assertNotEquals(notSaved.hashCode(), SampleData.cities[1].hashCode())
     }
 
     @Test
-    fun `test toString`() {
+    fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val pIdC = copy.country.id
         val pIdS = copy.state?.id
         val cExpected = "City(id='$cId', country='$pIdC', state='$pIdS', name='Berlin')"
         val cActual = SampleData.cities[0].toString()
         assertEquals(cExpected, cActual)
-
-        val nIdC = notSaved.country.id
-        val nIdS = notSaved.state?.id
-        val nExpected = "City(id='null', country='$nIdC', state='$nIdS', name='Berlin-Spandau')"
-        val nActual = notSaved.toString()
-        assertEquals(nExpected, nActual)
     }
 }

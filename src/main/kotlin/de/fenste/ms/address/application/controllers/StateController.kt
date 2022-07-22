@@ -16,8 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.application.services.CountryService
+import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.application.services.StateService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.SchemaMapping
@@ -25,26 +25,22 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
-class CountryController(
-    @Autowired private val countryService: CountryService,
+class StateController(
+    @Autowired private val stateService: StateService,
 ) {
-    @SchemaMapping(field = "countries", typeName = "Query")
-    fun countries(
+    @SchemaMapping(field = "states", typeName = "Query")
+    fun states(
         @Argument limit: Int? = null,
         @Argument offset: Int? = null,
-    ): List<CountryDto>? = countryService.countries(
+    ): List<StateDto>? = stateService.states(
         limit = limit,
         offset = offset?.toLong(),
     )
 
-    @SchemaMapping(field = "country", typeName = "Query")
-    fun country(
-        @Argument id: String? = null,
-        @Argument alpha2: String? = null,
-        @Argument alpha3: String? = null,
-    ): CountryDto? = countryService.country(
-        id = id?.let { UUID.fromString(id) },
-        alpha2 = alpha2,
-        alpha3 = alpha3,
+    @SchemaMapping(field = "state", typeName = "Query")
+    fun state(
+        @Argument id: String,
+    ): StateDto? = stateService.state(
+        UUID.fromString(id),
     )
 }

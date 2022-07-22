@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.infrastructure.repositories
+package de.fenste.ms.address.infrastructure.tables
 
-import de.fenste.ms.address.domain.model.Street
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Repository
-import java.util.UUID
+import org.jetbrains.exposed.dao.id.UUIDTable
 
-@Repository
-interface StreetRepository : JpaRepository<Street, UUID>
+object StateTable : UUIDTable("states") {
+
+    val country = reference("state_id", CountryTable)
+
+    val name = varchar("name", 255)
+}

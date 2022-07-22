@@ -16,42 +16,35 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.infrastructure.repository.CountryRepository
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.infrastructure.repository.StreetRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.util.UUID
 
 @Service
-class CountryService(
-    @Autowired private val countryRepository: CountryRepository,
+class StreetService(
+    @Autowired private val streetRepository: StreetRepository,
 ) {
-    fun countries(
+    fun streets(
         limit: Int? = null,
         offset: Long? = null,
-    ): List<CountryDto>? = transaction {
-        countryRepository
+    ): List<StreetDto>? = transaction {
+        streetRepository
             .list(
                 limit = limit,
                 offset = offset ?: 0L,
             )
-            .map { c -> CountryDto(c) }
+            .map { s -> StreetDto(s) }
             .ifEmpty { null }
-
     }
 
-    fun country(
-        id: UUID? = null,
-        alpha2: String? = null,
-        alpha3: String? = null,
-    ): CountryDto? = transaction {
-        countryRepository
-            .find(
-                id = id,
-                alpha2 = alpha2,
-                alpha3 = alpha3,
-            )
-            ?.let { c -> CountryDto(c) }
+    fun street(
+        id: UUID,
+    ): StreetDto? = transaction {
+        streetRepository
+            .find(id)
+            ?.let { s -> StreetDto(s) }
     }
 }

@@ -16,47 +16,38 @@
 
 package de.fenste.ms.address.domain.model
 
-import org.springframework.data.jpa.domain.AbstractPersistable
+import de.fenste.ms.address.infrastructure.tables.StreetTable
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
-@Entity
-@Table(name = "streets")
-open class Street(
+class Street(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object EntityClass : UUIDEntityClass<Street>(StreetTable)
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "post_code_id", unique = false, nullable = false)
-    open var postCode: PostCode = PostCode(),
+    var postCode by PostCode referencedOn StreetTable.postCode
 
-    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
-
-    ) : AbstractPersistable<UUID>() {
+    var name by StreetTable.name
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is Street -> super.equals(other) &&
-                postCode.id == other.postCode.id &&
-                name == other.name
+        other is Street -> id == other.id &&
+            postCode.id == other.postCode.id &&
+            name == other.name
         else -> false
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
+        var result = id.hashCode()
         result = 31 * result + postCode.id.hashCode()
         result = 31 * result + name.hashCode()
         return result
     }
 
     override fun toString(): String = "Street(" +
-            "id='$id', " +
-            "postCode='${postCode.id}', " +
-            "name='$name')"
+        "id='$id', " +
+        "postCode='${postCode.id}', " +
+        "name='$name')"
 }
 

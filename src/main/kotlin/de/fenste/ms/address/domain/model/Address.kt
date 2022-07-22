@@ -16,43 +16,33 @@
 
 package de.fenste.ms.address.domain.model
 
-import org.springframework.data.jpa.domain.AbstractPersistable
+import de.fenste.ms.address.infrastructure.tables.AddressTable
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
-@Entity
-@Table(name = "addresses")
-open class Address(
+class Address(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object EntityClass : UUIDEntityClass<Address>(AddressTable)
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "street_id", unique = false, nullable = false)
-    open var street: Street = Street(),
+    var street by Street referencedOn AddressTable.street
 
-    @Column(name = "house_number", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var houseNumber: String = "",
+    var houseNumber by AddressTable.houseNumber
 
-    @Column(name = "extra", unique = false, nullable = true, columnDefinition = "varchar(255)")
-    open var extra: String? = null,
-
-    ) : AbstractPersistable<UUID>() {
+    var extra by AddressTable.extra
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is Address -> super.equals(other) &&
-                street.id == other.street.id &&
-                houseNumber == other.houseNumber &&
-                extra == other.extra
+        other is Address -> id == other.id &&
+            street.id == other.street.id &&
+            houseNumber == other.houseNumber &&
+            extra == other.extra
         else -> false
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
+        var result = id.hashCode()
         result = 31 * result + street.id.hashCode()
         result = 31 * result + houseNumber.hashCode()
         result = 31 * result + extra.hashCode()
@@ -60,8 +50,8 @@ open class Address(
     }
 
     override fun toString(): String = "Address(" +
-            "id='$id', " +
-            "street='${street.id}', " +
-            "houseNumber='$houseNumber', " +
-            "extra='$extra')"
+        "id='$id', " +
+        "street='${street.id}', " +
+        "houseNumber='$houseNumber', " +
+        "extra='$extra')"
 }

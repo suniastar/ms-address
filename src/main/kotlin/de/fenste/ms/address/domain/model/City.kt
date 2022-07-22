@@ -16,44 +16,33 @@
 
 package de.fenste.ms.address.domain.model
 
-import org.springframework.data.jpa.domain.AbstractPersistable
+import de.fenste.ms.address.infrastructure.tables.CityTable
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
-@Entity
-@Table(name = "cities")
-open class City(
+class City(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object EntityClass : UUIDEntityClass<City>(CityTable)
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "country_id", unique = false, nullable = false)
-    open var country: Country = Country(),
+    var country by Country referencedOn CityTable.country
 
-    @ManyToOne(optional = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "state_id", unique = false, nullable = true)
-    open var state: State? = null,
+    var state by State optionalReferencedOn CityTable.state
 
-    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
-
-    ) : AbstractPersistable<UUID>() {
+    var name by CityTable.name
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is City -> super.equals(other) &&
-                country.id == other.country.id &&
-                state?.id == other.state?.id &&
-                name == other.name
+        other is City -> id == other.id &&
+            country.id == other.country.id &&
+            state?.id == other.state?.id &&
+            name == other.name
         else -> false
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
+        var result = id.hashCode()
         result = 31 * result + country.id.hashCode()
         result = 31 * result + state?.id.hashCode()
         result = 31 * result + name.hashCode()
@@ -61,8 +50,8 @@ open class City(
     }
 
     override fun toString(): String = "City(" +
-            "id='$id', " +
-            "country='${country.id}', " +
-            "state='${state?.id}', " +
-            "name='$name')"
+        "id='$id', " +
+        "country='${country.id}', " +
+        "state='${state?.id}', " +
+        "name='$name')"
 }

@@ -16,47 +16,38 @@
 
 package de.fenste.ms.address.domain.model
 
-import org.springframework.data.jpa.domain.AbstractPersistable
+import de.fenste.ms.address.infrastructure.tables.StateTable
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
-@Entity
-@Table(name = "states")
-open class State(
+class State(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object EntityClass : UUIDEntityClass<State>(StateTable)
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER)
-    @JoinColumn(name = "country_id", unique = false, nullable = false)
-    open var country: Country = Country(),
+    var country by Country referencedOn StateTable.country
 
-    @Column(name = "name", unique = false, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
-
-    ) : AbstractPersistable<UUID>() {
+    var name by StateTable.name
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is State -> super.equals(other) &&
-                country.id == other.country.id &&
-                name == other.name
+        other is State -> id == other.id &&
+            country.id == other.country.id &&
+            name == other.name
         else -> false
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
+        var result = id.hashCode()
         result = 31 * result + country.id.hashCode()
         result = 31 * result + name.hashCode()
         return result
     }
 
     override fun toString(): String = "State(" +
-            "id='$id', " +
-            "country='${country.id}', " +
-            "name='$name')"
+        "id='$id', " +
+        "country='${country.id}', " +
+        "name='$name')"
 }
 

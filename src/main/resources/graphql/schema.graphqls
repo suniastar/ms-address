@@ -21,9 +21,6 @@ type Country {
 
     states: [State!]
     cities: [City!]
-    postCodes: [PostCode!]
-    streets: [Street!]
-    addresses: [Address!]
 }
 
 input CreateState {
@@ -43,11 +40,7 @@ type State {
     name: String!
 
     country: Country!
-
     cities: [City!]
-    postCodes: [PostCode!]
-    streets: [Street!]
-    addresses: [Address!]
 }
 
 input CreateCity {
@@ -69,11 +62,8 @@ type City {
     name: String!
 
     country: Country!
-    state: State!
-
+    state: State
     postCodes: [PostCode!]
-    streets: [Street!]
-    addresses: [Address!]
 }
 
 input CreatePostCode {
@@ -92,12 +82,8 @@ type PostCode {
     id: String!
     code: String!
 
-    country: Country!
-    state: State!
     city: City!
-
     streets: [Street!]
-    addresses: [Address!]
 }
 
 input CreateStreet {
@@ -116,11 +102,7 @@ type Street {
     id: String!
     name: String!
 
-    country: Country!
-    state: State!
-    city: City!
     postCode: PostCode!
-
     addresses: [Address!]
 }
 
@@ -143,10 +125,6 @@ type Address {
     houseNumber: String!
     extra: String
 
-    country: Country!
-    state: State!
-    city: City!
-    postCode: PostCode!
     street: Street!
 }
 

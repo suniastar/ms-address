@@ -16,33 +16,28 @@
 
 package de.fenste.ms.address.application.dtos
 
-import de.fenste.ms.address.domain.model.Country
+import de.fenste.ms.address.domain.model.Address
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 
-@SchemaMapping(typeName = "Country")
-data class CountryDto(
+@SchemaMapping(typeName = "Address")
+data class AddressDto(
 
-    @get:SchemaMapping(field = "id", typeName = "Int")
+    @get:SchemaMapping(field = "id", typeName = "String")
     val id: String,
 
-    @get:SchemaMapping(field = "alpha2", typeName = "String")
-    val alpha2: String,
+    @get:SchemaMapping(field = "houseNumber", typeName = "String")
+    val houseNumber: String,
 
-    @get:SchemaMapping(field = "alpha3", typeName = "String")
-    val alpha3: String,
+    @get:SchemaMapping(field = "extra", typeName = "String")
+    val extra: String?,
 
-    @get:SchemaMapping(field = "name", typeName = "String")
-    val name: String,
-
-    @get:SchemaMapping(field = "localizedName", typeName = "String")
-    val localizedName: String,
+    @get:SchemaMapping(field = "street", typeName = "Street")
+    val street: StreetDto,
 ) {
-
-    constructor(country: Country) : this(
-        id = country.id.value.toString(),
-        alpha2 = country.alpha2,
-        alpha3 = country.alpha3,
-        name = country.name,
-        localizedName = country.localizedName,
+    constructor(address: Address) : this(
+        id = address.id.value.toString(),
+        houseNumber = address.houseNumber,
+        extra = address.extra,
+        street = StreetDto(address.street),
     )
 }

@@ -14,12 +14,26 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.infrastructure.repositories
+package de.fenste.ms.address.application.dtos
 
 import de.fenste.ms.address.domain.model.PostCode
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Repository
-import java.util.UUID
+import org.springframework.graphql.data.method.annotation.SchemaMapping
 
-@Repository
-interface PostCodeRepository : JpaRepository<PostCode, UUID>
+@SchemaMapping(typeName = "PostCode")
+data class PostCodeDto(
+
+    @get:SchemaMapping(field = "id", typeName = "String")
+    val id: String,
+
+    @get:SchemaMapping(field = "code", typeName = "String")
+    val code: String,
+
+    @get:SchemaMapping(field = "state", typeName = "City")
+    val city: CityDto,
+) {
+    constructor(postCode: PostCode) : this(
+        id = postCode.id.value.toString(),
+        code = postCode.code,
+        city = CityDto(postCode.city),
+    )
+}

@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.infrastructure.repositories
+package de.fenste.ms.address.infrastructure.tables
 
-import de.fenste.ms.address.domain.model.Country
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.stereotype.Repository
-import java.util.UUID
+import org.jetbrains.exposed.dao.id.UUIDTable
 
-@Repository
-interface CountryRepository : JpaRepository<Country, UUID>
+object CountryTable : UUIDTable("countries") {
+
+    val alpha2 = varchar("alpha2", 2).uniqueIndex()
+
+    val alpha3 = varchar("alpha3", 3).uniqueIndex()
+
+    val name = varchar("name", 255)
+
+    val localizedName = varchar("localized_name", 255)
+}

@@ -1,37 +1,42 @@
+/*
+ * Copyright (c) 2022 Frederik Enste <frederik@fenste.de>.
+ *
+ * Licensed under the GNU General Public License, Version 3 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package de.fenste.ms.address.domain.model
 
 import de.fenste.ms.address.test.SampleData
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
+import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-@DataJpaTest
-class PostCodeTest(
-    @Autowired private val testEntityManager: TestEntityManager,
-) {
+class PostCodeTest {
     private lateinit var copy: PostCode
-    private lateinit var notSaved: PostCode
 
-    @BeforeEach
+    @BeforeTest
     fun `set up`() {
-        SampleData.reset(testEntityManager)
+        SampleData.reset()
 
-        copy = testEntityManager.find(PostCode::class.java, SampleData.postCodes[0].id)
-
-        notSaved = with(SampleData.postCodes[1]) {
-            PostCode(
-                city = city,
-                code = code,
-            )
+        copy = transaction {
+            PostCode.findById(SampleData.postCodes[0].id)!!
         }
     }
 
     @Test
-    fun `test equals`() {
+    fun `test equals`(): Unit = transaction {
         assertEquals(SampleData.postCodes[0], SampleData.postCodes[0])
         assertEquals(copy, copy)
         assertEquals(SampleData.postCodes[0], copy)
@@ -44,13 +49,10 @@ class PostCodeTest(
 
         assertNotEquals<PostCode?>(copy, null)
         assertNotEquals<PostCode?>(null, SampleData.postCodes[0])
-
-        assertNotEquals(SampleData.postCodes[1], notSaved)
-        assertNotEquals(notSaved, SampleData.postCodes[1])
     }
 
     @Test
-    fun `test hashCode`() {
+    fun `test hashCode`(): Unit = transaction {
         assertEquals(SampleData.postCodes[0].hashCode(), SampleData.postCodes[0].hashCode())
         assertEquals(copy.hashCode(), copy.hashCode())
         assertEquals(SampleData.postCodes[0].hashCode(), copy.hashCode())
@@ -63,22 +65,14 @@ class PostCodeTest(
 
         assertNotEquals(copy.hashCode(), null.hashCode())
         assertNotEquals(null.hashCode(), SampleData.postCodes[0].hashCode())
-
-        assertNotEquals(SampleData.postCodes[1].hashCode(), notSaved.hashCode())
-        assertNotEquals(notSaved.hashCode(), SampleData.postCodes[1].hashCode())
     }
 
     @Test
-    fun `test toString`() {
+    fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val pId = copy.city.id
         val cExpected = "PostCode(id='$cId', city='$pId', code='10557')"
         val cActual = SampleData.postCodes[0].toString()
         assertEquals(cExpected, cActual)
-
-        val nId = notSaved.city.id
-        val nExpected = "PostCode(id='null', city='$nId', code='10117')"
-        val nActual = notSaved.toString()
-        assertEquals(nExpected, nActual)
     }
 }

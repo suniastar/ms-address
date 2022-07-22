@@ -1,5 +1,9 @@
 complexity:
   LargeClass:
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/test/**' ]
   LongMethod:
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/jsTest/**', '**/iosTest/**' ]
+    excludes: [ '**/test/**' ]
+
+style:
+  MagicNumber:
+    excludes: [ '**/infrastructure/table/**' ]

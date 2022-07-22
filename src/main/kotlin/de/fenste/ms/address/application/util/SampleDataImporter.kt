@@ -22,251 +22,180 @@ import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.domain.model.Street
-import de.fenste.ms.address.infrastructure.repositories.AddressRepository
-import de.fenste.ms.address.infrastructure.repositories.CityRepository
-import de.fenste.ms.address.infrastructure.repositories.CountryRepository
-import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
-import de.fenste.ms.address.infrastructure.repositories.StateRepository
-import de.fenste.ms.address.infrastructure.repositories.StreetRepository
-import org.springframework.beans.factory.annotation.Autowired
+import de.fenste.ms.address.infrastructure.tables.AddressTable
+import de.fenste.ms.address.infrastructure.tables.CityTable
+import de.fenste.ms.address.infrastructure.tables.CountryTable
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
+import de.fenste.ms.address.infrastructure.tables.StateTable
+import de.fenste.ms.address.infrastructure.tables.StreetTable
+import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.stereotype.Component
-import javax.transaction.Transactional
 
 // TODO remove
 @Component
-class SampleDataImporter(
-    @Autowired private val addressRepository: AddressRepository,
-    @Autowired private val cityRepository: CityRepository,
-    @Autowired private val countryRepository: CountryRepository,
-    @Autowired private val postCodeRepository: PostCodeRepository,
-    @Autowired private val stateRepository: StateRepository,
-    @Autowired private val streetRepository: StreetRepository,
-) {
+class SampleDataImporter {
 
-    @Transactional
-    fun resetToSample() {
-        addressRepository.deleteAll()
-        streetRepository.deleteAll()
-        postCodeRepository.deleteAll()
-        cityRepository.deleteAll()
-        stateRepository.deleteAll()
-        countryRepository.deleteAll()
+    fun resetToSample(): Unit = transaction {
 
-        val cGermany = countryRepository.saveAndFlush(
-            Country(
-                alpha2 = "DE",
-                alpha3 = "DEU",
-                name = "Germany",
-                localizedName = "Deutschland",
-            )
-        )
-        val cFrance = countryRepository.saveAndFlush(
-            Country(
-                alpha2 = "FR",
-                alpha3 = "FRA",
-                name = "France",
-                localizedName = "Frankreich",
-            )
-        )
-        val cGB = countryRepository.saveAndFlush(
-            Country(
-                alpha2 = "GB",
-                alpha3 = "GBR",
-                name = "United Kingdom of Great Britain and Northern Ireland",
-                localizedName = "Großbritannien und Nordirland",
-            )
-        )
+        AddressTable.deleteAll()
+        StreetTable.deleteAll()
+        PostCodeTable.deleteAll()
+        CityTable.deleteAll()
+        StateTable.deleteAll()
+        CountryTable.deleteAll()
 
-        val sBerlin = stateRepository.saveAndFlush(
-            State(
-                name = "Berlin",
-                country = cGermany,
-            )
-        )
-        val sBadenWuerttemberg = stateRepository.saveAndFlush(
-            State(
-                name = "Baden-Württemberg",
-                country = cGermany,
-            )
-        )
-        val sIleDeFrance = stateRepository.saveAndFlush(
-            State(
-                name = "Ile-de-France",
-                country = cFrance,
-            )
-        )
+        val cGermany = Country.new {
+            alpha2 = "DE"
+            alpha3 = "DEU"
+            name = "Germany"
+            localizedName = "Deutschland"
+        }
+        val cFrance = Country.new {
+            alpha2 = "FR"
+            alpha3 = "FRA"
+            name = "France"
+            localizedName = "Frankreich"
+        }
+        val cGB = Country.new {
+            alpha2 = "GB"
+            alpha3 = "GBR"
+            name = "United Kingdom of Great Britain and Northern Ireland"
+            localizedName = "Großbritannien und Nordirland"
+        }
 
-        val cBerlin = cityRepository.saveAndFlush(
-            City(
-                name = "Berlin",
-                country = cGermany,
-                state = sBerlin,
-            )
-        )
-        val cSpandau = cityRepository.saveAndFlush(
-            City(
-                name = "Berlin-Spandau",
-                country = cGermany,
-                state = sBerlin,
-            )
-        )
-        val cKarlsruhe = cityRepository.saveAndFlush(
-            City(
-                name = "Karlsruhe",
-                country = cGermany,
-                state = sBadenWuerttemberg,
-            )
-        )
-        val cParis = cityRepository.saveAndFlush(
-            City(
-                name = "Paris",
-                country = cFrance,
-                state = sIleDeFrance,
-            )
-        )
-        val cBirmingham = cityRepository.saveAndFlush(
-            City(
-                name = "Birmingham",
-                country = cGB,
-                state = null,
-            )
-        )
+        val sBerlin = State.new {
+            name = "Berlin"
+            country = cGermany
+        }
+        val sBadenWuerttemberg = State.new {
+            name = "Baden-Württemberg"
+            country = cGermany
+        }
+        val sIleDeFrance = State.new {
+            name = "Ile-de-France"
+            country = cFrance
+        }
 
-        val p10557 = postCodeRepository.saveAndFlush(
-            PostCode(
-                code = "10557",
-                city = cBerlin,
-            )
-        )
-        val p10117 = postCodeRepository.saveAndFlush(
-            PostCode(
-                code = "10117",
-                city = cBerlin,
-            )
-        )
-        val p13597 = postCodeRepository.saveAndFlush(
-            PostCode(
-                code = "13597",
-                city = cSpandau,
-            )
-        )
-        val p76131 = postCodeRepository.saveAndFlush(
-            PostCode(
-                code = "76131",
-                city = cKarlsruhe,
-            )
-        )
-        val p75007 = postCodeRepository.saveAndFlush(
-            PostCode(
-                code = "75007",
-                city = cParis,
-            )
-        )
-        val pB100RJ = postCodeRepository.saveAndFlush(
-            PostCode(
-                code = "B10 0RJ",
-                city = cBirmingham,
-            )
-        )
+        val cBerlin = City.new {
+            name = "Berlin"
+            country = cGermany
+            state = sBerlin
+        }
+        val cSpandau = City.new {
+            name = "Berlin-Spandau"
+            country = cGermany
+            state = sBerlin
+        }
+        val cKarlsruhe = City.new {
+            name = "Karlsruhe"
+            country = cGermany
+            state = sBadenWuerttemberg
+        }
+        val cParis = City.new {
+            name = "Paris"
+            country = cFrance
+            state = sIleDeFrance
+        }
+        val cBirmingham = City.new {
+            name = "Birmingham"
+            country = cGB
+            state = null
+        }
 
-        val sPlatzDerRepublik = streetRepository.saveAndFlush(
-            Street(
-                name = "Platz der Republik",
-                postCode = p10557,
-            )
-        )
-        val sWillyBrandtStrasse = streetRepository.saveAndFlush(
-            Street(
-                name = "Willy-Brandt-Straße",
-                postCode = p10557,
-            )
-        )
-        val sFriedrichEbertPlatz = streetRepository.saveAndFlush(
-            Street(
-                name = "Friedrich-Ebert-Platz",
-                postCode = p10117,
-            )
-        )
-        val sBreiteStrasse = streetRepository.saveAndFlush(
-            Street(
-                name = "Breite Str.",
-                postCode = p13597,
-            )
-        )
-        val sAmFasanengarten = streetRepository.saveAndFlush(
-            Street(
-                name = "Am Fasanengarten",
-                postCode = p76131,
-            )
-        )
-        val sAnatoleFrance = streetRepository.saveAndFlush(
-            Street(
-                name = "Anatole France",
-                postCode = p75007,
-            )
-        )
-        val sCoventryRoad = streetRepository.saveAndFlush(
-            Street(
-                name = "Coventry Rd",
-                postCode = pB100RJ,
-            )
-        )
+        val p10557 = PostCode.new {
+            code = "10557"
+            city = cBerlin
+        }
+        val p10117 = PostCode.new {
+            code = "10117"
+            city = cBerlin
+        }
+        val p13597 = PostCode.new {
+            code = "13597"
+            city = cSpandau
+        }
+        val p76131 = PostCode.new {
+            code = "76131"
+            city = cKarlsruhe
+        }
+        val p75007 = PostCode.new {
+            code = "75007"
+            city = cParis
+        }
+        val pB100RJ = PostCode.new {
+            code = "B10 0RJ"
+            city = cBirmingham
+        }
 
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "1",
-                extra = null,
-                street = sPlatzDerRepublik,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "2a",
-                extra = null,
-                street = sPlatzDerRepublik,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "1",
-                extra = null,
-                street = sWillyBrandtStrasse,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "2",
-                extra = null,
-                street = sFriedrichEbertPlatz,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "25",
-                extra = null,
-                street = sBreiteStrasse,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "5",
-                extra = null,
-                street = sAmFasanengarten,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "5",
-                extra = "Av.",
-                street = sAnatoleFrance,
-            )
-        )
-        addressRepository.saveAndFlush(
-            Address(
-                houseNumber = "109",
-                extra = null,
-                street = sCoventryRoad,
-            )
-        )
+        val sPlatzDerRepublik = Street.new {
+            name = "Platz der Republik"
+            postCode = p10557
+        }
+        val sWillyBrandtStrasse = Street.new {
+            name = "Willy-Brandt-Straße"
+            postCode = p10557
+        }
+        val sFriedrichEbertPlatz = Street.new {
+            name = "Friedrich-Ebert-Platz"
+            postCode = p10117
+        }
+        val sBreiteStrasse = Street.new {
+            name = "Breite Str."
+            postCode = p13597
+        }
+        val sAmFasanengarten = Street.new {
+            name = "Am Fasanengarten"
+            postCode = p76131
+        }
+        val sAnatoleFrance = Street.new {
+            name = "Anatole France"
+            postCode = p75007
+        }
+        val sCoventryRoad = Street.new {
+            name = "Coventry Rd"
+            postCode = pB100RJ
+        }
+
+        Address.new {
+            houseNumber = "1"
+            extra = null
+            street = sPlatzDerRepublik
+        }
+        Address.new {
+            houseNumber = "2a"
+            extra = null
+            street = sPlatzDerRepublik
+        }
+        Address.new {
+            houseNumber = "1"
+            extra = null
+            street = sWillyBrandtStrasse
+        }
+        Address.new {
+            houseNumber = "2"
+            extra = null
+            street = sFriedrichEbertPlatz
+        }
+        Address.new {
+            houseNumber = "25"
+            extra = null
+            street = sBreiteStrasse
+        }
+        Address.new {
+            houseNumber = "5"
+            extra = null
+            street = sAmFasanengarten
+        }
+        Address.new {
+            houseNumber = "5"
+            extra = "Av."
+            street = sAnatoleFrance
+        }
+        Address.new {
+            houseNumber = "109"
+            extra = null
+            street = sCoventryRoad
+        }
     }
 }

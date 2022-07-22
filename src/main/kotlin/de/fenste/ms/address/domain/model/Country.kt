@@ -16,34 +16,27 @@
 
 package de.fenste.ms.address.domain.model
 
-import org.springframework.data.jpa.domain.AbstractPersistable
+import de.fenste.ms.address.infrastructure.tables.CountryTable
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import java.util.UUID
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Table
 
-@Entity
-@Table(name = "countries")
-open class Country(
+class Country(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object EntityClass : UUIDEntityClass<Country>(CountryTable)
 
-    @Column(name = "alpha2", unique = true, nullable = false, columnDefinition = "char(2)")
-    open var alpha2: String = "",
+    var alpha2 by CountryTable.alpha2
 
-    @Column(name = "alpha3", unique = true, nullable = false, columnDefinition = "char(3)")
-    open var alpha3: String = "",
+    var alpha3 by CountryTable.alpha3
 
-    @Column(name = "name", unique = true, nullable = false, columnDefinition = "varchar(255)")
-    open var name: String = "",
+    var name by CountryTable.name
 
-    @Column(name = "localizedName", unique = true, nullable = false, columnDefinition = "varchar(255)")
-    open var localizedName: String = "",
-
-    ) : AbstractPersistable<UUID>() {
+    var localizedName by CountryTable.localizedName
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
         other === this -> true
-        other is Country -> super.equals(other) &&
+        other is Country -> id == other.id &&
             alpha2 == other.alpha2 &&
             alpha3 == other.alpha3 &&
             name == other.name &&
@@ -52,7 +45,7 @@ open class Country(
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
+        var result = id.hashCode()
         result = 31 * result + alpha2.hashCode()
         result = 31 * result + alpha3.hashCode()
         result = 31 * result + name.hashCode()
