@@ -127,7 +127,7 @@ class CountryService {
             .forUpdate()
             .firstOrNull()
 
-        require(country != null) { "The country (${update.id}) does not exist." }
+        requireNotNull(country) { "The country (${update.id}) does not exist." }
 
         val uId = idOf(
             alpha2 = update.alpha2 ?: country.alpha2,
@@ -154,7 +154,7 @@ class CountryService {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-        require(country != null) { "The country ($id) does not exist." }
+        requireNotNull(country) { "The country ($id) does not exist." }
 
         country.delete()
         true
