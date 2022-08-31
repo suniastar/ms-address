@@ -52,9 +52,11 @@ class StateService(
     fun create(
         create: CreateStateDto,
     ): StateDto = transaction {
-        stateRepository.create(
-            name = create.name,
-            countryId = create.country,
-        ).let { s -> StateDto(s) }
+        stateRepository
+            .create(
+                name = create.name,
+                countryId = create.country,
+            )
+            .let { s -> StateDto(s) }
     }
 }
