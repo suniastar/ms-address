@@ -16,6 +16,7 @@
 
 package de.fenste.ms.address.application.controllers
 
+import de.fenste.ms.address.application.dtos.requests.CreateStateDto
 import de.fenste.ms.address.application.dtos.responses.StateDto
 import de.fenste.ms.address.application.services.StateService
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,5 +44,12 @@ class StateController(
         @Argument id: String,
     ): StateDto? = stateService.state(
         id = UUID.fromString(id),
+    )
+
+    @SchemaMapping(field = "createState", typeName = "Mutation")
+    fun createState(
+        @Argument state: CreateStateDto,
+    ): StateDto = stateService.create(
+        create = state,
     )
 }

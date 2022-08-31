@@ -16,8 +16,11 @@
 
 package de.fenste.ms.address.infrastructure.repository
 
+import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.domain.model.State
+import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
@@ -26,6 +29,18 @@ import java.util.UUID
 
 @Repository
 class StateRepository {
+
+    private companion object {
+
+        private fun idOf(
+            name: String,
+        ): EntityID<UUID>? = State
+            .find { StateTable.name eq name }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+            ?.id
+    }
 
     fun list(
         limit: Int? = null,
@@ -52,4 +67,24 @@ class StateRepository {
         .limit(1)
         .notForUpdate()
         .firstOrNull()
+
+    fun create(
+        name: String,
+        countryId: String,
+    ): State {
+        require(idOf(name) == null) { "A state with this name does already exist." }
+
+        val country = Country
+            .find { CountryTable.id eq UUID.fromString(countryId) }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(country) { "The country ($countryId) does not exist." }
+
+        return State.new {
+            this.name = name
+            this.country = country
+        }
+    }
 }

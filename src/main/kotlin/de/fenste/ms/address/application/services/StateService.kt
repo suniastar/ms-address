@@ -16,6 +16,7 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.requests.CreateStateDto
 import de.fenste.ms.address.application.dtos.responses.StateDto
 import de.fenste.ms.address.infrastructure.repository.StateRepository
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -46,5 +47,14 @@ class StateService(
         stateRepository
             .find(id)
             ?.let { s -> StateDto(s) }
+    }
+
+    fun create(
+        create: CreateStateDto,
+    ): StateDto = transaction {
+        stateRepository.create(
+            name = create.name,
+            countryId = create.country,
+        ).let { s -> StateDto(s) }
     }
 }
