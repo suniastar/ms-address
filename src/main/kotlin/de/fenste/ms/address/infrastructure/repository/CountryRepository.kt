@@ -22,7 +22,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -31,16 +31,35 @@ class CountryRepository {
 
     private companion object {
 
-        private fun idOf(
+        private fun idOfAlpha2(
             alpha2: String,
-            alpha3: String,
-            name: String,
-        ): EntityID<UUID>? = Country
-            .find { (CountryTable.alpha2 eq alpha2) or (CountryTable.alpha3 eq alpha3) or (CountryTable.name eq name) }
+        ): EntityID<UUID>? = CountryTable
+            .slice(CountryTable.id)
+            .select { CountryTable.alpha2 eq alpha2 }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-            ?.id
+            ?.let { r -> r[CountryTable.id] }
+
+        private fun idOfAlpha3(
+            alpha3: String,
+        ): EntityID<UUID>? = CountryTable
+            .slice(CountryTable.id)
+            .select { CountryTable.alpha3 eq alpha3 }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+            ?.let { r -> r[CountryTable.id] }
+
+        private fun idOfName(
+            name: String,
+        ): EntityID<UUID>? = CountryTable
+            .slice(CountryTable.id)
+            .select { CountryTable.name eq name }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+            ?.let { r -> r[CountryTable.id] }
     }
 
     fun list(
@@ -97,13 +116,9 @@ class CountryRepository {
         name: String,
         localizedName: String,
     ): Country {
-        require(
-            idOf(
-                alpha2 = alpha2,
-                alpha3 = alpha3,
-                name = name,
-            ) == null,
-        ) { "A country with these country codes does already exist." }
+        require(idOfAlpha2(alpha2) == null) { "A country with the country code ($alpha2) does already exist." }
+        require(idOfAlpha3(alpha3) == null) { "A country with the country code ($alpha3) does already exist." }
+        require(idOfName(name) == null) { "A country with the country code ($name) does already exist." }
 
         return Country.new {
             this.alpha2 = alpha2
@@ -128,12 +143,24 @@ class CountryRepository {
 
         requireNotNull(country) { "The country ($id) does not exist." }
 
-        val uId = idOf(
-            alpha2 = alpha2 ?: country.alpha2,
-            alpha3 = alpha3 ?: country.alpha3,
-            name = name ?: country.name,
-        )
-        require(uId == null || uId == country.id) { "A country with these country codes does already exist." }
+        alpha2?.let {
+            val uId = idOfAlpha2(alpha2)
+            require(uId == null || uId == country.id) {
+                "A country with the country code ($alpha2) does already exist."
+            }
+        }
+        alpha3?.let {
+            val uId = idOfAlpha3(alpha3)
+            require(uId == null || uId == country.id) {
+                "A country with the country code ($alpha3) does already exist."
+            }
+        }
+        name?.let {
+            val uId = idOfName(name)
+            require(uId == null || uId == country.id) {
+                "A country with the country code ($name) does already exist."
+            }
+        }
 
         alpha2?.let { country.alpha2 = alpha2 }
         alpha3?.let { country.alpha3 = alpha3 }

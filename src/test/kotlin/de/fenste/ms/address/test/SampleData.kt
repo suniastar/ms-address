@@ -76,12 +76,7 @@ object SampleData {
                 StreetTable,
             )
 
-            AddressTable.deleteAll()
-            StreetTable.deleteAll()
-            PostCodeTable.deleteAll()
-            CityTable.deleteAll()
-            StateTable.deleteAll()
-            CountryTable.deleteAll()
+            clear()
 
             val cGermany = Country.new {
                 alpha2 = "DE"
@@ -281,5 +276,14 @@ object SampleData {
                 aCoventryRoad109,
             )
         }
+    }
+
+    fun clear(): Unit = transaction {
+        AddressTable.deleteAll()
+        StreetTable.deleteAll()
+        PostCodeTable.deleteAll()
+        CityTable.deleteAll()
+        StateTable.deleteAll()
+        CountryTable.deleteAll()
     }
 }
