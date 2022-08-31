@@ -17,6 +17,7 @@
 package de.fenste.ms.address.application.controllers
 
 import de.fenste.ms.address.application.dtos.requests.CreateStateDto
+import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
 import de.fenste.ms.address.application.dtos.responses.StateDto
 import de.fenste.ms.address.application.services.StateService
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,7 +35,7 @@ class StateController(
     fun states(
         @Argument limit: Int? = null,
         @Argument offset: Int? = null,
-    ): List<StateDto>? = stateService.states(
+    ): List<StateDto>? = stateService.list(
         limit = limit,
         offset = offset?.toLong(),
     )
@@ -42,7 +43,7 @@ class StateController(
     @SchemaMapping(field = "state", typeName = "Query")
     fun state(
         @Argument id: String,
-    ): StateDto? = stateService.state(
+    ): StateDto? = stateService.find(
         id = UUID.fromString(id),
     )
 
@@ -51,5 +52,19 @@ class StateController(
         @Argument state: CreateStateDto,
     ): StateDto = stateService.create(
         create = state,
+    )
+
+    @SchemaMapping(field = "updateState", typeName = "Mutation")
+    fun updateState(
+        @Argument state: UpdateStateDto,
+    ): StateDto = stateService.update(
+        update = state,
+    )
+
+    @SchemaMapping(field = "deleteState", typeName = "Muatation")
+    fun deleteState(
+        @Argument id: String,
+    ): Boolean = stateService.delete(
+        id = UUID.fromString(id),
     )
 }

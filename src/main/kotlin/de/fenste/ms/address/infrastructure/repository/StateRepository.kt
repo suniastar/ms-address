@@ -24,6 +24,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -34,8 +35,9 @@ class StateRepository {
 
         private fun idOf(
             name: String,
+            countryId: UUID,
         ): EntityID<UUID>? = State
-            .find { StateTable.name eq name }
+            .find { (StateTable.name eq name) and (StateTable.country eq countryId) }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
@@ -71,12 +73,18 @@ class StateRepository {
 
     fun create(
         name: String,
-        countryId: String,
+        countryId: UUID,
     ): State {
-        require(idOf(name) == null) { "A state with this name does already exist." }
+        require(
+            idOf(
+                name = name,
+                countryId = countryId,
+            ) == null,
+        )
+        { "A state with this name and parent country does already exist." }
 
         val country = Country
-            .find { CountryTable.id eq UUID.fromString(countryId) }
+            .find { CountryTable.id eq countryId }
             .limit(1)
             .forUpdate()
             .firstOrNull()
@@ -87,5 +95,54 @@ class StateRepository {
             this.name = name
             this.country = country
         }
+    }
+
+    fun update(
+        id: UUID,
+        name: String? = null,
+        countryId: UUID? = null,
+    ): State {
+        val state = State
+            .find { StateTable.id eq id }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(state) { "The state ($id) does not exist." }
+
+        val uId = idOf(
+            name = name ?: state.name,
+            countryId = countryId ?: state.country.id.value,
+        )
+        require(uId == null || uId == state.id) { "A state with this name and parent country does already exist." }
+
+        name?.let { state.name = name }
+        countryId?.let {
+            val country = Country
+                .find { CountryTable.id eq countryId }
+                .limit(1)
+                .forUpdate()
+                .firstOrNull()
+
+            requireNotNull(country) { "The country ($countryId) does not exist." }
+
+            state.country = country
+        }
+
+        return state
+    }
+
+    fun delete(
+        id: UUID,
+    ) {
+        val state = State
+            .find { StateTable.id eq id }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(state) { "The state ($id) does not exist." }
+
+        state.delete()
     }
 }

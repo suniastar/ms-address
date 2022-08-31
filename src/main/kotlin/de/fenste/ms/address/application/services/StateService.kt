@@ -17,6 +17,7 @@
 package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.requests.CreateStateDto
+import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
 import de.fenste.ms.address.application.dtos.responses.StateDto
 import de.fenste.ms.address.infrastructure.repository.StateRepository
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -28,7 +29,7 @@ import java.util.UUID
 class StateService(
     @Autowired private val stateRepository: StateRepository,
 ) {
-    fun states(
+    fun list(
         limit: Int? = null,
         offset: Long? = null,
     ): List<StateDto>? = transaction {
@@ -41,7 +42,7 @@ class StateService(
             .ifEmpty { null }
     }
 
-    fun state(
+    fun find(
         id: UUID,
     ): StateDto? = transaction {
         stateRepository
@@ -55,8 +56,30 @@ class StateService(
         stateRepository
             .create(
                 name = create.name,
-                countryId = create.country,
+                countryId = UUID.fromString(create.country),
             )
             .let { s -> StateDto(s) }
+    }
+
+    fun update(
+        update: UpdateStateDto,
+    ): StateDto = transaction {
+        stateRepository
+            .update(
+                id = UUID.fromString(update.id),
+                name = update.name,
+                countryId = UUID.fromString(update.country),
+            )
+            .let { s -> StateDto(s) }
+    }
+
+    fun delete(
+        id: UUID,
+    ): Boolean = transaction {
+        stateRepository
+            .delete(
+                id = id,
+            )
+        true
     }
 }
