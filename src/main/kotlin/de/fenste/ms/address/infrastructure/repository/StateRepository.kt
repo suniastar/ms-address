@@ -80,8 +80,7 @@ class StateRepository {
                 name = name,
                 countryId = countryId,
             ) == null,
-        )
-        { "A state with this name and parent country does already exist." }
+        ) { "A state with this name and parent country does already exist." }
 
         val country = Country
             .find { CountryTable.id eq countryId }
