@@ -25,6 +25,7 @@ import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -36,12 +37,13 @@ class StateRepository {
         private fun idOf(
             name: String,
             countryId: UUID,
-        ): EntityID<UUID>? = State
-            .find { (StateTable.name eq name) and (StateTable.country eq countryId) }
+        ): EntityID<UUID>? = StateTable
+            .slice(StateTable.id)
+            .select { (StateTable.name eq name) and (StateTable.country eq countryId) }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-            ?.id
+            ?.let { r -> r[StateTable.id] }
     }
 
     fun list(
