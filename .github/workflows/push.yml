@@ -1,4 +1,4 @@
-name: Pull Requests Checks
+name: Build and Tests
 
 on:
   push:
@@ -17,4 +17,4 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
       - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots test
+        run: mvn --batch-mode --update-snapshots package
