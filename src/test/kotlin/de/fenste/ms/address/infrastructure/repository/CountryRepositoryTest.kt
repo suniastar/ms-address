@@ -36,7 +36,7 @@ import kotlin.test.assertTrue
 
 @SpringBootTest
 class CountryRepositoryTest(
-    @Autowired private val countryRepository: CountryRepository,
+    @Autowired private val repository: CountryRepository,
 ) {
 
     @BeforeTest
@@ -47,7 +47,7 @@ class CountryRepositoryTest(
     @Test
     fun `test list on sample data`(): Unit = transaction {
         val expected = SampleData.countries.sortedBy { c -> c.id.value.toString() }
-        val actual = countryRepository.list()
+        val actual = repository.list()
 
         assertContentEquals(expected, actual)
     }
@@ -58,7 +58,7 @@ class CountryRepositoryTest(
             .sortedBy { c -> c.alpha2 }
             .drop(2)
             .take(1)
-        val actual = countryRepository.list(
+        val actual = repository.list(
             order = arrayOf(CountryTable.alpha2 to SortOrder.ASC),
             offset = 2,
             limit = 1,
@@ -70,7 +70,7 @@ class CountryRepositoryTest(
     @Test
     fun `test list on no data`(): Unit = transaction {
         SampleData.clear()
-        val list = countryRepository.list()
+        val list = repository.list()
 
         assertTrue(list.empty())
     }
@@ -78,7 +78,7 @@ class CountryRepositoryTest(
     @Test
     fun `test find by id on sample data`(): Unit = transaction {
         val expected = SampleData.countries.random()
-        val actual = countryRepository.find(id = expected.id.value)
+        val actual = repository.find(id = expected.id.value)
 
         assertEquals(expected, actual)
     }
@@ -86,7 +86,7 @@ class CountryRepositoryTest(
     @Test
     fun `test find by alpha2 on sample data`(): Unit = transaction {
         val expected = SampleData.countries.random()
-        val actual = countryRepository.find(alpha2 = expected.alpha2)
+        val actual = repository.find(alpha2 = expected.alpha2)
 
         assertEquals(expected, actual)
     }
@@ -94,7 +94,7 @@ class CountryRepositoryTest(
     @Test
     fun `test find by alpha3 on sample data`(): Unit = transaction {
         val expected = SampleData.countries.random()
-        val actual = countryRepository.find(alpha3 = expected.alpha3)
+        val actual = repository.find(alpha3 = expected.alpha3)
 
         assertEquals(expected, actual)
     }
@@ -102,14 +102,14 @@ class CountryRepositoryTest(
     @Test
     fun `test find by id on no data`(): Unit = transaction {
         SampleData.clear()
-        val actual = countryRepository.find(id = UUID.randomUUID())
+        val actual = repository.find(id = UUID.randomUUID())
 
         assertNull(actual)
     }
 
     @Test
     fun `test find by id on non existing sample data`(): Unit = transaction {
-        val actual = countryRepository.find(id = UUID.randomUUID())
+        val actual = repository.find(id = UUID.randomUUID())
 
         assertNull(actual)
     }
@@ -117,7 +117,7 @@ class CountryRepositoryTest(
     @Test
     fun `test find by nothing on sample data`(): Unit = transaction {
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.find()
+            repository.find()
         }
     }
 
@@ -128,7 +128,7 @@ class CountryRepositoryTest(
         val name = "Czechia"
         val localizedName = "Tschechien"
 
-        val actual = countryRepository.create(
+        val actual = repository.create(
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -139,7 +139,7 @@ class CountryRepositoryTest(
         assertEquals(alpha2, actual.alpha2)
         assertEquals(alpha3, actual.alpha3)
         assertEquals(name, actual.name)
-        assertEquals(localizedName, localizedName)
+        assertEquals(localizedName, actual.localizedName)
     }
 
     @Test
@@ -150,7 +150,7 @@ class CountryRepositoryTest(
         val localizedName = "LocalizedName"
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.create(
+            repository.create(
                 alpha2 = alpha2,
                 alpha3 = alpha3,
                 name = name,
@@ -167,7 +167,7 @@ class CountryRepositoryTest(
         val localizedName = "LocalizedName"
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.create(
+            repository.create(
                 alpha2 = alpha2,
                 alpha3 = alpha3,
                 name = name,
@@ -184,7 +184,7 @@ class CountryRepositoryTest(
         val localizedName = "LocalizedName"
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.create(
+            repository.create(
                 alpha2 = alpha2,
                 alpha3 = alpha3,
                 name = name,
@@ -198,7 +198,7 @@ class CountryRepositoryTest(
         val sampleId = SampleData.countries.random().id.value
         val alpha2 = "XX"
 
-        val actual = countryRepository.update(
+        val actual = repository.update(
             id = sampleId,
             alpha2 = alpha2,
         )
@@ -212,7 +212,7 @@ class CountryRepositoryTest(
         val sampleId = SampleData.countries.random().id.value
         val alpha3 = "XXX"
 
-        val actual = countryRepository.update(
+        val actual = repository.update(
             id = sampleId,
             alpha3 = alpha3,
         )
@@ -226,7 +226,7 @@ class CountryRepositoryTest(
         val sampleId = SampleData.countries.random().id.value
         val name = "Name"
 
-        val actual = countryRepository.update(
+        val actual = repository.update(
             id = sampleId,
             name = name,
         )
@@ -240,7 +240,7 @@ class CountryRepositoryTest(
         val sampleId = SampleData.countries.random().id.value
         val localizedName = "LocalizedName"
 
-        val actual = countryRepository.update(
+        val actual = repository.update(
             id = sampleId,
             localizedName = localizedName,
         )
@@ -257,7 +257,7 @@ class CountryRepositoryTest(
         val name = "Name"
         val localizedName = "LocalizedName"
 
-        val actual = countryRepository.update(
+        val actual = repository.update(
             id = sampleId,
             alpha2 = alpha2,
             alpha3 = alpha3,
@@ -266,6 +266,9 @@ class CountryRepositoryTest(
         )
 
         assertNotNull(actual)
+        assertEquals(alpha2, actual.alpha2)
+        assertEquals(alpha3, actual.alpha3)
+        assertEquals(name, actual.name)
         assertEquals(localizedName, actual.localizedName)
     }
 
@@ -277,7 +280,7 @@ class CountryRepositoryTest(
         val name = sample.name
         val localizedName = sample.localizedName
 
-        val actual = countryRepository.update(
+        val actual = repository.update(
             id = sample.id.value,
             alpha2 = alpha2,
             alpha3 = alpha3,
@@ -286,13 +289,16 @@ class CountryRepositoryTest(
         )
 
         assertNotNull(actual)
+        assertEquals(alpha2, actual.alpha2)
+        assertEquals(alpha3, actual.alpha3)
+        assertEquals(name, actual.name)
         assertEquals(localizedName, actual.localizedName)
     }
 
     @Test
     fun `test update nothing`(): Unit = transaction {
         val expected = SampleData.countries.random()
-        val actual = countryRepository.update(id = expected.id.value)
+        val actual = repository.update(id = expected.id.value)
 
         assertEquals(expected, actual)
     }
@@ -302,7 +308,7 @@ class CountryRepositoryTest(
         val id = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.update(
+            repository.update(
                 id = id,
                 name = "doesn't",
                 localizedName = "matter",
@@ -316,7 +322,7 @@ class CountryRepositoryTest(
         val alpha2 = SampleData.countries.last().alpha2
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.update(
+            repository.update(
                 id = sampleId,
                 alpha2 = alpha2,
             )
@@ -329,7 +335,7 @@ class CountryRepositoryTest(
         val alpha3 = SampleData.countries.last().alpha3
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.update(
+            repository.update(
                 id = sampleId,
                 alpha3 = alpha3,
             )
@@ -342,7 +348,7 @@ class CountryRepositoryTest(
         val name = SampleData.countries.last().name
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.update(
+            repository.update(
                 id = sampleId,
                 name = name,
             )
@@ -354,7 +360,7 @@ class CountryRepositoryTest(
     fun `test delete`(): Unit = transaction {
         val sampleId = SampleData.countries.random().id.value
 
-        countryRepository.delete(sampleId)
+        repository.delete(sampleId)
 
         assertNull(Country.findById(sampleId))
     }
@@ -364,7 +370,7 @@ class CountryRepositoryTest(
         val id = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
-            countryRepository.delete(id)
+            repository.delete(id)
         }
     }
 }

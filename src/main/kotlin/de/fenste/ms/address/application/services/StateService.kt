@@ -68,7 +68,7 @@ class StateService(
             .update(
                 id = UUID.fromString(update.id),
                 name = update.name,
-                countryId = UUID.fromString(update.country),
+                countryId = update.country?.let { c -> UUID.fromString(c) },
             )
             .let { s -> StateDto(s) }
     }
