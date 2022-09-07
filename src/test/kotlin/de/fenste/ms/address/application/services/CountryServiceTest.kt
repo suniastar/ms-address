@@ -67,7 +67,7 @@ class CountryServiceTest(
     }
 
     @Test
-    fun `test list on no data`(): Unit = transaction {
+    fun `test list on no data`() {
         SampleData.clear()
         val list = service.list()
 
@@ -152,6 +152,6 @@ class CountryServiceTest(
 
         service.delete(sampleId)
 
-        assertNull(Country.findById(sampleId))
+        transaction { assertNull(Country.findById(sampleId)) }
     }
 }

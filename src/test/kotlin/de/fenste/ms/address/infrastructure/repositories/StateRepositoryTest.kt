@@ -236,7 +236,7 @@ class StateRepositoryTest(
     }
 
     @Test
-    fun `test update country to existing`(): Unit = transaction {
+    fun `test update country to not existing`(): Unit = transaction {
         val sampleId = SampleData.states.first().id.value
         val countryId = UUID.randomUUID()
 

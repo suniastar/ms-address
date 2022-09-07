@@ -16,6 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.requests.CreateCityDto
+import de.fenste.ms.address.application.dtos.requests.UpdateCityDto
 import de.fenste.ms.address.application.dtos.responses.CityDto
 import de.fenste.ms.address.infrastructure.repositories.CityRepository
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -27,7 +29,7 @@ import java.util.UUID
 class CityService(
     @Autowired private val cityRepository: CityRepository,
 ) {
-    fun cities(
+    fun list(
         limit: Int? = null,
         offset: Long? = null,
     ): List<CityDto>? = transaction {
@@ -40,11 +42,45 @@ class CityService(
             .ifEmpty { null }
     }
 
-    fun city(
+    fun find(
         id: UUID,
     ): CityDto? = transaction {
         cityRepository
             .find(id)
             ?.let { c -> CityDto(c) }
+    }
+
+    fun create(
+        create: CreateCityDto,
+    ): CityDto = transaction {
+        cityRepository
+            .create(
+                name = create.name,
+                countryId = UUID.fromString(create.country),
+                stateId = create.state?.let { s -> UUID.fromString(s) },
+            )
+            .let { c -> CityDto(c) }
+    }
+
+    fun update(
+        update: UpdateCityDto,
+    ): CityDto = transaction {
+        cityRepository.update(
+            id = UUID.fromString(update.id),
+            name = update.name,
+            countryId = update.country?.let { c -> UUID.fromString(c) },
+            stateId = update.state?.let { s -> UUID.fromString(s) },
+        )
+            .let { c -> CityDto(c) }
+    }
+
+    fun delete(
+        id: UUID,
+    ): Boolean = transaction {
+        cityRepository
+            .delete(
+                id = id,
+            )
+        true
     }
 }

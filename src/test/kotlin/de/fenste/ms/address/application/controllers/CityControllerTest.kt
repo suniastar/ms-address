@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.services
+package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateStateDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
+import de.fenste.ms.address.application.dtos.requests.CreateCityDto
+import de.fenste.ms.address.application.dtos.requests.UpdateCityDto
+import de.fenste.ms.address.application.dtos.responses.CityDto
 import de.fenste.ms.address.application.dtos.responses.CountryDto
 import de.fenste.ms.address.application.dtos.responses.StateDto
-import de.fenste.ms.address.domain.model.State
+import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -35,8 +36,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
-class StateServiceTest(
-    @Autowired private val service: StateService,
+class CityControllerTest(
+    @Autowired private val controller: CityController,
 ) {
 
     @BeforeTest
@@ -46,20 +47,20 @@ class StateServiceTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.states.sortedBy { s -> s.id.value.toString() }.map { s -> StateDto(s) }
-        val actual = service.list()
+        val expected = SampleData.cities.sortedBy { s -> s.id.value.toString() }.map { c -> CityDto(c) }
+        val actual = controller.cities()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.states
+        val expected = SampleData.cities
             .sortedBy { s -> s.id.value.toString() }
             .drop(2)
             .take(1)
-            .map { s -> StateDto(s) }
-        val actual = service.list(
+            .map { c -> CityDto(c) }
+        val actual = controller.cities(
             offset = 2,
             limit = 1,
         )
@@ -68,72 +69,72 @@ class StateServiceTest(
     }
 
     @Test
-    fun `test list on no data`() {
-        SampleData.clear()
-        val list = service.list()
-
-        assertNull(list)
-    }
-
-    @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
-        val actual = service.find(id = UUID.fromString(expected.id))
+        val expected = SampleData.cities.random().let { c -> CityDto(c) }
+        val actual = controller.city(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = service.find(id = UUID.randomUUID())
+        val actual = controller.city(id = UUID.randomUUID().toString())
 
         assertNull(actual)
     }
 
     @Test
     fun `test create`() {
-        val country = SampleData.countries.random()
-        val create = CreateStateDto(
+        val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
+        val create = CreateCityDto(
             name = "Name",
             country = country.id.value.toString(),
         )
 
-        val actual = service.create(
+        val actual = controller.createCity(
             create = create,
         )
 
         assertNotNull(actual.id)
         assertEquals(create.name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        transaction { assertEquals((CountryDto(country)), actual.country) }
+        assertNull(actual.state)
     }
 
     @Test
-    fun `test update all`() {
-        val sampleId = SampleData.states.first().id.value.toString()
-        val country = SampleData.countries.last()
-        val update = UpdateStateDto(
-            id = sampleId,
-            name = "Name",
+    fun `test update all`(): Unit = transaction {
+        val sample = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
+        val name = "Name"
+        val country = transaction {
+            SampleData.countries.filterNot { c -> c == sample.country || c.states.empty() }.random()
+        }
+        val state = country.states.toList().random()
+        val update = UpdateCityDto(
+            id = sample.id.value.toString(),
+            name = name,
             country = country.id.value.toString(),
+            state = state.id.value.toString(),
         )
 
-        val actual = service.update(
+        val actual = controller.updateCity(
             update = update,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(update.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
+        assertNotNull(actual.state)
+        transaction { assertEquals(StateDto(state), actual.state) }
     }
 
     @Test
-    fun `test update nothing`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
-        val update = UpdateStateDto(
+    fun `test update nothing`(): Unit = transaction {
+        val expected = SampleData.cities.random().let { c -> CityDto(c) }
+        val update = UpdateCityDto(
             id = expected.id,
         )
 
-        val actual = service.update(
+        val actual = controller.updateCity(
             update = update,
         )
 
@@ -142,11 +143,11 @@ class StateServiceTest(
 
     @Test
     @Ignore // TODO allow cascade deletion?
-    fun `test delete`() {
-        val sampleId = SampleData.states.random().id.value
+    fun `test delete`(): Unit = transaction {
+        val sampleId = SampleData.states.random().id.value.toString()
 
-        service.delete(sampleId)
+        controller.deleteCity(sampleId)
 
-        transaction { assertNull(State.findById(sampleId)) }
+        transaction { assertNull(City.findById(UUID.fromString(sampleId))) }
     }
 }
