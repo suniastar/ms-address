@@ -19,7 +19,7 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.requests.CreateStateDto
 import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
 import de.fenste.ms.address.application.dtos.responses.StateDto
-import de.fenste.ms.address.infrastructure.repository.StateRepository
+import de.fenste.ms.address.infrastructure.repositories.StateRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
