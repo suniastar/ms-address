@@ -87,7 +87,7 @@ class StateRepository {
         val country = Country
             .find { CountryTable.id eq countryId }
             .limit(1)
-            .forUpdate()
+            .notForUpdate()
             .firstOrNull()
 
         requireNotNull(country) { "The country ($countryId) does not exist." }

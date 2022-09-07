@@ -28,7 +28,6 @@ import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import de.fenste.ms.address.infrastructure.tables.StreetTable
-import org.jetbrains.exposed.dao.load
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.deleteAll
@@ -240,7 +239,7 @@ object SampleData {
                 sBerlin,
                 sBadenWuerttemberg,
                 sIleDeFrance,
-            ).map { it.load(State::country) }
+            )
             pCities = listOf(
                 cBerlin,
                 cSpandau,
