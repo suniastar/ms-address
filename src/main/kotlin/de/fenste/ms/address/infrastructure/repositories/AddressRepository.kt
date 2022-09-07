@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.infrastructure.repository
+package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.domain.model.Address
 import de.fenste.ms.address.infrastructure.tables.AddressTable

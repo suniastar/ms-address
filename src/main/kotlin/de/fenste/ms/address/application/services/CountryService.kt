@@ -19,7 +19,7 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
 import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
 import de.fenste.ms.address.application.dtos.responses.CountryDto
-import de.fenste.ms.address.infrastructure.repository.CountryRepository
+import de.fenste.ms.address.infrastructure.repositories.CountryRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service

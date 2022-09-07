@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.infrastructure.repository
+package de.fenste.ms.address.infrastructure.repositories
 
-import de.fenste.ms.address.domain.model.Street
-import de.fenste.ms.address.infrastructure.tables.StreetTable
+import de.fenste.ms.address.domain.model.City
+import de.fenste.ms.address.infrastructure.tables.CityTable
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
@@ -25,21 +25,21 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
-class StreetRepository {
+class CityRepository {
 
     fun list(
         limit: Int? = null,
         offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(StreetTable.id to SortOrder.ASC),
-    ): SizedIterable<Street> = when {
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CityTable.id to SortOrder.ASC),
+    ): SizedIterable<City> = when {
         limit != null ->
-            Street
+            City
                 .all()
                 .orderBy(*order)
                 .limit(limit, offset)
                 .notForUpdate()
         else ->
-            Street
+            City
                 .all()
                 .orderBy(*order)
                 .notForUpdate()
@@ -47,8 +47,8 @@ class StreetRepository {
 
     fun find(
         id: UUID,
-    ): Street? = Street
-        .find { StreetTable.id eq id }
+    ): City? = City
+        .find { CityTable.id eq id }
         .limit(1)
         .notForUpdate()
         .firstOrNull()
