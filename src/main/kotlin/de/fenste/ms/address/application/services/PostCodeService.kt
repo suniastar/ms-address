@@ -27,7 +27,7 @@ import java.util.UUID
 class PostCodeService(
     @Autowired private val postCodeRepository: PostCodeRepository,
 ) {
-    fun postCodes(
+    fun list(
         limit: Int? = null,
         offset: Long? = null,
     ): List<PostCodeDto>? = transaction {
@@ -40,7 +40,7 @@ class PostCodeService(
             .ifEmpty { null }
     }
 
-    fun postCode(
+    fun find(
         id: UUID,
     ): PostCodeDto? = transaction {
         postCodeRepository

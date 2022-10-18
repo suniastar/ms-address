@@ -33,7 +33,7 @@ class PostCodeController(
     fun postCodes(
         @Argument limit: Int? = null,
         @Argument offset: Int? = null,
-    ): List<PostCodeDto>? = postCodeService.postCodes(
+    ): List<PostCodeDto>? = postCodeService.list(
         limit = limit,
         offset = offset?.toLong(),
     )
@@ -41,7 +41,7 @@ class PostCodeController(
     @SchemaMapping(field = "postCode", typeName = "Query")
     fun postCode(
         @Argument id: String,
-    ): PostCodeDto? = postCodeService.postCode(
+    ): PostCodeDto? = postCodeService.find(
         id = UUID.fromString(id),
     )
 }
