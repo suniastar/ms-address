@@ -65,12 +65,13 @@ class CityService(
     fun update(
         update: UpdateCityDto,
     ): CityDto = transaction {
-        cityRepository.update(
-            id = UUID.fromString(update.id),
-            name = update.name,
-            countryId = update.country?.let { c -> UUID.fromString(c) },
-            stateId = update.state?.let { s -> UUID.fromString(s) },
-        )
+        cityRepository
+            .update(
+                id = UUID.fromString(update.id),
+                name = update.name,
+                countryId = update.country?.let { c -> UUID.fromString(c) },
+                stateId = update.state?.let { s -> UUID.fromString(s) },
+            )
             .let { c -> CityDto(c) }
     }
 

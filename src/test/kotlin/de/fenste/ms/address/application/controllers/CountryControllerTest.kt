@@ -94,7 +94,7 @@ class CountryControllerTest(
         )
 
         val actual = controller.createCountry(
-            country = create,
+            create = create,
         )
 
         assertNotNull(actual)
@@ -121,7 +121,7 @@ class CountryControllerTest(
         )
 
         val actual = controller.updateCountry(
-            country = update,
+            update = update,
         )
 
         assertNotNull(actual)
@@ -140,7 +140,7 @@ class CountryControllerTest(
         )
 
         val actual = controller.updateCountry(
-            country = update,
+            update = update,
         )
 
         assertEquals(expected, actual)

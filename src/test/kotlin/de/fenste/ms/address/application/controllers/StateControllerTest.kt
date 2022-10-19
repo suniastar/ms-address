@@ -93,7 +93,7 @@ class StateControllerTest(
         )
 
         val actual = controller.createState(
-            state = create,
+            create = create,
         )
 
         assertNotNull(actual)
@@ -114,7 +114,7 @@ class StateControllerTest(
         )
 
         val actual = controller.updateState(
-            state = update,
+            update = update,
         )
 
         assertNotNull(actual)
@@ -131,7 +131,7 @@ class StateControllerTest(
         )
 
         val actual = controller.updateState(
-            state = update,
+            update = update,
         )
 
         transaction { assertEquals(expected, actual) }

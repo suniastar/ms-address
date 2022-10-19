@@ -53,16 +53,16 @@ class CountryController(
 
     @SchemaMapping(field = "createCountry", typeName = "Mutation")
     fun createCountry(
-        @Argument country: CreateCountryDto,
+        @Argument create: CreateCountryDto,
     ): CountryDto = countryService.create(
-        create = country,
+        create = create,
     )
 
     @SchemaMapping(field = "updateCountry", typeName = "Mutation")
     fun updateCountry(
-        @Argument country: UpdateCountryDto,
+        @Argument update: UpdateCountryDto,
     ): CountryDto = countryService.update(
-        update = country,
+        update = update,
     )
 
     @SchemaMapping(field = "deleteCountry", typeName = "Mutation")

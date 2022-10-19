@@ -49,16 +49,16 @@ class StateController(
 
     @SchemaMapping(field = "createState", typeName = "Mutation")
     fun createState(
-        @Argument state: CreateStateDto,
+        @Argument create: CreateStateDto,
     ): StateDto = stateService.create(
-        create = state,
+        create = create,
     )
 
     @SchemaMapping(field = "updateState", typeName = "Mutation")
     fun updateState(
-        @Argument state: UpdateStateDto,
+        @Argument update: UpdateStateDto,
     ): StateDto = stateService.update(
-        update = state,
+        update = update,
     )
 
     @SchemaMapping(field = "deleteState", typeName = "Muatation")
