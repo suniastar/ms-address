@@ -195,11 +195,11 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha2`(): Unit = transaction {
-        val sampleId = SampleData.countries.random().id.value
+        val country = SampleData.countries.random()
         val alpha2 = "XX"
 
         val actual = repository.update(
-            id = sampleId,
+            id = country.id.value,
             alpha2 = alpha2,
         )
 
@@ -209,11 +209,11 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha3`(): Unit = transaction {
-        val sampleId = SampleData.countries.random().id.value
+        val country = SampleData.countries.random()
         val alpha3 = "XXX"
 
         val actual = repository.update(
-            id = sampleId,
+            id = country.id.value,
             alpha3 = alpha3,
         )
 
@@ -223,11 +223,11 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update name`(): Unit = transaction {
-        val sampleId = SampleData.countries.random().id.value
+        val country = SampleData.countries.random()
         val name = "Name"
 
         val actual = repository.update(
-            id = sampleId,
+            id = country.id.value,
             name = name,
         )
 
@@ -237,11 +237,11 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update localizedName`(): Unit = transaction {
-        val sampleId = SampleData.countries.random().id.value
+        val country = SampleData.countries.random()
         val localizedName = "LocalizedName"
 
         val actual = repository.update(
-            id = sampleId,
+            id = country.id.value,
             localizedName = localizedName,
         )
 
@@ -251,14 +251,14 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update all`(): Unit = transaction {
-        val sampleId = SampleData.countries.random().id.value
+        val country = SampleData.countries.random()
         val alpha2 = "XX"
         val alpha3 = "XXX"
         val name = "Name"
         val localizedName = "LocalizedName"
 
         val actual = repository.update(
-            id = sampleId,
+            id = country.id.value,
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -274,14 +274,14 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update all to same`(): Unit = transaction {
-        val sample = SampleData.countries.random()
-        val alpha2 = sample.alpha2
-        val alpha3 = sample.alpha3
-        val name = sample.name
-        val localizedName = sample.localizedName
+        val country = SampleData.countries.random()
+        val alpha2 = country.alpha2
+        val alpha3 = country.alpha3
+        val name = country.name
+        val localizedName = country.localizedName
 
         val actual = repository.update(
-            id = sample.id.value,
+            id = country.id.value,
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -318,12 +318,12 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha2 to existing`(): Unit = transaction {
-        val sampleId = SampleData.countries.first().id.value
-        val alpha2 = SampleData.countries.last().alpha2
+        val country = SampleData.countries.random()
+        val alpha2 = SampleData.countries.filterNot { c -> c.alpha2 == country.alpha2 }.random().alpha2
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sampleId,
+                id = country.id.value,
                 alpha2 = alpha2,
             )
         }
@@ -331,12 +331,12 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha3 to existing`(): Unit = transaction {
-        val sampleId = SampleData.countries.first().id.value
-        val alpha3 = SampleData.countries.last().alpha3
+        val country = SampleData.countries.random()
+        val alpha3 = SampleData.countries.filterNot { c -> c.alpha3 == country.alpha3 }.random().alpha3
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sampleId,
+                id = country.id.value,
                 alpha3 = alpha3,
             )
         }
@@ -344,12 +344,12 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update name to existing`(): Unit = transaction {
-        val sampleId = SampleData.countries.first().id.value
-        val name = SampleData.countries.last().name
+        val country = SampleData.countries.random()
+        val name = SampleData.countries.filterNot { c -> c.name == country.name }.random().name
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sampleId,
+                id = country.id.value,
                 name = name,
             )
         }

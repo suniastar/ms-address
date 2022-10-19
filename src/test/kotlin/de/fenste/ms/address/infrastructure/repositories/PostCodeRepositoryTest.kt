@@ -115,7 +115,7 @@ class PostCodeRepositoryTest(
 
     @Test
     fun `test create existing`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { p -> p.postCodes.empty() }.first()
+        val city = SampleData.cities.filterNot { p -> p.postCodes.empty() }.random()
         val code = city.postCodes.first().code
 
         assertFailsWith<IllegalArgumentException> {
@@ -141,11 +141,11 @@ class PostCodeRepositoryTest(
 
     @Test
     fun `test update code`(): Unit = transaction {
-        val id = SampleData.postCodes.random().id.value
+        val postCode = SampleData.postCodes.random()
         val code = "CODE"
 
         val actual = repository.update(
-            id = id,
+            id = postCode.id.value,
             code = code,
         )
 
@@ -170,8 +170,8 @@ class PostCodeRepositoryTest(
     @Test
     fun `test update all`(): Unit = transaction {
         val postCode = SampleData.postCodes.random()
-        val city = SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
         val code = "CODE"
+        val city = SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
 
         val actual = repository.update(
             id = postCode.id.value,
@@ -188,17 +188,17 @@ class PostCodeRepositoryTest(
     fun `test update all to same`(): Unit = transaction {
         val postCode = SampleData.postCodes.random()
         val code = postCode.code
-        val cityId = postCode.city.id.value
+        val city = postCode.city
 
         val actual = repository.update(
             id = postCode.id.value,
             code = code,
-            cityId = cityId,
+            cityId = city.id.value,
         )
 
         assertNotNull(actual)
         assertEquals(code, actual.code)
-        assertEquals(cityId, actual.city.id.value)
+        assertEquals(city, actual.city)
     }
 
     @Test
@@ -224,12 +224,12 @@ class PostCodeRepositoryTest(
 
     @Test
     fun `test update name to existing`(): Unit = transaction {
-        val sample = SampleData.postCodes.filter { p -> p.city.postCodes.count() >= 2 }.random()
-        val code = sample.city.postCodes.filterNot { p -> p == sample }.random().code
+        val postCode = SampleData.postCodes.filter { p -> p.city.postCodes.count() >= 2 }.random()
+        val code = postCode.city.postCodes.filterNot { p -> p == postCode }.random().code
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sample.id.value,
+                id = postCode.id.value,
                 code = code,
             )
         }
@@ -237,12 +237,12 @@ class PostCodeRepositoryTest(
 
     @Test
     fun `test update city to not existing`(): Unit = transaction {
-        val id = SampleData.postCodes.first().id.value
+        val postCode = SampleData.postCodes.first()
         val cityId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = id,
+                id = postCode.id.value,
                 cityId = cityId,
             )
         }
