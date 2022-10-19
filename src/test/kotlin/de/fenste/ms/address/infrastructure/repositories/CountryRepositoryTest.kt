@@ -135,7 +135,7 @@ class CountryRepositoryTest(
             localizedName = localizedName,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(alpha2, actual.alpha2)
         assertEquals(alpha3, actual.alpha3)
         assertEquals(name, actual.name)

@@ -47,7 +47,7 @@ class CityServiceTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.cities.sortedBy { s -> s.id.value.toString() }.map { c -> CityDto(c) }
+        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }.map { c -> CityDto(c) }
         val actual = service.list()
 
         transaction { assertContentEquals(expected, actual) }
@@ -56,7 +56,7 @@ class CityServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = SampleData.cities
-            .sortedBy { s -> s.id.value.toString() }
+            .sortedBy { c -> c.id.value.toString() }
             .drop(2)
             .take(1)
             .map { c -> CityDto(c) }
@@ -93,9 +93,11 @@ class CityServiceTest(
 
     @Test
     fun `test create`() {
+        val name = "Name"
         val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
+
         val create = CreateCityDto(
-            name = "Name",
+            name = name,
             country = country.id.value.toString(),
         )
 
@@ -103,18 +105,20 @@ class CityServiceTest(
             create = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals((CountryDto(country)), actual.country) }
         assertNull(actual.state)
     }
 
     @Test
-    fun `test create all`(): Unit = transaction {
+    fun `test create all`() {
         val country = transaction { SampleData.countries.filterNot { c -> c.states.empty() }.random() }
-        val state = country.states.toList().random()
+        val name = "Name"
+        val state = transaction { country.states.toList().random() }
+
         val create = CreateCityDto(
-            name = "Name",
+            name = name,
             country = country.id.value.toString(),
             state = state.id.value.toString(),
         )
@@ -123,23 +127,24 @@ class CityServiceTest(
             create = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals((CountryDto(country)), actual.country) }
-        assertNotNull(create.state)
+        assertNotNull(actual.state)
         transaction { assertEquals(StateDto(state), actual.state) }
     }
 
     @Test
-    fun `test update all`(): Unit = transaction {
-        val sample = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
+    fun `test update all`() {
+        val city = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
         val name = "Name"
         val country = transaction {
-            SampleData.countries.filterNot { c -> c == sample.country || c.states.empty() }.random()
+            SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         }
-        val state = country.states.toList().random()
+        val state = transaction { country.states.toList().random() }
+
         val update = UpdateCityDto(
-            id = sample.id.value.toString(),
+            id = city.id.value.toString(),
             name = name,
             country = country.id.value.toString(),
             state = state.id.value.toString(),
@@ -157,8 +162,9 @@ class CityServiceTest(
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
+    fun `test update nothing`() {
         val expected = SampleData.cities.random().let { c -> CityDto(c) }
+
         val update = UpdateCityDto(
             id = expected.id,
         )
@@ -172,11 +178,11 @@ class CityServiceTest(
 
     @Test
     @Ignore // TODO allow cascade deletion?
-    fun `test delete`(): Unit = transaction {
-        val sampleId = SampleData.states.random().id.value
+    fun `test delete`() {
+        val id = SampleData.states.random().id.value
 
-        service.delete(sampleId)
+        service.delete(id)
 
-        transaction { assertNull(City.findById(sampleId)) }
+        transaction { assertNull(City.findById(id)) }
     }
 }

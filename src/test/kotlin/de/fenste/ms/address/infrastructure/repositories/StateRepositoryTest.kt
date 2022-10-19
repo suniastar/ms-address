@@ -108,7 +108,7 @@ class StateRepositoryTest(
             countryId = country.id.value,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
     }

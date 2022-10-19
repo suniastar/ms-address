@@ -91,33 +91,43 @@ class CountryServiceTest(
 
     @Test
     fun `test create`() {
+        val alpha2 = "CZ"
+        val alpha3 = "CZE"
+        val name = "Czechia"
+        val localizedName = "Tschechien"
+
         val create = CreateCountryDto(
-            alpha2 = "CZ",
-            alpha3 = "CZE",
-            name = "Czechia",
-            localizedName = "Tschechien",
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+            name = name,
+            localizedName = localizedName,
         )
 
         val actual = service.create(
             create = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.alpha2, actual.alpha2)
-        assertEquals(create.alpha3, actual.alpha3)
-        assertEquals(create.name, actual.name)
-        assertEquals(create.localizedName, actual.localizedName)
+        assertNotNull(actual)
+        assertEquals(alpha2, actual.alpha2)
+        assertEquals(alpha3, actual.alpha3)
+        assertEquals(name, actual.name)
+        assertEquals(localizedName, actual.localizedName)
     }
 
     @Test
     fun `test update all`() {
-        val sampleId = SampleData.countries.random().id.value.toString()
+        val country = SampleData.countries.random()
+        val alpha2 = "XX"
+        val alpha3 = "XXX"
+        val name = "Name"
+        val localizedName = "LocalizedName"
+
         val update = UpdateCountryDto(
-            id = sampleId,
-            alpha2 = "XX",
-            alpha3 = "XXX",
-            name = "Name",
-            localizedName = "LocalizedName",
+            id = country.id.value.toString(),
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+            name = name,
+            localizedName = localizedName,
         )
 
         val actual = service.update(
@@ -125,15 +135,16 @@ class CountryServiceTest(
         )
 
         assertNotNull(actual)
-        assertEquals(update.alpha2, actual.alpha2)
-        assertEquals(update.alpha3, actual.alpha3)
-        assertEquals(update.name, actual.name)
-        assertEquals(update.localizedName, actual.localizedName)
+        assertEquals(alpha2, actual.alpha2)
+        assertEquals(alpha3, actual.alpha3)
+        assertEquals(name, actual.name)
+        assertEquals(localizedName, actual.localizedName)
     }
 
     @Test
     fun `test update nothing`() {
         val expected = SampleData.countries.random().let { c -> CountryDto(c) }
+
         val update = UpdateCountryDto(
             id = expected.id,
         )
@@ -148,10 +159,10 @@ class CountryServiceTest(
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
-        val sampleId = SampleData.countries.random().id.value
+        val id = SampleData.countries.random().id.value
 
-        service.delete(sampleId)
+        service.delete(id)
 
-        transaction { assertNull(Country.findById(sampleId)) }
+        transaction { assertNull(Country.findById(id)) }
     }
 }

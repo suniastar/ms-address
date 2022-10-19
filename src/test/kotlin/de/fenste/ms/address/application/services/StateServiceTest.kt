@@ -92,9 +92,11 @@ class StateServiceTest(
 
     @Test
     fun `test create`() {
+        val name = "Name"
         val country = SampleData.countries.random()
+
         val create = CreateStateDto(
-            name = "Name",
+            name = name,
             country = country.id.value.toString(),
         )
 
@@ -102,18 +104,20 @@ class StateServiceTest(
             create = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
     }
 
     @Test
     fun `test update all`() {
-        val sampleId = SampleData.states.first().id.value.toString()
-        val country = SampleData.countries.last()
+        val state = SampleData.states.random()
+        val name = "Name"
+        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+
         val update = UpdateStateDto(
-            id = sampleId,
-            name = "Name",
+            id = state.id.value.toString(),
+            name = name,
             country = country.id.value.toString(),
         )
 
@@ -121,14 +125,15 @@ class StateServiceTest(
             update = update,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(update.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
     }
 
     @Test
     fun `test update nothing`() {
         val expected = SampleData.states.random().let { s -> StateDto(s) }
+
         val update = UpdateStateDto(
             id = expected.id,
         )
@@ -143,10 +148,10 @@ class StateServiceTest(
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
-        val sampleId = SampleData.states.random().id.value
+        val id = SampleData.states.random().id.value
 
-        service.delete(sampleId)
+        service.delete(id)
 
-        transaction { assertNull(State.findById(sampleId)) }
+        transaction { assertNull(State.findById(id)) }
     }
 }

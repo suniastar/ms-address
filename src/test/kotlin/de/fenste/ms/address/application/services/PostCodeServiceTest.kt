@@ -109,7 +109,7 @@ class PostCodeServiceTest(
     }
 
     @Test
-    fun `test update all`(): Unit = transaction {
+    fun `test update all`() {
         val postCode = transaction { SampleData.postCodes.random() }
         val code = "CODE"
         val city = transaction {
@@ -131,7 +131,7 @@ class PostCodeServiceTest(
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
+    fun `test update nothing`() {
         val expected = SampleData.postCodes.random().let { p -> PostCodeDto(p) }
         val update = UpdatePostCodeDto(
             id = expected.id,
@@ -146,7 +146,7 @@ class PostCodeServiceTest(
 
     @Test
     @Ignore // TODO allow cascade deletion?
-    fun `test delete`(): Unit = transaction {
+    fun `test delete`() {
         val id = SampleData.postCodes.random().id.value
 
         service.delete(id)

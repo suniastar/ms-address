@@ -47,7 +47,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test list on sample data`(): Unit = transaction {
-        val expected = SampleData.cities.sortedBy { s -> s.id.value.toString() }
+        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }
         val actual = repository.list()
 
         assertContentEquals(expected, actual)
@@ -56,7 +56,7 @@ class CityRepositoryTest(
     @Test
     fun `test list on sample data with options`(): Unit = transaction {
         val expected = SampleData.cities
-            .sortedBy { s -> s.name }
+            .sortedBy { c -> c.name }
             .drop(2)
             .take(1)
         val actual = repository.list(
@@ -110,7 +110,7 @@ class CityRepositoryTest(
             stateId = null,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
         assertNull(actual.state)
@@ -128,7 +128,7 @@ class CityRepositoryTest(
             stateId = state.id.value,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
         assertEquals(state, actual.state)

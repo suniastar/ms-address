@@ -101,12 +101,10 @@ class PostCodeControllerTest(
     }
 
     @Test
-    fun `test update all`(): Unit = transaction {
+    fun `test update all`() {
         val postCode = transaction { SampleData.postCodes.random() }
         val code = "CODE"
-        val city = transaction {
-            SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
-        }
+        val city = transaction { SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random() }
         val update = UpdatePostCodeDto(
             id = postCode.id.value.toString(),
             code = code,
@@ -123,7 +121,7 @@ class PostCodeControllerTest(
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
+    fun `test update nothing`() {
         val expected = SampleData.postCodes.random().let { p -> PostCodeDto(p) }
         val update = UpdatePostCodeDto(
             id = expected.id,
@@ -138,7 +136,7 @@ class PostCodeControllerTest(
 
     @Test
     @Ignore // TODO allow cascade deletion?
-    fun `test delete`(): Unit = transaction {
+    fun `test delete`() {
         val id = SampleData.postCodes.random().id.value
 
         controller.deletePostCode(id.toString())

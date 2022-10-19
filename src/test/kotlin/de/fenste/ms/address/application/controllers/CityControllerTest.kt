@@ -47,7 +47,7 @@ class CityControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.cities.sortedBy { s -> s.id.value.toString() }.map { c -> CityDto(c) }
+        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }.map { c -> CityDto(c) }
         val actual = controller.cities()
 
         transaction { assertContentEquals(expected, actual) }
@@ -56,7 +56,7 @@ class CityControllerTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = SampleData.cities
-            .sortedBy { s -> s.id.value.toString() }
+            .sortedBy { c -> c.id.value.toString() }
             .drop(2)
             .take(1)
             .map { c -> CityDto(c) }
@@ -85,9 +85,11 @@ class CityControllerTest(
 
     @Test
     fun `test create`() {
+        val name = "Name"
         val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
+
         val create = CreateCityDto(
-            name = "Name",
+            name = name,
             country = country.id.value.toString(),
         )
 
@@ -95,20 +97,21 @@ class CityControllerTest(
             create = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals((CountryDto(country)), actual.country) }
         assertNull(actual.state)
     }
 
     @Test
-    fun `test update all`(): Unit = transaction {
+    fun `test update all`() {
         val sample = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
         val name = "Name"
         val country = transaction {
             SampleData.countries.filterNot { c -> c == sample.country || c.states.empty() }.random()
         }
-        val state = country.states.toList().random()
+        val state = transaction { country.states.toList().random() }
+
         val update = UpdateCityDto(
             id = sample.id.value.toString(),
             name = name,
@@ -128,8 +131,9 @@ class CityControllerTest(
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
+    fun `test update nothing`() {
         val expected = SampleData.cities.random().let { c -> CityDto(c) }
+
         val update = UpdateCityDto(
             id = expected.id,
         )
@@ -143,11 +147,11 @@ class CityControllerTest(
 
     @Test
     @Ignore // TODO allow cascade deletion?
-    fun `test delete`(): Unit = transaction {
-        val sampleId = SampleData.states.random().id.value.toString()
+    fun `test delete`() {
+        val id = SampleData.states.random().id.value
 
-        controller.deleteCity(sampleId)
+        controller.deleteCity(id.toString())
 
-        transaction { assertNull(City.findById(UUID.fromString(sampleId))) }
+        transaction { assertNull(City.findById(id)) }
     }
 }

@@ -108,7 +108,7 @@ class PostCodeRepositoryTest(
             cityId = city.id.value,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(code, actual.code)
         assertEquals(city, actual.city)
     }

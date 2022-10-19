@@ -84,9 +84,11 @@ class StateControllerTest(
 
     @Test
     fun `test create`() {
+        val name = "Name"
         val country = SampleData.countries.random()
+
         val create = CreateStateDto(
-            name = "Name",
+            name = name,
             country = country.id.value.toString(),
         )
 
@@ -94,18 +96,20 @@ class StateControllerTest(
             state = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
     }
 
     @Test
-    fun `test update all`(): Unit = transaction {
-        val sampleId = SampleData.states.first().id.value.toString()
-        val country = SampleData.countries.last()
+    fun `test update all`() {
+        val state = SampleData.states.random()
+        val name = "Name"
+        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+
         val update = UpdateStateDto(
-            id = sampleId,
-            name = "Name",
+            id = state.id.value.toString(),
+            name = name,
             country = country.id.value.toString(),
         )
 
@@ -113,17 +117,19 @@ class StateControllerTest(
             state = update,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(update.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
+    fun `test update nothing`() {
         val expected = SampleData.states.random().let { s -> StateDto(s) }
+
         val update = UpdateStateDto(
             id = expected.id,
         )
+
         val actual = controller.updateState(
             state = update,
         )
@@ -133,11 +139,11 @@ class StateControllerTest(
 
     @Test
     @Ignore // TODO allow cascade deletion?
-    fun `test delete`(): Unit = transaction {
-        val sampleId = SampleData.states.random().id.value.toString()
+    fun `test delete`() {
+        val id = SampleData.states.random().id.value
 
-        controller.deleteState(sampleId)
+        controller.deleteState(id.toString())
 
-        assertNull(Country.findById(UUID.fromString(sampleId)))
+        assertNull(Country.findById(id))
     }
 }
