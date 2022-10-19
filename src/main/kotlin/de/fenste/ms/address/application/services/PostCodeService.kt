@@ -16,6 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.requests.CreatePostCodeDto
+import de.fenste.ms.address.application.dtos.requests.UpdatePostCodeDto
 import de.fenste.ms.address.application.dtos.responses.PostCodeDto
 import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -46,5 +48,38 @@ class PostCodeService(
         postCodeRepository
             .find(id)
             ?.let { p -> PostCodeDto(p) }
+    }
+
+    fun create(
+        create: CreatePostCodeDto,
+    ): PostCodeDto = transaction {
+        postCodeRepository
+            .create(
+                code = create.code,
+                cityId = UUID.fromString(create.city),
+            )
+            .let { p -> PostCodeDto(p) }
+    }
+
+    fun update(
+        update: UpdatePostCodeDto,
+    ): PostCodeDto = transaction {
+        postCodeRepository
+            .update(
+                id = UUID.fromString(update.id),
+                code = update.code,
+                cityId = update.city?.let { c -> UUID.fromString(c) },
+            )
+            .let { p -> PostCodeDto(p) }
+    }
+
+    fun delete(
+        id: UUID,
+    ): Boolean = transaction {
+        postCodeRepository
+            .delete(
+                id = id,
+            )
+        true
     }
 }

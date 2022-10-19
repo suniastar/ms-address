@@ -16,6 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
+import de.fenste.ms.address.application.dtos.requests.CreatePostCodeDto
+import de.fenste.ms.address.application.dtos.requests.UpdatePostCodeDto
 import de.fenste.ms.address.application.dtos.responses.PostCodeDto
 import de.fenste.ms.address.application.services.PostCodeService
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,6 +44,27 @@ class PostCodeController(
     fun postCode(
         @Argument id: String,
     ): PostCodeDto? = postCodeService.find(
+        id = UUID.fromString(id),
+    )
+
+    @SchemaMapping(field = "createPostCode", typeName = "Mutation")
+    fun createPostCode(
+        @Argument create: CreatePostCodeDto,
+    ): PostCodeDto = postCodeService.create(
+        create = create,
+    )
+
+    @SchemaMapping(field = "updatePostCode", typeName = "Mutation")
+    fun updatePostCode(
+        @Argument update: UpdatePostCodeDto,
+    ): PostCodeDto = postCodeService.update(
+        update = update,
+    )
+
+    @SchemaMapping(field = "deletePostCode", typeName = "Mutation")
+    fun deletePostCode(
+        @Argument id: String,
+    ): Boolean = postCodeService.delete(
         id = UUID.fromString(id),
     )
 }
