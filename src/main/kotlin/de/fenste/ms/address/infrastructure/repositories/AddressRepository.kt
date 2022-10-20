@@ -17,15 +17,39 @@
 package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.domain.model.Address
+import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.infrastructure.tables.AddressTable
+import de.fenste.ms.address.infrastructure.tables.StreetTable
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
 @Repository
 class AddressRepository {
+
+    private companion object {
+
+        private fun idOf(
+            houseNumber: String,
+            extra: String?,
+            streetId: UUID,
+        ): EntityID<UUID>? = AddressTable
+            .slice(AddressTable.id)
+            .select {
+                (AddressTable.houseNumber eq houseNumber) and
+                    (AddressTable.extra eq extra) and
+                    (AddressTable.street eq streetId)
+            }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+            ?.let { a -> a[AddressTable.id] }
+    }
 
     fun list(
         limit: Int? = null,
@@ -38,6 +62,7 @@ class AddressRepository {
                 .orderBy(*order)
                 .limit(limit, offset)
                 .notForUpdate()
+
         else ->
             Address
                 .all()
@@ -52,4 +77,88 @@ class AddressRepository {
         .limit(1)
         .notForUpdate()
         .firstOrNull()
+
+    fun create(
+        houseNumber: String,
+        extra: String? = null,
+        streetId: UUID,
+    ): Address {
+        require(
+            idOf(
+                houseNumber = houseNumber,
+                extra = extra,
+                streetId = streetId,
+            ) == null,
+        ) { "An Address with this house number, extra and parent street does already exist." }
+
+        val street = Street
+            .find { StreetTable.id eq streetId }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+
+        requireNotNull(street) { "The street ($streetId) does not exist." }
+
+        return Address.new {
+            this.houseNumber = houseNumber
+            this.extra = extra
+            this.street = street
+        }
+    }
+
+    fun update(
+        id: UUID,
+        houseNumber: String? = null,
+        extra: String? = null,
+        streetId: UUID? = null,
+        removeExtra: Boolean = false,
+    ): Address {
+        val address = Address
+            .find { AddressTable.id eq id }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(address) { "The Address ($id) does not exist." }
+
+        val uId = idOf(
+            houseNumber = houseNumber ?: address.houseNumber,
+            extra = if (!removeExtra) extra ?: address.extra else null,
+            streetId = streetId ?: address.street.id.value,
+        )
+        require(
+            uId == null || uId == address.id,
+        ) { "An Address with this house number, extra and parent street does already exist." }
+
+        streetId?.let {
+            val street = Street
+                .find { StreetTable.id eq streetId }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+
+            requireNotNull(street) { "The street ($streetId) does not exist." }
+
+            address.street = street
+        }
+        houseNumber?.let { address.houseNumber = houseNumber }
+        extra?.let { address.extra = extra }
+        if (removeExtra) address.extra = null
+
+        return address
+    }
+
+    fun delete(
+        id: UUID,
+    ) {
+        val address = Address
+            .find { AddressTable.id eq id }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(address) { "The Address ($id) does not exist." }
+
+        address.delete()
+    }
 }

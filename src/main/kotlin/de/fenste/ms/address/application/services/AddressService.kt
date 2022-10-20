@@ -16,6 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.requests.CreateAddressDto
+import de.fenste.ms.address.application.dtos.requests.UpdateAddressDto
 import de.fenste.ms.address.application.dtos.responses.AddressDto
 import de.fenste.ms.address.infrastructure.repositories.AddressRepository
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -27,7 +29,7 @@ import java.util.UUID
 class AddressService(
     @Autowired private val addressRepository: AddressRepository,
 ) {
-    fun addresses(
+    fun list(
         limit: Int? = null,
         offset: Long? = null,
     ): List<AddressDto>? = transaction {
@@ -40,11 +42,47 @@ class AddressService(
             .ifEmpty { null }
     }
 
-    fun address(
+    fun find(
         id: UUID,
     ): AddressDto? = transaction {
         addressRepository
             .find(id)
             ?.let { a -> AddressDto(a) }
+    }
+
+    fun create(
+        create: CreateAddressDto,
+    ): AddressDto = transaction {
+        addressRepository
+            .create(
+                houseNumber = create.houseNumber,
+                extra = create.extra,
+                streetId = UUID.fromString(create.street),
+            )
+            .let { a -> AddressDto(a) }
+    }
+
+    fun update(
+        update: UpdateAddressDto,
+    ): AddressDto = transaction {
+        addressRepository
+            .update(
+                id = UUID.fromString(update.id),
+                houseNumber = update.houseNumber,
+                extra = update.extra,
+                removeExtra = update.removeExtra ?: false,
+                streetId = update.street?.let { s -> UUID.fromString(s) },
+            )
+            .let { a -> AddressDto(a) }
+    }
+
+    fun delete(
+        id: UUID,
+    ): Boolean = transaction {
+        addressRepository
+            .delete(
+                id = id,
+            )
+        true
     }
 }

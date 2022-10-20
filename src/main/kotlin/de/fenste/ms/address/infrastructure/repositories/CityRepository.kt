@@ -72,7 +72,7 @@ class CityRepository {
                 val country = Country
                     .find { CountryTable.id eq countryId }
                     .limit(1)
-                    .forUpdate()
+                    .notForUpdate()
                     .firstOrNull()
 
                 requireNotNull(country) { "The country ($countryId) does not exist." }
@@ -181,7 +181,7 @@ class CityRepository {
         val uId = idOf(
             name = name ?: city.name,
             countryId = countryId ?: city.country.id.value,
-            stateId = stateId ?: city.state?.id?.value,
+            stateId = if (!removeState) stateId ?: city.state?.id?.value else null,
         )
         require(
             uId == null || uId == city.id,

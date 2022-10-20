@@ -16,10 +16,10 @@
 
 package de.fenste.ms.address.application.dtos.requests
 
-data class UpdateCityDto(
+data class UpdateAddressDto(
     val id: String,
-    val name: String? = null,
-    val country: String? = null,
-    val state: String? = null,
-    val removeState: Boolean? = null,
+    val houseNumber: String? = null,
+    val extra: String? = null,
+    val removeExtra: Boolean? = null,
+    val street: String? = null,
 )

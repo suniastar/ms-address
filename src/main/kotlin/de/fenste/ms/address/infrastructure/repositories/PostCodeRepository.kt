@@ -32,16 +32,19 @@ import java.util.UUID
 @Repository
 class PostCodeRepository {
 
-    private fun idOf(
-        code: String,
-        cityId: UUID,
-    ): EntityID<UUID>? = PostCodeTable
-        .slice(PostCodeTable.id)
-        .select { (PostCodeTable.code eq code) and (PostCodeTable.city eq cityId) }
-        .limit(1)
-        .notForUpdate()
-        .firstOrNull()
-        ?.let { p -> p[PostCodeTable.id] }
+    private companion object {
+
+        private fun idOf(
+            code: String,
+            cityId: UUID,
+        ): EntityID<UUID>? = PostCodeTable
+            .slice(PostCodeTable.id)
+            .select { (PostCodeTable.code eq code) and (PostCodeTable.city eq cityId) }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+            ?.let { p -> p[PostCodeTable.id] }
+    }
 
     fun list(
         limit: Int? = null,
@@ -87,7 +90,7 @@ class PostCodeRepository {
             .notForUpdate()
             .firstOrNull()
 
-        requireNotNull(city) { "The city ($cityId) does not exist" }
+        requireNotNull(city) { "The city ($cityId) does not exist." }
 
         return PostCode.new {
             this.code = code
@@ -103,7 +106,7 @@ class PostCodeRepository {
         val postCode = PostCode
             .find { PostCodeTable.id eq id }
             .limit(1)
-            .notForUpdate()
+            .forUpdate()
             .firstOrNull()
 
         requireNotNull(postCode) { "The post code ($id) does not exist." }
@@ -116,18 +119,18 @@ class PostCodeRepository {
             uId == null || uId == postCode.id,
         ) { "A post code with this code and parent city does already exist." }
 
-        code?.let { postCode.code = code }
         cityId?.let {
             val city = City
                 .find { CityTable.id eq cityId }
                 .limit(1)
-                .forUpdate()
+                .notForUpdate()
                 .firstOrNull()
 
             requireNotNull(city) { "The city ($cityId) does not exist." }
 
             postCode.city = city
         }
+        code?.let { postCode.code = code }
 
         return postCode
     }

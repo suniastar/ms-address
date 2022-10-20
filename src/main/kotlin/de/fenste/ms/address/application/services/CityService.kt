@@ -71,6 +71,7 @@ class CityService(
                 name = update.name,
                 countryId = update.country?.let { c -> UUID.fromString(c) },
                 stateId = update.state?.let { s -> UUID.fromString(s) },
+                removeState = update.removeState ?: false,
             )
             .let { c -> CityDto(c) }
     }

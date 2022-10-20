@@ -6,6 +6,7 @@ input CreateCountry {
 }
 
 input UpdateCountry {
+    id: String!
     alpha2: String
     alpha3: String
     name: String
@@ -30,9 +31,10 @@ input CreateState {
 }
 
 input UpdateState {
-    name: String!
+    id: String!
+    name: String
 
-    country: String!
+    country: String
 }
 
 type State {
@@ -51,10 +53,12 @@ input CreateCity {
 }
 
 input UpdateCity {
+    id: String!
     name: String
 
     country: String
     state: String
+    removeState: Boolean
 }
 
 type City {
@@ -73,7 +77,8 @@ input CreatePostCode {
 }
 
 input UpdatePostCode {
-    code: String!
+    id: String!
+    code: String
 
     city: String
 }
@@ -93,6 +98,7 @@ input CreateStreet {
 }
 
 input UpdateStreet {
+    id: String!
     name: String
 
     postCode: String
@@ -114,8 +120,10 @@ input CreateAddress {
 }
 
 input UpdateAddress {
+    id: String!
     houseNumber: String
     extra: String
+    removeExtra: Boolean
 
     street: String
 }

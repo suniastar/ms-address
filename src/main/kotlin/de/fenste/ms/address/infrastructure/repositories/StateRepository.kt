@@ -117,18 +117,18 @@ class StateRepository {
         )
         require(uId == null || uId == state.id) { "A state with this name and parent country does already exist." }
 
-        name?.let { state.name = name }
         countryId?.let {
             val country = Country
                 .find { CountryTable.id eq countryId }
                 .limit(1)
-                .forUpdate()
+                .notForUpdate()
                 .firstOrNull()
 
             requireNotNull(country) { "The country ($countryId) does not exist." }
 
             state.country = country
         }
+        name?.let { state.name = name }
 
         return state
     }
