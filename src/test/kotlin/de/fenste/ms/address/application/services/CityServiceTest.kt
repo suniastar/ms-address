@@ -16,11 +16,10 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateCityDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCityDto
-import de.fenste.ms.address.application.dtos.responses.CityDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
-import de.fenste.ms.address.application.dtos.responses.StateDto
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.CityInputDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -79,7 +78,7 @@ class CityServiceTest(
     @Test
     fun `test find by id on sample data`() {
         val expected = SampleData.cities.random().let { c -> CityDto(c) }
-        val actual = service.find(id = UUID.fromString(expected.id))
+        val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
     }
@@ -96,13 +95,13 @@ class CityServiceTest(
         val name = "Name"
         val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
 
-        val create = CreateCityDto(
+        val create = CityInputDto(
             name = name,
-            country = country.id.value.toString(),
+            country = country.id.value,
         )
 
         val actual = service.create(
-            create = create,
+            city = create,
         )
 
         assertNotNull(actual)
@@ -117,14 +116,14 @@ class CityServiceTest(
         val name = "Name"
         val state = transaction { country.states.toList().random() }
 
-        val create = CreateCityDto(
+        val create = CityInputDto(
             name = name,
-            country = country.id.value.toString(),
-            state = state.id.value.toString(),
+            country = country.id.value,
+            state = state.id.value,
         )
 
         val actual = service.create(
-            create = create,
+            city = create,
         )
 
         assertNotNull(actual)
@@ -143,15 +142,15 @@ class CityServiceTest(
         }
         val state = transaction { country.states.toList().random() }
 
-        val update = UpdateCityDto(
-            id = city.id.value.toString(),
+        val update = CityInputDto(
             name = name,
-            country = country.id.value.toString(),
-            state = state.id.value.toString(),
+            country = country.id.value,
+            state = state.id.value,
         )
 
         val actual = service.update(
-            update = update,
+            id = city.id.value,
+            city = update,
         )
 
         assertNotNull(actual)
@@ -159,21 +158,6 @@ class CityServiceTest(
         transaction { assertEquals(CountryDto(country), actual.country) }
         assertNotNull(actual.state)
         transaction { assertEquals(StateDto(state), actual.state) }
-    }
-
-    @Test
-    fun `test update nothing`() {
-        val expected = SampleData.cities.random().let { c -> CityDto(c) }
-
-        val update = UpdateCityDto(
-            id = expected.id,
-        )
-
-        val actual = service.update(
-            update = update,
-        )
-
-        transaction { assertEquals(expected, actual) }
     }
 
     @Test

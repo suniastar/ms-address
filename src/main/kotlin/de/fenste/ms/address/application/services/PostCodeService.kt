@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreatePostCodeDto
-import de.fenste.ms.address.application.dtos.requests.UpdatePostCodeDto
-import de.fenste.ms.address.application.dtos.responses.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,24 +50,25 @@ class PostCodeService(
     }
 
     fun create(
-        create: CreatePostCodeDto,
+        postCode: PostCodeInputDto,
     ): PostCodeDto = transaction {
         postCodeRepository
             .create(
-                code = create.code,
-                cityId = UUID.fromString(create.city),
+                code = postCode.code,
+                cityId = postCode.city,
             )
             .let { p -> PostCodeDto(p) }
     }
 
     fun update(
-        update: UpdatePostCodeDto,
+        id: UUID,
+        postCode: PostCodeInputDto,
     ): PostCodeDto = transaction {
         postCodeRepository
             .update(
-                id = UUID.fromString(update.id),
-                code = update.code,
-                cityId = update.city?.let { c -> UUID.fromString(c) },
+                id = id,
+                code = postCode.code,
+                cityId = postCode.city,
             )
             .let { p -> PostCodeDto(p) }
     }

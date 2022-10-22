@@ -16,11 +16,10 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateCityDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCityDto
-import de.fenste.ms.address.application.dtos.responses.CityDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
-import de.fenste.ms.address.application.dtos.responses.StateDto
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.CityInputDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -78,7 +77,7 @@ class CityControllerTest(
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.city(id = UUID.randomUUID().toString())
+        val actual = controller.city(id = UUID.randomUUID())
 
         assertNull(actual)
     }
@@ -88,13 +87,13 @@ class CityControllerTest(
         val name = "Name"
         val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
 
-        val create = CreateCityDto(
+        val create = CityInputDto(
             name = name,
-            country = country.id.value.toString(),
+            country = country.id.value,
         )
 
         val actual = controller.createCity(
-            create = create,
+            city = create,
         )
 
         assertNotNull(actual)
@@ -112,15 +111,15 @@ class CityControllerTest(
         }
         val state = transaction { country.states.toList().random() }
 
-        val update = UpdateCityDto(
-            id = sample.id.value.toString(),
+        val update = CityInputDto(
             name = name,
-            country = country.id.value.toString(),
-            state = state.id.value.toString(),
+            country = country.id.value,
+            state = state.id.value,
         )
 
         val actual = controller.updateCity(
-            update = update,
+            id = sample.id.value,
+            city = update,
         )
 
         assertNotNull(actual)
@@ -131,26 +130,11 @@ class CityControllerTest(
     }
 
     @Test
-    fun `test update nothing`() {
-        val expected = SampleData.cities.random().let { c -> CityDto(c) }
-
-        val update = UpdateCityDto(
-            id = expected.id,
-        )
-
-        val actual = controller.updateCity(
-            update = update,
-        )
-
-        transaction { assertEquals(expected, actual) }
-    }
-
-    @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.states.random().id.value
 
-        controller.deleteCity(id.toString())
+        controller.deleteCity(id)
 
         transaction { assertNull(City.findById(id)) }
     }

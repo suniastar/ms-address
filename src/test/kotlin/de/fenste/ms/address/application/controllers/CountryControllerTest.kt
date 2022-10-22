@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.test.SampleData
 import org.springframework.beans.factory.annotation.Autowired
@@ -86,7 +85,7 @@ class CountryControllerTest(
         val name = "Czechia"
         val localizedName = "Tschechien"
 
-        val create = CreateCountryDto(
+        val create = CountryInputDto(
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -94,7 +93,7 @@ class CountryControllerTest(
         )
 
         val actual = controller.createCountry(
-            create = create,
+            country = create,
         )
 
         assertNotNull(actual)
@@ -112,8 +111,7 @@ class CountryControllerTest(
         val name = "Name"
         val localizedName = "LocalizedName"
 
-        val update = UpdateCountryDto(
-            id = country.id.value.toString(),
+        val update = CountryInputDto(
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -121,7 +119,8 @@ class CountryControllerTest(
         )
 
         val actual = controller.updateCountry(
-            update = update,
+            id = country.id.value,
+            country = update,
         )
 
         assertNotNull(actual)
@@ -132,26 +131,11 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test update nothing`() {
-        val expected = SampleData.countries.random().let { c -> CountryDto(c) }
-
-        val update = UpdateCountryDto(
-            id = expected.id,
-        )
-
-        val actual = controller.updateCountry(
-            update = update,
-        )
-
-        assertEquals(expected, actual)
-    }
-
-    @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.countries.random().id.value
 
-        controller.deleteCountry(id.toString())
+        controller.deleteCountry(id)
 
         assertNull(Country.findById(id))
     }

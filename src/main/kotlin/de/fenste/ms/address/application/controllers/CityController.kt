@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateCityDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCityDto
-import de.fenste.ms.address.application.dtos.responses.CityDto
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.CityInputDto
 import de.fenste.ms.address.application.services.CityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -42,29 +41,31 @@ class CityController(
 
     @SchemaMapping(field = "city", typeName = "Query")
     fun city(
-        @Argument id: String,
+        @Argument id: UUID,
     ): CityDto? = cityService.find(
-        id = UUID.fromString(id),
+        id = id,
     )
 
     @SchemaMapping(field = "createCity", typeName = "Mutation")
     fun createCity(
-        @Argument create: CreateCityDto,
+        @Argument city: CityInputDto,
     ): CityDto = cityService.create(
-        create = create,
+        city = city,
     )
 
     @SchemaMapping(field = "updateCity", typeName = "Mutation")
     fun updateCity(
-        @Argument update: UpdateCityDto,
+        @Argument id: UUID,
+        @Argument city: CityInputDto,
     ): CityDto = cityService.update(
-        update = update,
+        id = id,
+        city = city,
     )
 
     @SchemaMapping(field = "deleteCity", typeName = "Mutation")
     fun deleteCity(
-        @Argument id: String,
+        @Argument id: UUID,
     ): Boolean = cityService.delete(
-        id = UUID.fromString(id),
+        id = id,
     )
 }

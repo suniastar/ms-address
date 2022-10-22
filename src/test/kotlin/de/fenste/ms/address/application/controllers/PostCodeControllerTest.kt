@@ -16,10 +16,9 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreatePostCodeDto
-import de.fenste.ms.address.application.dtos.requests.UpdatePostCodeDto
-import de.fenste.ms.address.application.dtos.responses.CityDto
-import de.fenste.ms.address.application.dtos.responses.PostCodeDto
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -77,7 +76,7 @@ class PostCodeControllerTest(
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.postCode(id = UUID.randomUUID().toString())
+        val actual = controller.postCode(id = UUID.randomUUID())
 
         assertNull(actual)
     }
@@ -86,13 +85,13 @@ class PostCodeControllerTest(
     fun `test create`() {
         val code = "CODE"
         val city = transaction { SampleData.cities.random() }
-        val create = CreatePostCodeDto(
+        val create = PostCodeInputDto(
             code = code,
-            city = city.id.value.toString(),
+            city = city.id.value,
         )
 
         val actual = controller.createPostCode(
-            create = create,
+            postCode = create,
         )
 
         assertNotNull(actual)
@@ -105,14 +104,14 @@ class PostCodeControllerTest(
         val postCode = transaction { SampleData.postCodes.random() }
         val code = "CODE"
         val city = transaction { SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random() }
-        val update = UpdatePostCodeDto(
-            id = postCode.id.value.toString(),
+        val update = PostCodeInputDto(
             code = code,
-            city = city.id.value.toString(),
+            city = city.id.value,
         )
 
         val actual = controller.updatePostCode(
-            update = update,
+            id = postCode.id.value,
+            postCode = update,
         )
 
         assertNotNull(actual)
@@ -121,25 +120,11 @@ class PostCodeControllerTest(
     }
 
     @Test
-    fun `test update nothing`() {
-        val expected = SampleData.postCodes.random().let { p -> PostCodeDto(p) }
-        val update = UpdatePostCodeDto(
-            id = expected.id,
-        )
-
-        val actual = controller.updatePostCode(
-            update = update,
-        )
-
-        transaction { assertEquals(expected, actual) }
-    }
-
-    @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.postCodes.random().id.value
 
-        controller.deletePostCode(id.toString())
+        controller.deletePostCode(id)
 
         transaction { assertNull(PostCode.findById(id)) }
     }

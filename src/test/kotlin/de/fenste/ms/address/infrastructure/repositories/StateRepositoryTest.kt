@@ -143,10 +143,12 @@ class StateRepositoryTest(
     fun `test update name`(): Unit = transaction {
         val state = SampleData.states.random()
         val name = "Name"
+        val country = state.country
 
         val actual = repository.update(
             id = state.id.value,
             name = name,
+            countryId = country.id.value,
         )
 
         assertNotNull(actual)
@@ -156,10 +158,12 @@ class StateRepositoryTest(
     @Test
     fun `test update country`(): Unit = transaction {
         val state = SampleData.states.random()
+        val name = state.name
         val country = SampleData.countries.filterNot { c -> c.states.contains(state) }.random()
 
         val actual = repository.update(
             id = state.id.value,
+            name = name,
             countryId = country.id.value,
         )
 
@@ -202,22 +206,16 @@ class StateRepositoryTest(
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
-        val expected = SampleData.states.random()
-        val actual = repository.update(id = expected.id.value)
-
-        assertEquals(expected, actual)
-    }
-
-    @Test
     fun `test update on not existing`(): Unit = transaction {
         val id = UUID.randomUUID()
+        val name = "doesn't matter"
+        val countryId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
                 id = id,
-                name = "doesn't matter",
-                countryId = UUID.randomUUID(),
+                name = name,
+                countryId = countryId,
             )
         }
     }
@@ -226,11 +224,13 @@ class StateRepositoryTest(
     fun `test update name to existing`(): Unit = transaction {
         val state = SampleData.states.filter { s -> s.country.states.count() >= 2 }.random()
         val name = state.country.states.filterNot { s -> s == state }.random().name
+        val country = state.country
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
                 id = state.id.value,
                 name = name,
+                countryId = country.id.value,
             )
         }
     }
@@ -238,11 +238,13 @@ class StateRepositoryTest(
     @Test
     fun `test update country to not existing`(): Unit = transaction {
         val state = SampleData.states.random()
+        val name = state.name
         val countryId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
                 id = state.id.value,
+                name = name,
                 countryId = countryId,
             )
         }

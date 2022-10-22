@@ -16,15 +16,13 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -77,7 +75,7 @@ class CountryServiceTest(
     @Test
     fun `test find by id on sample data`() {
         val expected = SampleData.countries.random().let { c -> CountryDto(c) }
-        val actual = service.find(id = UUID.fromString(expected.id))
+        val actual = service.find(id = expected.id)
 
         assertEquals(expected, actual)
     }
@@ -96,7 +94,7 @@ class CountryServiceTest(
         val name = "Czechia"
         val localizedName = "Tschechien"
 
-        val create = CreateCountryDto(
+        val create = CountryInputDto(
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -104,7 +102,7 @@ class CountryServiceTest(
         )
 
         val actual = service.create(
-            create = create,
+            country = create,
         )
 
         assertNotNull(actual)
@@ -122,8 +120,7 @@ class CountryServiceTest(
         val name = "Name"
         val localizedName = "LocalizedName"
 
-        val update = UpdateCountryDto(
-            id = country.id.value.toString(),
+        val update = CountryInputDto(
             alpha2 = alpha2,
             alpha3 = alpha3,
             name = name,
@@ -131,7 +128,8 @@ class CountryServiceTest(
         )
 
         val actual = service.update(
-            update = update,
+            id = country.id.value,
+            country = update,
         )
 
         assertNotNull(actual)
@@ -139,21 +137,6 @@ class CountryServiceTest(
         assertEquals(alpha3, actual.alpha3)
         assertEquals(name, actual.name)
         assertEquals(localizedName, actual.localizedName)
-    }
-
-    @Test
-    fun `test update nothing`() {
-        val expected = SampleData.countries.random().let { c -> CountryDto(c) }
-
-        val update = UpdateCountryDto(
-            id = expected.id,
-        )
-
-        val actual = service.update(
-            update = update,
-        )
-
-        assertEquals(expected, actual)
     }
 
     @Test

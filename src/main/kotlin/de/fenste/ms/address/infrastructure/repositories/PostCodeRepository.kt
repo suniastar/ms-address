@@ -20,11 +20,11 @@ import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.PostCodeTable
-import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
@@ -34,16 +34,22 @@ class PostCodeRepository {
 
     private companion object {
 
-        private fun idOf(
+        private fun checkDuplicate(
+            original: PostCode? = null,
             code: String,
-            cityId: UUID,
-        ): EntityID<UUID>? = PostCodeTable
-            .slice(PostCodeTable.id)
-            .select { (PostCodeTable.code eq code) and (PostCodeTable.city eq cityId) }
-            .limit(1)
-            .notForUpdate()
-            .firstOrNull()
-            ?.let { p -> p[PostCodeTable.id] }
+            city: City,
+        ) {
+            val postCode = PostCodeTable
+                .slice(PostCodeTable.columns)
+                .select { (PostCodeTable.code eq code) and (PostCodeTable.city eq city.id) }
+                .apply { original?.let { andWhere { PostCodeTable.id neq original.id } } }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+                ?.let { r -> PostCode.wrapRow(r) }
+
+            require(postCode == null) { "This post code does already exist: $postCode" }
+        }
     }
 
     fun list(
@@ -77,13 +83,6 @@ class PostCodeRepository {
         code: String,
         cityId: UUID,
     ): PostCode {
-        require(
-            idOf(
-                code = code,
-                cityId = cityId,
-            ) == null,
-        ) { "A post code with this code and parent city does already exist." }
-
         val city = City
             .find { CityTable.id eq cityId }
             .limit(1)
@@ -91,6 +90,11 @@ class PostCodeRepository {
             .firstOrNull()
 
         requireNotNull(city) { "The city ($cityId) does not exist." }
+
+        checkDuplicate(
+            code = code,
+            city = city,
+        )
 
         return PostCode.new {
             this.code = code
@@ -100,8 +104,8 @@ class PostCodeRepository {
 
     fun update(
         id: UUID,
-        code: String? = null,
-        cityId: UUID? = null,
+        code: String,
+        cityId: UUID,
     ): PostCode {
         val postCode = PostCode
             .find { PostCodeTable.id eq id }
@@ -111,27 +115,22 @@ class PostCodeRepository {
 
         requireNotNull(postCode) { "The post code ($id) does not exist." }
 
-        val uId = idOf(
-            code = code ?: postCode.code,
-            cityId = cityId ?: postCode.city.id.value,
+        val city = City
+            .find { CityTable.id eq cityId }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+
+        requireNotNull(city) { "The city ($cityId) does not exist." }
+
+        checkDuplicate(
+            original = postCode,
+            code = code,
+            city = city,
         )
-        require(
-            uId == null || uId == postCode.id,
-        ) { "A post code with this code and parent city does already exist." }
 
-        cityId?.let {
-            val city = City
-                .find { CityTable.id eq cityId }
-                .limit(1)
-                .notForUpdate()
-                .firstOrNull()
-
-            requireNotNull(city) { "The city ($cityId) does not exist." }
-
-            postCode.city = city
-        }
-        code?.let { postCode.code = code }
-
+        postCode.code = code
+        postCode.city = city
         return postCode
     }
 

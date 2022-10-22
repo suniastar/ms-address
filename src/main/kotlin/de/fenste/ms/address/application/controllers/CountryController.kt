@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.services.CountryService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -42,33 +41,35 @@ class CountryController(
 
     @SchemaMapping(field = "country", typeName = "Query")
     fun country(
-        @Argument id: String? = null,
+        @Argument id: UUID? = null,
         @Argument alpha2: String? = null,
         @Argument alpha3: String? = null,
     ): CountryDto? = countryService.find(
-        id = id?.let { UUID.fromString(id) },
+        id = id,
         alpha2 = alpha2,
         alpha3 = alpha3,
     )
 
     @SchemaMapping(field = "createCountry", typeName = "Mutation")
     fun createCountry(
-        @Argument create: CreateCountryDto,
+        @Argument country: CountryInputDto,
     ): CountryDto = countryService.create(
-        create = create,
+        country = country,
     )
 
     @SchemaMapping(field = "updateCountry", typeName = "Mutation")
     fun updateCountry(
-        @Argument update: UpdateCountryDto,
+        @Argument id: UUID,
+        @Argument country: CountryInputDto,
     ): CountryDto = countryService.update(
-        update = update,
+        id = id,
+        country = country,
     )
 
     @SchemaMapping(field = "deleteCountry", typeName = "Mutation")
     fun deleteCountry(
-        id: String,
+        id: UUID,
     ): Boolean = countryService.delete(
-        id = UUID.fromString(id),
+        id = id,
     )
 }

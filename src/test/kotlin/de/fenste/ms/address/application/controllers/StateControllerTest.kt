@@ -16,10 +16,9 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateStateDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
-import de.fenste.ms.address.application.dtos.responses.StateDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.application.dtos.StateInputDto
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -77,7 +76,7 @@ class StateControllerTest(
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.state(id = UUID.randomUUID().toString())
+        val actual = controller.state(id = UUID.randomUUID())
 
         assertNull(actual)
     }
@@ -87,13 +86,13 @@ class StateControllerTest(
         val name = "Name"
         val country = SampleData.countries.random()
 
-        val create = CreateStateDto(
+        val create = StateInputDto(
             name = name,
-            country = country.id.value.toString(),
+            country = country.id.value,
         )
 
         val actual = controller.createState(
-            create = create,
+            state = create,
         )
 
         assertNotNull(actual)
@@ -107,14 +106,14 @@ class StateControllerTest(
         val name = "Name"
         val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
 
-        val update = UpdateStateDto(
-            id = state.id.value.toString(),
+        val update = StateInputDto(
             name = name,
-            country = country.id.value.toString(),
+            country = country.id.value,
         )
 
         val actual = controller.updateState(
-            update = update,
+            id = state.id.value,
+            state = update,
         )
 
         assertNotNull(actual)
@@ -123,26 +122,11 @@ class StateControllerTest(
     }
 
     @Test
-    fun `test update nothing`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
-
-        val update = UpdateStateDto(
-            id = expected.id,
-        )
-
-        val actual = controller.updateState(
-            update = update,
-        )
-
-        transaction { assertEquals(expected, actual) }
-    }
-
-    @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.states.random().id.value
 
-        controller.deleteState(id.toString())
+        controller.deleteState(id)
 
         assertNull(Country.findById(id))
     }

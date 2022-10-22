@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateStreetDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStreetDto
-import de.fenste.ms.address.application.dtos.responses.StreetDto
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.infrastructure.repositories.StreetRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,24 +50,25 @@ class StreetService(
     }
 
     fun create(
-        create: CreateStreetDto,
+        street: StreetInputDto,
     ): StreetDto = transaction {
         streetRepository
             .create(
-                name = create.name,
-                postCodeId = UUID.fromString(create.postCode),
+                name = street.name,
+                postCodeId = street.postCode,
             )
             .let { s -> StreetDto(s) }
     }
 
     fun update(
-        update: UpdateStreetDto,
+        id: UUID,
+        street: StreetInputDto,
     ): StreetDto = transaction {
         streetRepository
             .update(
-                id = UUID.fromString(update.id),
-                name = update.name,
-                postCodeId = update.postCode?.let { p -> UUID.fromString(p) },
+                id = id,
+                name = street.name,
+                postCodeId = street.postCode,
             )
             .let { s -> StreetDto(s) }
     }

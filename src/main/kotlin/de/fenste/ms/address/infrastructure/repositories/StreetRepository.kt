@@ -20,11 +20,11 @@ import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import de.fenste.ms.address.infrastructure.tables.StreetTable
-import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
@@ -34,16 +34,22 @@ class StreetRepository {
 
     private companion object {
 
-        private fun idOf(
+        private fun checkDuplicate(
+            original: Street? = null,
             name: String,
-            postCodeId: UUID,
-        ): EntityID<UUID>? = StreetTable
-            .slice(StreetTable.id)
-            .select { (StreetTable.name eq name) and (StreetTable.postCode eq postCodeId) }
-            .limit(1)
-            .notForUpdate()
-            .firstOrNull()
-            ?.let { s -> s[StreetTable.id] }
+            postCode: PostCode,
+        ) {
+            val street = StreetTable
+                .slice(StreetTable.columns)
+                .select { (StreetTable.name eq name) and (StreetTable.postCode eq postCode.id) }
+                .apply { original?.let { andWhere { StreetTable.id neq original.id } } }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+                ?.let { r -> Street.wrapRow(r) }
+
+            require(street == null) { "This street does already exist: $street" }
+        }
     }
 
     fun list(
@@ -77,13 +83,6 @@ class StreetRepository {
         name: String,
         postCodeId: UUID,
     ): Street {
-        require(
-            idOf(
-                name = name,
-                postCodeId = postCodeId,
-            ) == null,
-        ) { "A street with this name and parent post code does already exist." }
-
         val postCode = PostCode
             .find { PostCodeTable.id eq postCodeId }
             .limit(1)
@@ -91,6 +90,11 @@ class StreetRepository {
             .firstOrNull()
 
         requireNotNull(postCode) { "The post code ($postCodeId) does not exist." }
+
+        checkDuplicate(
+            name = name,
+            postCode = postCode,
+        )
 
         return Street.new {
             this.name = name
@@ -100,8 +104,8 @@ class StreetRepository {
 
     fun update(
         id: UUID,
-        name: String? = null,
-        postCodeId: UUID? = null,
+        name: String,
+        postCodeId: UUID,
     ): Street {
         val street = Street
             .find { StreetTable.id eq id }
@@ -111,27 +115,22 @@ class StreetRepository {
 
         requireNotNull(street) { "The street ($id) does not exit." }
 
-        val uId = idOf(
-            name = name ?: street.name,
-            postCodeId = postCodeId ?: street.postCode.id.value,
+        val postCode = PostCode
+            .find { PostCodeTable.id eq postCodeId }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(postCode) { "The post code ($postCodeId) does not exist." }
+
+        checkDuplicate(
+            original = street,
+            name = name,
+            postCode = postCode,
         )
-        require(
-            uId == null || uId == street.id,
-        ) { "A street with this name and parent post code does already exist." }
 
-        postCodeId?.let {
-            val postCode = PostCode
-                .find { PostCodeTable.id eq postCodeId }
-                .limit(1)
-                .forUpdate()
-                .firstOrNull()
-
-            requireNotNull(postCode) { "The post code ($postCodeId) does not exist." }
-
-            street.postCode = postCode
-        }
-        name?.let { street.name = name }
-
+        street.name = name
+        street.postCode = postCode
         return street
     }
 

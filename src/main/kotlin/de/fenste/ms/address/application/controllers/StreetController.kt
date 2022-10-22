@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateStreetDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStreetDto
-import de.fenste.ms.address.application.dtos.responses.StreetDto
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.application.services.StreetService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -42,29 +41,31 @@ class StreetController(
 
     @SchemaMapping(field = "street", typeName = "Query")
     fun street(
-        @Argument id: String,
+        @Argument id: UUID,
     ): StreetDto? = streetService.find(
-        id = UUID.fromString(id),
+        id = id,
     )
 
     @SchemaMapping(field = "createStreet", typeName = "Mutation")
     fun createStreet(
-        @Argument create: CreateStreetDto,
+        @Argument street: StreetInputDto,
     ): StreetDto = streetService.create(
-        create = create,
+        street = street,
     )
 
     @SchemaMapping(field = "updateStreet", typeName = "Mutation")
     fun updateStreet(
-        @Argument update: UpdateStreetDto,
+        @Argument id: UUID,
+        @Argument street: StreetInputDto,
     ): StreetDto = streetService.update(
-        update = update,
+        id = id,
+        street = street,
     )
 
     @SchemaMapping(field = "deleteStreet", typeName = "Mutation")
     fun deleteStreet(
-        @Argument id: String,
+        @Argument id: UUID,
     ): Boolean = streetService.delete(
-        id = UUID.fromString(id),
+        id = id,
     )
 }

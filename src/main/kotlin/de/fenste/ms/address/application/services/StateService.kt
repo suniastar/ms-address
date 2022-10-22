@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateStateDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
-import de.fenste.ms.address.application.dtos.responses.StateDto
+import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.application.dtos.StateInputDto
 import de.fenste.ms.address.infrastructure.repositories.StateRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,24 +50,25 @@ class StateService(
     }
 
     fun create(
-        create: CreateStateDto,
+        state: StateInputDto,
     ): StateDto = transaction {
         stateRepository
             .create(
-                name = create.name,
-                countryId = UUID.fromString(create.country),
+                name = state.name,
+                countryId = state.country,
             )
             .let { s -> StateDto(s) }
     }
 
     fun update(
-        update: UpdateStateDto,
+        id: UUID,
+        state: StateInputDto,
     ): StateDto = transaction {
         stateRepository
             .update(
-                id = UUID.fromString(update.id),
-                name = update.name,
-                countryId = update.country?.let { c -> UUID.fromString(c) },
+                id = id,
+                name = state.name,
+                countryId = state.country,
             )
             .let { s -> StateDto(s) }
     }

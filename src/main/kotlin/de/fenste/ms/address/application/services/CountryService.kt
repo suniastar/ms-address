@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.infrastructure.repositories.CountryRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -58,28 +57,29 @@ class CountryService(
     }
 
     fun create(
-        create: CreateCountryDto,
+        country: CountryInputDto,
     ): CountryDto = transaction {
         countryRepository
             .create(
-                alpha2 = create.alpha2,
-                alpha3 = create.alpha3,
-                name = create.name,
-                localizedName = create.localizedName,
+                alpha2 = country.alpha2,
+                alpha3 = country.alpha3,
+                name = country.name,
+                localizedName = country.localizedName,
             )
             .let { c -> CountryDto(c) }
     }
 
     fun update(
-        update: UpdateCountryDto,
+        id: UUID,
+        country: CountryInputDto,
     ): CountryDto = transaction {
         countryRepository
             .update(
-                id = UUID.fromString(update.id),
-                alpha2 = update.alpha2,
-                alpha3 = update.alpha3,
-                name = update.name,
-                localizedName = update.localizedName,
+                id = id,
+                alpha2 = country.alpha2,
+                alpha3 = country.alpha3,
+                name = country.name,
+                localizedName = country.localizedName,
             )
             .let { c -> CountryDto(c) }
     }

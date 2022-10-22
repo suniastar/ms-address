@@ -14,10 +14,29 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos.requests
+package de.fenste.ms.address.application.dtos
 
-data class CreateAddressDto(
+import de.fenste.ms.address.domain.model.Address
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.UUID
+
+data class AddressInputDto(
     val houseNumber: String,
     val extra: String? = null,
-    val street: String,
+    val street: UUID,
 )
+
+data class AddressDto(private val address: Address) {
+
+    val id: UUID
+        get() = address.id.value
+
+    val houseNumber: String
+        get() = address.houseNumber
+
+    val extra: String?
+        get() = address.extra
+
+    val street: StreetDto
+        get() = transaction { StreetDto(address.street) }
+}

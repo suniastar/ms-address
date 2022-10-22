@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateStateDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
-import de.fenste.ms.address.application.dtos.responses.StateDto
+import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.application.dtos.StateInputDto
 import de.fenste.ms.address.application.services.StateService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -42,29 +41,31 @@ class StateController(
 
     @SchemaMapping(field = "state", typeName = "Query")
     fun state(
-        @Argument id: String,
+        @Argument id: UUID,
     ): StateDto? = stateService.find(
-        id = UUID.fromString(id),
+        id = id,
     )
 
     @SchemaMapping(field = "createState", typeName = "Mutation")
     fun createState(
-        @Argument create: CreateStateDto,
+        @Argument state: StateInputDto,
     ): StateDto = stateService.create(
-        create = create,
+        state = state,
     )
 
     @SchemaMapping(field = "updateState", typeName = "Mutation")
     fun updateState(
-        @Argument update: UpdateStateDto,
+        @Argument id: UUID,
+        @Argument state: StateInputDto,
     ): StateDto = stateService.update(
-        update = update,
+        id = id,
+        state = state,
     )
 
     @SchemaMapping(field = "deleteState", typeName = "Muatation")
     fun deleteState(
-        @Argument id: String,
+        @Argument id: UUID,
     ): Boolean = stateService.delete(
-        id = UUID.fromString(id),
+        id = id,
     )
 }

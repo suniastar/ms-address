@@ -143,10 +143,12 @@ class PostCodeRepositoryTest(
     fun `test update code`(): Unit = transaction {
         val postCode = SampleData.postCodes.random()
         val code = "CODE"
+        val city = postCode.city
 
         val actual = repository.update(
             id = postCode.id.value,
             code = code,
+            cityId = city.id.value,
         )
 
         assertNotNull(actual)
@@ -156,10 +158,12 @@ class PostCodeRepositoryTest(
     @Test
     fun `test update city`(): Unit = transaction {
         val postCode = SampleData.postCodes.random()
+        val code = postCode.code
         val city = SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
 
         val actual = repository.update(
             id = postCode.id.value,
+            code = code,
             cityId = city.id.value,
         )
 
@@ -202,14 +206,6 @@ class PostCodeRepositoryTest(
     }
 
     @Test
-    fun `test update nothing`(): Unit = transaction {
-        val expected = SampleData.postCodes.random()
-        val actual = repository.update(id = expected.id.value)
-
-        assertEquals(expected, actual)
-    }
-
-    @Test
     fun `test update on not existing`(): Unit = transaction {
         val id = UUID.randomUUID()
 
@@ -226,11 +222,13 @@ class PostCodeRepositoryTest(
     fun `test update name to existing`(): Unit = transaction {
         val postCode = SampleData.postCodes.filter { p -> p.city.postCodes.count() >= 2 }.random()
         val code = postCode.city.postCodes.filterNot { p -> p == postCode }.random().code
+        val city = postCode.city
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
                 id = postCode.id.value,
                 code = code,
+                cityId = city.id.value,
             )
         }
     }
@@ -238,11 +236,13 @@ class PostCodeRepositoryTest(
     @Test
     fun `test update city to not existing`(): Unit = transaction {
         val postCode = SampleData.postCodes.first()
+        val code = postCode.code
         val cityId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
                 id = postCode.id.value,
+                code = code,
                 cityId = cityId,
             )
         }

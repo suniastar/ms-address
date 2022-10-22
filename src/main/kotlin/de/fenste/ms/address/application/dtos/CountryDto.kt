@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos.responses
+package de.fenste.ms.address.application.dtos
 
 import de.fenste.ms.address.domain.model.Country
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.UUID
 
-@Suppress("unused")
+data class CountryInputDto(
+    val alpha2: String,
+    val alpha3: String,
+    val name: String,
+    val localizedName: String,
+)
+
 data class CountryDto(private val country: Country) {
 
-    val id: String
-        get() = country.id.value.toString()
+    val id: UUID
+        get() = country.id.value
 
     val alpha2: String
         get() = country.alpha2

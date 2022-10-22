@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateAddressDto
-import de.fenste.ms.address.application.dtos.requests.UpdateAddressDto
-import de.fenste.ms.address.application.dtos.responses.AddressDto
+import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.AddressInputDto
 import de.fenste.ms.address.application.services.AddressService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -42,29 +41,31 @@ class AddressController(
 
     @SchemaMapping(field = "address", typeName = "Query")
     fun address(
-        @Argument id: String,
+        @Argument id: UUID,
     ): AddressDto? = addressService.find(
-        id = UUID.fromString(id),
+        id = id,
     )
 
     @SchemaMapping(field = "createAddress", typeName = "Mutation")
     fun createStreet(
-        @Argument create: CreateAddressDto,
+        @Argument create: AddressInputDto,
     ): AddressDto = addressService.create(
-        create = create,
+        address = create,
     )
 
     @SchemaMapping(field = "updateAddress", typeName = "Mutation")
     fun updateStreet(
-        @Argument update: UpdateAddressDto,
+        @Argument id: UUID,
+        @Argument address: AddressInputDto,
     ): AddressDto = addressService.update(
-        update = update,
+        id = id,
+        address = address,
     )
 
     @SchemaMapping(field = "deleteAddress", typeName = "Mutation")
     fun deleteStreet(
-        @Argument id: String,
+        @Argument id: UUID,
     ): Boolean = addressService.delete(
-        id = UUID.fromString(id),
+        id = id,
     )
 }

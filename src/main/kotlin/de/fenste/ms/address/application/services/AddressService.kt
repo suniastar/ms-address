@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateAddressDto
-import de.fenste.ms.address.application.dtos.requests.UpdateAddressDto
-import de.fenste.ms.address.application.dtos.responses.AddressDto
+import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.AddressInputDto
 import de.fenste.ms.address.infrastructure.repositories.AddressRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,27 +50,27 @@ class AddressService(
     }
 
     fun create(
-        create: CreateAddressDto,
+        address: AddressInputDto,
     ): AddressDto = transaction {
         addressRepository
             .create(
-                houseNumber = create.houseNumber,
-                extra = create.extra,
-                streetId = UUID.fromString(create.street),
+                houseNumber = address.houseNumber,
+                extra = address.extra,
+                streetId = address.street,
             )
             .let { a -> AddressDto(a) }
     }
 
     fun update(
-        update: UpdateAddressDto,
+        id: UUID,
+        address: AddressInputDto,
     ): AddressDto = transaction {
         addressRepository
             .update(
-                id = UUID.fromString(update.id),
-                houseNumber = update.houseNumber,
-                extra = update.extra,
-                removeExtra = update.removeExtra ?: false,
-                streetId = update.street?.let { s -> UUID.fromString(s) },
+                id = id,
+                houseNumber = address.houseNumber,
+                extra = address.extra,
+                streetId = address.street,
             )
             .let { a -> AddressDto(a) }
     }
