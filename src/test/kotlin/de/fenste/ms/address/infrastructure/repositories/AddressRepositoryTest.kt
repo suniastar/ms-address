@@ -1,0 +1,356 @@
+/*
+ * Copyright (c) 2022 Frederik Enste <frederik@fenste.de>.
+ *
+ * Licensed under the GNU General Public License, Version 3 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.gnu.org/licenses/gpl-3.0.html
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package de.fenste.ms.address.infrastructure.repositories
+
+import de.fenste.ms.address.domain.model.Address
+import de.fenste.ms.address.infrastructure.tables.AddressTable
+import de.fenste.ms.address.test.SampleData
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import java.util.UUID
+import kotlin.test.BeforeTest
+import kotlin.test.Ignore
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+@SpringBootTest
+class AddressRepositoryTest(
+    @Autowired private val repository: AddressRepository,
+) {
+
+    @BeforeTest
+    fun `set up`() {
+        SampleData.reset()
+    }
+
+    @Test
+    fun `test list on sample data`(): Unit = transaction {
+        val expected = SampleData.addresses.sortedBy { a -> a.id.value.toString() }
+        val actual = repository.list()
+
+        assertContentEquals(expected, actual)
+    }
+
+    @Test
+    fun `test list on sample data with options`(): Unit = transaction {
+        val expected = SampleData.addresses
+            .sortedBy { a -> a.houseNumber }
+            .drop(2)
+            .take(1)
+        val actual = repository.list(
+            order = arrayOf(AddressTable.houseNumber to SortOrder.ASC),
+            offset = 2,
+            limit = 1,
+        )
+
+        assertContentEquals(expected, actual)
+    }
+
+    @Test
+    fun `test list on no data`(): Unit = transaction {
+        SampleData.clear()
+        val list = repository.list()
+
+        assertTrue(list.empty())
+    }
+
+    @Test
+    fun `test find by id on sample data`(): Unit = transaction {
+        val expected = SampleData.addresses.random()
+        val actual = repository.find(id = expected.id.value)
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `test find by id on no data`(): Unit = transaction {
+        SampleData.clear()
+        val actual = repository.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`(): Unit = transaction {
+        val actual = repository.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
+    fun `test create`(): Unit = transaction {
+        val houseNumber = "42"
+        val street = SampleData.streets.random()
+
+        val actual = repository.create(
+            houseNumber = houseNumber,
+            extra = null,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNull(actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test create all`(): Unit = transaction {
+        val houseNumber = "42"
+        val extra = "extra"
+        val street = SampleData.streets.random()
+
+        val actual = repository.create(
+            houseNumber = houseNumber,
+            extra = extra,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNotNull(actual.extra)
+        assertEquals(extra, actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test create existing`(): Unit = transaction {
+        val street = SampleData.streets.filterNot { s -> s.addresses.empty() }.random()
+        val (houseNumber, extra) = street.addresses.toList().random().let { a -> a.houseNumber to a.extra }
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.create(
+                houseNumber = houseNumber,
+                extra = extra,
+                streetId = street.id.value,
+            )
+        }
+    }
+
+    @Test
+    fun `test create non existing street`(): Unit = transaction {
+        val houseNumber = "42"
+        val streetId = UUID.randomUUID()
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.create(
+                houseNumber = houseNumber,
+                extra = null,
+                streetId = streetId,
+            )
+        }
+    }
+
+    @Test
+    fun `test update house number`(): Unit = transaction {
+        val address = SampleData.addresses.random()
+        val houseNumber = "42"
+        val extra = address.extra
+        val street = address.street
+
+        val actual = repository.update(
+            id = address.id.value,
+            houseNumber = houseNumber,
+            extra = extra,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertEquals(extra, actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test update extra`(): Unit = transaction {
+        val address = SampleData.addresses.random()
+        val houseNumber = address.houseNumber
+        val extra = "new extra"
+        val street = address.street
+
+        val actual = repository.update(
+            id = address.id.value,
+            houseNumber = houseNumber,
+            extra = extra,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertEquals(extra, actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test update remove extra`(): Unit = transaction {
+        val address = SampleData.addresses.filterNot { a -> a.extra == null }.random()
+        val houseNumber = address.houseNumber
+        val street = address.street
+
+        val actual = repository.update(
+            id = address.id.value,
+            houseNumber = houseNumber,
+            extra = null,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNull(actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test update street`(): Unit = transaction {
+        val address = SampleData.addresses.random()
+        val houseNumber = address.houseNumber
+        val extra = address.extra
+        val street = SampleData.streets
+            .filter { s -> s.addresses.none { a -> a.houseNumber == address.houseNumber && a.extra == a.extra } }
+            .random()
+
+        val actual = repository.update(
+            id = address.id.value,
+            houseNumber = houseNumber,
+            extra = extra,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertEquals(extra, actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test update all`(): Unit = transaction {
+        val address = SampleData.addresses.random()
+        val houseNumber = "42"
+        val extra = "new extra"
+        val street = SampleData.streets.filterNot { s -> s.addresses.contains(address) }.random()
+
+        val actual = repository.update(
+            id = address.id.value,
+            houseNumber = houseNumber,
+            extra = extra,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertEquals(extra, actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test update all to same`(): Unit = transaction {
+        val address = SampleData.addresses.random()
+        val houseNumber = address.houseNumber
+        val extra = address.extra
+        val street = address.street
+
+        val actual = repository.update(
+            id = address.id.value,
+            houseNumber = houseNumber,
+            extra = extra,
+            streetId = street.id.value,
+        )
+
+        assertNotNull(actual)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertEquals(extra, actual.extra)
+        assertEquals(street, actual.street)
+    }
+
+    @Test
+    fun `test update on not existing`(): Unit = transaction {
+        val id = UUID.randomUUID()
+        val houseNumber = "doesn't matter"
+        val streetId = UUID.randomUUID()
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.update(
+                id = id,
+                houseNumber = houseNumber,
+                extra = null,
+                streetId = streetId,
+            )
+        }
+    }
+
+    @Test
+    fun `test update house number and extra to existing`(): Unit = transaction {
+        val address = SampleData.addresses.filter { s -> s.street.addresses.count() >= 2 }.random()
+        val street = address.street
+        val (houseNumber, extra) = street.addresses
+            .filterNot { a -> a == address }
+            .random()
+            .let { a -> a.houseNumber to a.extra }
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.update(
+                id = address.id.value,
+                houseNumber = houseNumber,
+                extra = extra,
+                streetId = street.id.value,
+            )
+        }
+    }
+
+    @Test
+    fun `test update street to not existing`(): Unit = transaction {
+        val address = SampleData.addresses.random()
+        val houseNumber = address.houseNumber
+        val extra = address.extra
+        val streetId = UUID.randomUUID()
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.update(
+                id = address.id.value,
+                houseNumber = houseNumber,
+                extra = extra,
+                streetId = streetId,
+            )
+        }
+    }
+
+    @Test
+    @Ignore // TODO allow cascade deletion?
+    fun `test delete`(): Unit = transaction {
+        val id = SampleData.addresses.random().id.value
+
+        repository.delete(id)
+
+        assertNull(Address.findById(id))
+    }
+
+    @Test
+    fun `test delete not existing`(): Unit = transaction {
+        val id = UUID.randomUUID()
+
+        assertFailsWith<IllegalArgumentException> {
+            repository.delete(id)
+        }
+    }
+}

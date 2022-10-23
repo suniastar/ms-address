@@ -83,7 +83,7 @@ class AddressRepository {
 
     fun create(
         houseNumber: String,
-        extra: String? = null,
+        extra: String?,
         streetId: UUID,
     ): Address {
         val street = Street
@@ -110,7 +110,7 @@ class AddressRepository {
     fun update(
         id: UUID,
         houseNumber: String,
-        extra: String? = null,
+        extra: String?,
         streetId: UUID,
     ): Address {
         val address = Address

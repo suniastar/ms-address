@@ -104,10 +104,10 @@ class CityControllerTest(
 
     @Test
     fun `test update all`() {
-        val sample = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
+        val city = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
         val name = "Name"
         val country = transaction {
-            SampleData.countries.filterNot { c -> c == sample.country || c.states.empty() }.random()
+            SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         }
         val state = transaction { country.states.toList().random() }
 
@@ -118,7 +118,7 @@ class CityControllerTest(
         )
 
         val actual = controller.updateCity(
-            id = sample.id.value,
+            id = city.id.value,
             city = update,
         )
 
