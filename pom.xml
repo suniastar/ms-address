@@ -158,6 +158,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <imageName>ghcr.io/suniastar/ms-address:${project.version}</imageName>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>com.github.gantsign.maven</groupId>
