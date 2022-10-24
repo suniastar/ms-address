@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.controllers
+package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.application.dtos.StateDto
-import de.fenste.ms.address.application.dtos.StateInputDto
-import de.fenste.ms.address.domain.model.State
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,8 +34,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
-class StateControllerTest(
-    @Autowired private val controller: StateController,
+class PostCodeServiceTest(
+    @Autowired private val service: PostCodeService,
 ) {
 
     @BeforeTest
@@ -45,20 +45,20 @@ class StateControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.states.sortedBy { s -> s.id.value.toString() }.map { s -> StateDto(s) }
-        val actual = controller.states()
+        val expected = SampleData.postCodes.sortedBy { p -> p.id.value.toString() }.map { p -> PostCodeDto(p) }
+        val actual = service.list()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.states
-            .sortedBy { s -> s.id.value.toString() }
+        val expected = SampleData.postCodes
+            .sortedBy { p -> p.id.value.toString() }
             .drop(2)
             .take(1)
-            .map { s -> StateDto(s) }
-        val actual = controller.states(
+            .map { p -> PostCodeDto(p) }
+        val actual = service.list(
             offset = 2,
             limit = 1,
         )
@@ -67,67 +67,75 @@ class StateControllerTest(
     }
 
     @Test
+    fun `test list on no data`() {
+        SampleData.clear()
+        val list = service.list()
+
+        assertNull(list)
+    }
+
+    @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
-        val actual = controller.state(id = expected.id)
+        val expected = SampleData.postCodes.random().let { p -> PostCodeDto(p) }
+        val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.state(id = UUID.randomUUID())
+        val actual = service.find(id = UUID.randomUUID())
 
         assertNull(actual)
     }
 
     @Test
     fun `test create`() {
-        val name = "Name"
-        val country = SampleData.countries.random()
-
-        val create = StateInputDto(
-            name = name,
-            country = country.id.value,
+        val code = "CODE"
+        val city = transaction { SampleData.cities.random() }
+        val create = PostCodeInputDto(
+            code = code,
+            city = city.id.value,
         )
 
-        val actual = controller.createState(
-            state = create,
+        val actual = service.create(
+            postCode = create,
         )
 
         assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        assertEquals(code, actual.code)
+        transaction { assertEquals(CityDto(city), actual.city) }
     }
 
     @Test
     fun `test update all`() {
-        val state = SampleData.states.random()
-        val name = "Name"
-        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
-
-        val update = StateInputDto(
-            name = name,
-            country = country.id.value,
+        val postCode = transaction { SampleData.postCodes.random() }
+        val code = "CODE"
+        val city = transaction {
+            SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
+        }
+        val update = PostCodeInputDto(
+            code = code,
+            city = city.id.value,
         )
 
-        val actual = controller.updateState(
-            id = state.id.value,
-            state = update,
+        val actual = service.update(
+            id = postCode.id.value,
+            postCode = update,
         )
 
         assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        assertEquals(code, actual.code)
+        transaction { assertEquals(CityDto(city), actual.city) }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
-        val id = SampleData.states.random().id.value
+        val id = SampleData.postCodes.random().id.value
 
-        controller.deleteState(id)
+        service.delete(id)
 
-        assertNull(State.findById(id))
+        transaction { assertNull(PostCode.findById(id)) }
     }
 }

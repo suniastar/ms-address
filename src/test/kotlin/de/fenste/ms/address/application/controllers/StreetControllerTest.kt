@@ -16,11 +16,10 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CityDto
-import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.application.dtos.StateDto
-import de.fenste.ms.address.domain.model.City
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.application.dtos.StreetInputDto
+import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -35,8 +34,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
-class CityControllerTest(
-    @Autowired private val controller: CityController,
+class StreetControllerTest(
+    @Autowired private val controller: StreetController,
 ) {
 
     @BeforeTest
@@ -46,20 +45,20 @@ class CityControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }.map { c -> CityDto(c) }
-        val actual = controller.cities()
+        val expected = SampleData.streets.sortedBy { s -> s.id.value.toString() }.map { s -> StreetDto(s) }
+        val actual = controller.streets()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.cities
-            .sortedBy { c -> c.id.value.toString() }
+        val expected = SampleData.streets
+            .sortedBy { s -> s.id.value.toString() }
             .drop(2)
             .take(1)
-            .map { c -> CityDto(c) }
-        val actual = controller.cities(
+            .map { s -> StreetDto(s) }
+        val actual = controller.streets(
             offset = 2,
             limit = 1,
         )
@@ -69,15 +68,15 @@ class CityControllerTest(
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.cities.random().let { c -> CityDto(c) }
-        val actual = controller.city(id = expected.id)
+        val expected = SampleData.streets.random().let { s -> StreetDto(s) }
+        val actual = controller.street(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.city(id = UUID.randomUUID())
+        val actual = controller.street(id = UUID.randomUUID())
 
         assertNull(actual)
     }
@@ -85,48 +84,41 @@ class CityControllerTest(
     @Test
     fun `test create`() {
         val name = "Name"
-        val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
+        val postCode = SampleData.postCodes.random()
 
-        val create = CityInputDto(
+        val create = StreetInputDto(
             name = name,
-            country = country.id.value,
+            postCode = postCode.id.value,
         )
 
-        val actual = controller.createCity(
-            city = create,
+        val actual = controller.createStreet(
+            street = create,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals((CountryDto(country)), actual.country) }
-        assertNull(actual.state)
+        transaction { assertEquals(PostCodeDto(postCode), actual.postCode) }
     }
 
     @Test
     fun `test update all`() {
-        val city = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
+        val state = SampleData.streets.random()
         val name = "Name"
-        val country = transaction {
-            SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
-        }
-        val state = transaction { country.states.toList().random() }
+        val postCode = transaction { SampleData.postCodes.filterNot { p -> p.streets.contains(state) }.random() }
 
-        val update = CityInputDto(
+        val update = StreetInputDto(
             name = name,
-            country = country.id.value,
-            state = state.id.value,
+            postCode = postCode.id.value,
         )
 
-        val actual = controller.updateCity(
-            id = city.id.value,
-            city = update,
+        val actual = controller.updateStreet(
+            id = state.id.value,
+            street = update,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
-        assertNotNull(actual.state)
-        transaction { assertEquals(StateDto(state), actual.state) }
+        transaction { assertEquals(PostCodeDto(postCode), actual.postCode) }
     }
 
     @Test
@@ -134,8 +126,8 @@ class CityControllerTest(
     fun `test delete`() {
         val id = SampleData.states.random().id.value
 
-        controller.deleteCity(id)
+        controller.deleteStreet(id)
 
-        transaction { assertNull(City.findById(id)) }
+        assertNull(Street.findById(id))
     }
 }

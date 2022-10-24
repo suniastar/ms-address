@@ -16,10 +16,10 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.application.dtos.StateDto
-import de.fenste.ms.address.application.dtos.StateInputDto
-import de.fenste.ms.address.domain.model.State
+import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.AddressInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.domain.model.Address
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,8 +34,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
-class StateControllerTest(
-    @Autowired private val controller: StateController,
+class AddressControllerTest(
+    @Autowired private val controller: AddressController,
 ) {
 
     @BeforeTest
@@ -45,20 +45,20 @@ class StateControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.states.sortedBy { s -> s.id.value.toString() }.map { s -> StateDto(s) }
-        val actual = controller.states()
+        val expected = SampleData.addresses.sortedBy { a -> a.id.value.toString() }.map { a -> AddressDto(a) }
+        val actual = controller.addresses()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.states
-            .sortedBy { s -> s.id.value.toString() }
+        val expected = SampleData.addresses
+            .sortedBy { a -> a.id.value.toString() }
             .drop(2)
             .take(1)
-            .map { s -> StateDto(s) }
-        val actual = controller.states(
+            .map { a -> AddressDto(a) }
+        val actual = controller.addresses(
             offset = 2,
             limit = 1,
         )
@@ -68,57 +68,62 @@ class StateControllerTest(
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
-        val actual = controller.state(id = expected.id)
+        val expected = SampleData.addresses.random().let { a -> AddressDto(a) }
+        val actual = controller.address(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.state(id = UUID.randomUUID())
+        val actual = controller.address(id = UUID.randomUUID())
 
         assertNull(actual)
     }
 
     @Test
     fun `test create`() {
-        val name = "Name"
-        val country = SampleData.countries.random()
+        val houseNumber = "42"
+        val street = SampleData.streets.random()
 
-        val create = StateInputDto(
-            name = name,
-            country = country.id.value,
+        val create = AddressInputDto(
+            houseNumber = houseNumber,
+            street = street.id.value,
         )
 
-        val actual = controller.createState(
-            state = create,
+        val actual = controller.createAddress(
+            address = create,
         )
 
         assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNull(actual.extra)
+        transaction { assertEquals(StreetDto(street), actual.street) }
     }
 
     @Test
     fun `test update all`() {
-        val state = SampleData.states.random()
-        val name = "Name"
-        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val address = SampleData.addresses.random()
+        val houseNumber = "42"
+        val extra = "extra"
+        val street = transaction { SampleData.streets.filterNot { s -> s.addresses.contains(address) }.random() }
 
-        val update = StateInputDto(
-            name = name,
-            country = country.id.value,
+        val update = AddressInputDto(
+            houseNumber = "42",
+            extra = extra,
+            street = street.id.value,
         )
 
-        val actual = controller.updateState(
-            id = state.id.value,
-            state = update,
+        val actual = controller.updateAddress(
+            id = address.id.value,
+            address = update,
         )
 
         assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNotNull(actual.extra)
+        assertEquals(extra, actual.extra)
+        transaction { assertEquals(StreetDto(street), actual.street) }
     }
 
     @Test
@@ -126,8 +131,8 @@ class StateControllerTest(
     fun `test delete`() {
         val id = SampleData.states.random().id.value
 
-        controller.deleteState(id)
+        controller.deleteAddress(id)
 
-        assertNull(State.findById(id))
+        assertNull(Address.findById(id))
     }
 }

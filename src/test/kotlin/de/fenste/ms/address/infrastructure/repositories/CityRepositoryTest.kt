@@ -16,6 +16,7 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.test.SampleData
@@ -46,7 +47,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test list on sample data`(): Unit = transaction {
-        val expected = SampleData.cities.sortedBy { s -> s.id.value.toString() }
+        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }
         val actual = repository.list()
 
         assertContentEquals(expected, actual)
@@ -55,7 +56,7 @@ class CityRepositoryTest(
     @Test
     fun `test list on sample data with options`(): Unit = transaction {
         val expected = SampleData.cities
-            .sortedBy { s -> s.name }
+            .sortedBy { c -> c.name }
             .drop(2)
             .take(1)
         val actual = repository.list(
@@ -109,7 +110,7 @@ class CityRepositoryTest(
             stateId = null,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
         assertNull(actual.state)
@@ -127,7 +128,7 @@ class CityRepositoryTest(
             stateId = state.id.value,
         )
 
-        assertNotNull(actual.id)
+        assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
         assertEquals(state, actual.state)
@@ -135,8 +136,8 @@ class CityRepositoryTest(
 
     @Test
     fun `test create existing`(): Unit = transaction {
-        val country = SampleData.countries.filterNot { c -> c.states.empty() }.first()
-        val state = country.states.first()
+        val country = SampleData.countries.filterNot { c -> c.states.empty() }.random()
+        val state = country.states.toList().random()
         val name = state.cities.first().name
 
         assertFailsWith<IllegalArgumentException> {
@@ -194,12 +195,16 @@ class CityRepositoryTest(
 
     @Test
     fun `test update name`(): Unit = transaction {
-        val id = SampleData.cities.random().id.value
+        val city = SampleData.cities.random()
         val name = "Name"
+        val country = city.country
+        val state = city.state
 
         val actual = repository.update(
-            id = id,
+            id = city.id.value,
             name = name,
+            countryId = country.id.value,
+            stateId = state?.id?.value,
         )
 
         assertNotNull(actual)
@@ -208,45 +213,56 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country`(): Unit = transaction {
-        val id = SampleData.cities.filter { c -> c.country.states.empty() }.random().id.value
-        val countryId = Country.new {
-            alpha2 = "XX"
-            alpha3 = "XXX"
-            name = "Stateless Nation"
-            localizedName = "Stateless Nation"
-        }.id.value
+        val city = SampleData.cities.filter { c -> c.country.states.empty() }.random()
+        val name = city.name
+        val country = Country.new {
+            this.alpha2 = "XX"
+            this.alpha3 = "XXX"
+            this.name = "Stateless Nation"
+            this.localizedName = "Stateless Nation"
+        }
 
         val actual = repository.update(
-            id = id,
-            countryId = countryId,
+            id = city.id.value,
+            name = name,
+            countryId = country.id.value,
+            stateId = null,
         )
 
         assertNotNull(actual)
-        assertEquals(countryId, actual.country.id.value)
+        assertEquals(country, actual.country)
     }
 
     @Test
     fun `test update state`(): Unit = transaction {
-        val sample = SampleData.cities.filter { c -> c.country.states.count() >= 2 }.random()
-        val stateId = sample.country.states.filterNot { s -> s == sample.state }.random().id.value
+        val city = SampleData.cities.filter { c -> c.country.states.count() >= 2 }.random()
+        val name = city.name
+        val country = city.country
+        val state = city.country.states.filterNot { s -> s == city.state }.random()
 
         val actual = repository.update(
-            id = sample.id.value,
-            stateId = stateId,
+            id = city.id.value,
+            name = name,
+            countryId = country.id.value,
+            stateId = state.id.value,
         )
 
         assertNotNull(actual)
         assertNotNull(actual.state)
-        assertEquals(stateId, actual.state?.id?.value)
+        assertEquals(state, actual.state)
     }
 
     @Test
     fun `test update remove state`(): Unit = transaction {
-        val sample = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val name = city.name
+        val country = city.country
 
         val actual = repository.update(
-            id = sample.id.value,
-            removeState = true,
+            id = city.id.value,
+            name = name,
+            countryId = country.id.value,
+            stateId = null,
         )
 
         assertNotNull(actual)
@@ -255,31 +271,33 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country and state`(): Unit = transaction {
-        val sample = SampleData.cities.filterNot { c -> c.state == null }.random()
-        val country = SampleData.countries.filterNot { c -> c == sample.country || c.states.empty() }.random()
+        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val name = city.name
+        val country = SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         val state = country.states.toList().random()
 
         val actual = repository.update(
-            id = sample.id.value,
+            id = city.id.value,
+            name = name,
             countryId = country.id.value,
             stateId = state.id.value,
         )
 
         assertNotNull(actual)
-        assertEquals(country.id.value, actual.country.id.value)
+        assertEquals(country, actual.country)
         assertNotNull(actual.state)
-        assertEquals(state.id.value, actual.state?.id?.value)
+        assertEquals(state, actual.state)
     }
 
     @Test
     fun `test update all`(): Unit = transaction {
-        val sample = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
         val name = "Name"
-        val country = SampleData.countries.filterNot { c -> c == sample.country || c.states.empty() }.random()
+        val country = SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         val state = country.states.toList().random()
 
         val actual = repository.update(
-            id = sample.id.value,
+            id = city.id.value,
             name = name,
             countryId = country.id.value,
             stateId = state.id.value,
@@ -287,106 +305,114 @@ class CityRepositoryTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        assertEquals(country.id.value, actual.country.id.value)
+        assertEquals(country, actual.country)
         assertNotNull(actual.state)
-        assertEquals(state.id.value, actual.state?.id?.value)
+        assertEquals(state, actual.state)
     }
 
     @Test
     fun `test update all remove state`(): Unit = transaction {
-        val sample = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
         val name = "Name"
-        val country = SampleData.countries.filterNot { c -> c != sample.country && c.states.empty() }.random()
+        val country = SampleData.countries.filterNot { c -> c != city.country && c.states.empty() }.random()
 
         val actual = repository.update(
-            id = sample.id.value,
+            id = city.id.value,
             name = name,
             countryId = country.id.value,
-            removeState = true,
+            stateId = null,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        assertEquals(country.id.value, actual.country.id.value)
+        assertEquals(country, actual.country)
         assertNull(actual.state)
     }
 
     @Test
     fun `test update all to same`(): Unit = transaction {
-        val sample = SampleData.cities.filterNot { c -> c.state == null }.random()
-        val name = sample.name
-        val countryId = sample.country.id.value
-        val stateId = sample.state?.id?.value
+        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val name = city.name
+        val country = city.country
+        val state = city.state
 
         val actual = repository.update(
-            id = sample.id.value,
+            id = city.id.value,
             name = name,
-            countryId = countryId,
-            stateId = stateId,
+            countryId = country.id.value,
+            stateId = state?.id?.value,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        assertEquals(countryId, actual.country.id.value)
+        assertEquals(country, actual.country)
         assertNotNull(actual.state)
-        assertEquals(stateId, actual.state?.id?.value)
-    }
-
-    @Test
-    fun `test update nothing`(): Unit = transaction {
-        val expected = SampleData.cities.random()
-        val actual = repository.update(id = expected.id.value)
-
-        assertEquals(expected, actual)
+        assertEquals(state, actual.state)
     }
 
     @Test
     fun `test update on not existing`(): Unit = transaction {
         val id = UUID.randomUUID()
+        val name = "doesn't matter"
+        val countryId = UUID.randomUUID()
+        val stateId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
                 id = id,
-                name = "doesn't matter",
-                countryId = UUID.randomUUID(),
+                name = name,
+                countryId = countryId,
+                stateId = stateId,
             )
         }
     }
 
     @Test
     fun `test update name to existing`(): Unit = transaction {
-        val sample = SampleData.cities.filter { c -> (c.state?.cities?.count() ?: 0) >= 2 }.random()
-        val name = sample.state!!.cities.filterNot { c -> c == sample }.random().name
+        val city = SampleData.cities.filter { c -> (c.state?.cities?.count() ?: 0) >= 2 }.random()
+        val name = city.state!!.cities.filterNot { c -> c == city }.random().name
+        val country = city.country
+        val state = city.state
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sample.id.value,
+                id = city.id.value,
                 name = name,
+                countryId = country.id.value,
+                stateId = state?.id?.value,
             )
         }
     }
 
     @Test
     fun `test update country to not existing`(): Unit = transaction {
-        val sampleId = SampleData.cities.first().id.value
+        val city = SampleData.cities.first()
+        val name = city.name
         val countryId = UUID.randomUUID()
+        val state = city.state
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sampleId,
+                id = city.id.value,
+                name = name,
                 countryId = countryId,
+                stateId = state?.id?.value,
             )
         }
     }
 
     @Test
     fun `test update state to not existing`(): Unit = transaction {
-        val sampleId = SampleData.cities.first().id.value
+        val city = SampleData.cities.first()
+        val name = city.name
+        val country = city.country
         val stateId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sampleId,
+                id = city.id.value,
+                name = name,
+                countryId = country.id.value,
                 stateId = stateId,
             )
         }
@@ -394,25 +420,33 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country where state does not belong to country`(): Unit = transaction {
-        val sample = SampleData.cities.filterNot { c -> c.state == null }.random()
-        val country = SampleData.countries.filterNot { c -> c == sample.country }.random()
+        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val name = city.name
+        val country = SampleData.countries.filterNot { c -> c == city.country }.random()
+        val state = city.state
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sample.id.value,
+                id = city.id.value,
+                name = name,
                 countryId = country.id.value,
+                stateId = state?.id?.value,
             )
         }
     }
 
     @Test
     fun `test update state where state does not belong to country`(): Unit = transaction {
-        val sample = SampleData.cities.random()
-        val state = SampleData.states.filterNot { s -> s.country == sample.country || s == sample.state }.random()
+        val city = SampleData.cities.random()
+        val name = city.name
+        val country = city.country
+        val state = SampleData.states.filterNot { s -> s.country == city.country || s == city.state }.random()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
-                id = sample.id.value,
+                id = city.id.value,
+                name = name,
+                countryId = country.id.value,
                 stateId = state.id.value,
             )
         }
@@ -421,11 +455,11 @@ class CityRepositoryTest(
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`(): Unit = transaction {
-        val sampleId = SampleData.states.random().id.value
+        val id = SampleData.cities.random().id.value
 
-        repository.delete(sampleId)
+        repository.delete(id)
 
-        assertNull(Country.findById(sampleId))
+        assertNull(City.findById(id))
     }
 
     @Test

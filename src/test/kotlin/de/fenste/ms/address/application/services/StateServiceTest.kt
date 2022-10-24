@@ -16,10 +16,9 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateStateDto
-import de.fenste.ms.address.application.dtos.requests.UpdateStateDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
-import de.fenste.ms.address.application.dtos.responses.StateDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.application.dtos.StateInputDto
 import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -78,7 +77,7 @@ class StateServiceTest(
     @Test
     fun `test find by id on sample data`() {
         val expected = SampleData.states.random().let { s -> StateDto(s) }
-        val actual = service.find(id = UUID.fromString(expected.id))
+        val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
     }
@@ -92,61 +91,51 @@ class StateServiceTest(
 
     @Test
     fun `test create`() {
+        val name = "Name"
         val country = SampleData.countries.random()
-        val create = CreateStateDto(
-            name = "Name",
-            country = country.id.value.toString(),
+
+        val create = StateInputDto(
+            name = name,
+            country = country.id.value,
         )
 
         val actual = service.create(
-            create = create,
+            state = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
     }
 
     @Test
     fun `test update all`() {
-        val sampleId = SampleData.states.first().id.value.toString()
-        val country = SampleData.countries.last()
-        val update = UpdateStateDto(
-            id = sampleId,
-            name = "Name",
-            country = country.id.value.toString(),
+        val state = SampleData.states.random()
+        val name = "Name"
+        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+
+        val update = StateInputDto(
+            name = name,
+            country = country.id.value,
         )
 
         val actual = service.update(
-            update = update,
+            id = state.id.value,
+            state = update,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(update.name, actual.name)
+        assertNotNull(actual)
+        assertEquals(name, actual.name)
         transaction { assertEquals(CountryDto(country), actual.country) }
-    }
-
-    @Test
-    fun `test update nothing`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
-        val update = UpdateStateDto(
-            id = expected.id,
-        )
-
-        val actual = service.update(
-            update = update,
-        )
-
-        transaction { assertEquals(expected, actual) }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
-        val sampleId = SampleData.states.random().id.value
+        val id = SampleData.states.random().id.value
 
-        service.delete(sampleId)
+        service.delete(id)
 
-        transaction { assertNull(State.findById(sampleId)) }
+        transaction { assertNull(State.findById(id)) }
     }
 }

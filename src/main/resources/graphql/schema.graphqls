@@ -1,19 +1,14 @@
-input CreateCountry {
+scalar UUID
+
+input CountryInput {
     alpha2: String!
     alpha3: String!
     name: String!
     localizedName: String!
 }
 
-input UpdateCountry {
-    alpha2: String
-    alpha3: String
-    name: String
-    localizedName: String
-}
-
 type Country {
-    id: String!
+    id: UUID!
     alpha2: String!
     alpha3: String!
     name: String!
@@ -23,42 +18,29 @@ type Country {
     cities: [City!]
 }
 
-input CreateState {
+input StateInput {
     name: String!
 
-    country: String!
-}
-
-input UpdateState {
-    name: String!
-
-    country: String!
+    country: UUID!
 }
 
 type State {
-    id: String!
+    id: UUID!
     name: String!
 
     country: Country!
     cities: [City!]
 }
 
-input CreateCity {
+input CityInput {
     name: String!
 
-    country: String!
-    state: String!
-}
-
-input UpdateCity {
-    name: String
-
-    country: String
-    state: String
+    country: UUID!
+    state: UUID!
 }
 
 type City {
-    id: String!
+    id: UUID!
     name: String!
 
     country: Country!
@@ -66,62 +48,43 @@ type City {
     postCodes: [PostCode!]
 }
 
-input CreatePostCode {
+input PostCodeInput {
     code: String!
 
-    city: String!
-}
-
-input UpdatePostCode {
-    code: String!
-
-    city: String
+    city: UUID!
 }
 
 type PostCode {
-    id: String!
+    id: UUID!
     code: String!
 
     city: City!
     streets: [Street!]
 }
 
-input CreateStreet {
+input StreetInput {
     name: String!
 
-    postCode: String!
-}
-
-input UpdateStreet {
-    name: String
-
-    postCode: String
+    postCode: UUID!
 }
 
 type Street {
-    id: String!
+    id: UUID!
     name: String!
 
     postCode: PostCode!
     addresses: [Address!]
 }
 
-input CreateAddress {
+input AddressInput {
     houseNumber: String!
     extra: String
 
-    street: String!
-}
-
-input UpdateAddress {
-    houseNumber: String
-    extra: String
-
-    street: String
+    street: UUID!
 }
 
 type Address {
-    id: String!
+    id: UUID!
     houseNumber: String!
     extra: String
 
@@ -130,46 +93,46 @@ type Address {
 
 type Query {
     countries(limit: Int, offset: Int): [Country!]
-    country(id: Int, alpha2: String, alpha3: String): Country
+    country(id: UUID, alpha2: String, alpha3: String): Country
 
     states(limit: Int, offset: Int): [State!]
-    state(id: String!): State
+    state(id: UUID!): State
 
     cities(limit: Int, offset: Int): [City!]
-    city(id: String!): City
+    city(id: UUID!): City
 
     postCodes(limit: Int, offset: Int): [PostCode!]
-    postCode(id: String!): PostCode
+    postCode(id: UUID!): PostCode
 
     streets(limit: Int, offset: Int): [Street!]
-    street(id: String!): Street
+    street(id: UUID!): Street
 
     addresses(limit: Int, offset: Int): [Address!]
-    address(id: String!): Address
+    address(id: UUID!): Address
 }
 
 type Mutation {
-    createCountry(country: CreateCountry!): Country!
-    updateCountry(id: Int!, country: UpdateCountry!): Country!
-    deleteCountry(id: Int!): Boolean!
+    createCountry(country: CountryInput!): Country!
+    updateCountry(id: UUID!, country: CountryInput!): Country!
+    deleteCountry(id: UUID!): Boolean!
 
-    createState(state: CreateState!): State!
-    updateState(id: String!, state: UpdateState!): State!
-    deleteState(id: String!): Boolean!
+    createState(state: StateInput!): State!
+    updateState(id: UUID!, state: StateInput!): State!
+    deleteState(id: UUID!): Boolean!
 
-    createCity(city: CreateCity!): City!
-    updateCity(id: String!, city: UpdateCity!): City!
-    deleteCity(id: String!): Boolean!
+    createCity(city: CityInput!): City!
+    updateCity(id: UUID!, city: CityInput!): City!
+    deleteCity(id: UUID!): Boolean!
 
-    createPostCode(postCode: CreatePostCode!): PostCode!
-    updatePostCode(id: String!, postCode: UpdatePostCode!): PostCode!
-    deletePostCode(id: String!): Boolean!
+    createPostCode(postCode: PostCodeInput!): PostCode!
+    updatePostCode(id: UUID!, postCode: PostCodeInput!): PostCode!
+    deletePostCode(id: UUID!): Boolean!
 
-    createStreet(street: CreateStreet!): Street!
-    updateStreet(id: String!, street: UpdateStreet!): Street!
-    deleteStreet(id: String!): Boolean!
+    createStreet(street: StreetInput!): Street!
+    updateStreet(id: UUID!, street: StreetInput!): Street!
+    deleteStreet(id: UUID!): Boolean!
 
-    createAddress(address: CreateAddress!): Address!
-    updateAddress(id: String!, address: UpdateAddress!): Address!
-    deleteAddress(id: String!): Boolean!
+    createAddress(address: AddressInput!): Address!
+    updateAddress(id: UUID!, address: AddressInput!): Address!
+    deleteAddress(id: UUID!): Boolean!
 }

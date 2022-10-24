@@ -16,7 +16,8 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.responses.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.application.services.PostCodeService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.graphql.data.method.annotation.Argument
@@ -33,15 +34,38 @@ class PostCodeController(
     fun postCodes(
         @Argument limit: Int? = null,
         @Argument offset: Int? = null,
-    ): List<PostCodeDto>? = postCodeService.postCodes(
+    ): List<PostCodeDto>? = postCodeService.list(
         limit = limit,
         offset = offset?.toLong(),
     )
 
     @SchemaMapping(field = "postCode", typeName = "Query")
     fun postCode(
-        @Argument id: String,
-    ): PostCodeDto? = postCodeService.postCode(
-        id = UUID.fromString(id),
+        @Argument id: UUID,
+    ): PostCodeDto? = postCodeService.find(
+        id = id,
+    )
+
+    @SchemaMapping(field = "createPostCode", typeName = "Mutation")
+    fun createPostCode(
+        @Argument postCode: PostCodeInputDto,
+    ): PostCodeDto = postCodeService.create(
+        postCode = postCode,
+    )
+
+    @SchemaMapping(field = "updatePostCode", typeName = "Mutation")
+    fun updatePostCode(
+        @Argument id: UUID,
+        @Argument postCode: PostCodeInputDto,
+    ): PostCodeDto = postCodeService.update(
+        id = id,
+        postCode = postCode,
+    )
+
+    @SchemaMapping(field = "deletePostCode", typeName = "Mutation")
+    fun deletePostCode(
+        @Argument id: UUID,
+    ): Boolean = postCodeService.delete(
+        id = id,
     )
 }

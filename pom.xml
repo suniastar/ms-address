@@ -23,7 +23,7 @@
     <artifactId>address</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>ms-address</name>
-    <description>TODO description</description>
+    <description>Address Management System</description>
     <packaging>jar</packaging>
 
     <parent>
@@ -158,6 +158,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <imageName>ghcr.io/suniastar/ms-address:${project.version}</imageName>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>com.github.gantsign.maven</groupId>

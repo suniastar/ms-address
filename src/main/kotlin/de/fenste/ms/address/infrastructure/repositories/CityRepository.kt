@@ -22,11 +22,11 @@ import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
-import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
@@ -36,62 +36,23 @@ class CityRepository {
 
     private companion object {
 
-        private fun idOf(
+        private fun checkDuplicate(
+            original: City? = null,
             name: String,
-            countryId: UUID,
-            stateId: UUID?,
-        ): EntityID<UUID>? = when (stateId) {
-            null ->
-                CityTable
-                    .slice(CityTable.id)
-                    .select { (CityTable.name eq name) and (CityTable.country eq countryId) }
-                    .limit(1)
-                    .notForUpdate()
-                    .firstOrNull()
-                    ?.let { r -> r[CityTable.id] }
+            country: Country,
+            state: State?,
+        ) {
+            val city = CityTable
+                .slice(CityTable.columns)
+                .select { (CityTable.name eq name) and (CityTable.country eq country.id) }
+                .apply { state?.let { andWhere { CityTable.state eq state.id } } }
+                .apply { original?.let { andWhere { CityTable.id neq original.id } } }
+                .limit(1)
+                .notForUpdate()
+                .map { r -> City.wrapRow(r) }
+                .firstOrNull()
 
-            else ->
-                CityTable
-                    .slice(CityTable.id)
-                    .select {
-                        (CityTable.name eq name) and (CityTable.country eq countryId) and (CityTable.state eq stateId)
-                    }
-                    .limit(1)
-                    .notForUpdate()
-                    .firstOrNull()
-                    ?.let { r -> r[CityTable.id] }
-        }
-
-        private fun findUpdatedCountryAndState(
-            city: City,
-            countryId: UUID?,
-            stateId: UUID?,
-            removeState: Boolean,
-        ): Pair<Country, State?> {
-            val country = countryId?.let {
-                val country = Country
-                    .find { CountryTable.id eq countryId }
-                    .limit(1)
-                    .forUpdate()
-                    .firstOrNull()
-
-                requireNotNull(country) { "The country ($countryId) does not exist." }
-            } ?: city.country
-            val state = stateId?.let {
-                val s = State
-                    .find { StateTable.id eq stateId }
-                    .limit(1)
-                    .notForUpdate()
-                    .firstOrNull()
-
-                requireNotNull(s) { "The state ($stateId) does not exist." }
-            } ?: city.state
-            if (!removeState) {
-                require(
-                    state?.let { country.states.contains(state) } != false,
-                ) { "The state (${state?.id?.value}) does not belong to the country (${country.id.value})." }
-            }
-            return country to state
+            require(city == null) { "The city does already exist: $city" }
         }
     }
 
@@ -127,13 +88,53 @@ class CityRepository {
         countryId: UUID,
         stateId: UUID?,
     ): City {
-        require(
-            idOf(
-                name = name,
-                countryId = countryId,
-                stateId = stateId,
-            ) == null,
-        ) { "A city with this name and parent country and state does already exist." }
+        val country = Country
+            .find { CountryTable.id eq countryId }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+
+        requireNotNull(country) { "The country ($countryId) does not exist." }
+
+        val state = stateId?.let {
+            val s = State
+                .find { StateTable.id eq stateId }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+
+            requireNotNull(s) { "The state ($stateId) does not exist." }
+            require(country.states.contains(s)) { "The state ($stateId) does not belong to the country ($countryId)." }
+
+            s
+        }
+
+        checkDuplicate(
+            name = name,
+            country = country,
+            state = state,
+        )
+
+        return City.new {
+            this.name = name
+            this.country = country
+            this.state = state
+        }
+    }
+
+    fun update(
+        id: UUID,
+        name: String,
+        countryId: UUID,
+        stateId: UUID?,
+    ): City {
+        val city = City
+            .find { CityTable.id eq id }
+            .limit(1)
+            .forUpdate()
+            .firstOrNull()
+
+        requireNotNull(city) { "The city ($id) does not exist." }
 
         val country = Country
             .find { CountryTable.id eq countryId }
@@ -156,49 +157,16 @@ class CityRepository {
             s
         }
 
-        return City.new {
-            this.name = name
-            this.country = country
-            this.state = state
-        }
-    }
-
-    fun update(
-        id: UUID,
-        name: String? = null,
-        countryId: UUID? = null,
-        stateId: UUID? = null,
-        removeState: Boolean = false,
-    ): City {
-        val city = City
-            .find { CityTable.id eq id }
-            .limit(1)
-            .forUpdate()
-            .firstOrNull()
-
-        requireNotNull(city) { "The city ($id) does not exist." }
-
-        val uId = idOf(
-            name = name ?: city.name,
-            countryId = countryId ?: city.country.id.value,
-            stateId = stateId ?: city.state?.id?.value,
-        )
-        require(
-            uId == null || uId == city.id,
-        ) { "A city with this name and parent country and state does already exist." }
-
-        val (country, state) = findUpdatedCountryAndState(
-            city = city,
-            countryId = countryId,
-            stateId = stateId,
-            removeState = removeState,
+        checkDuplicate(
+            original = city,
+            name = name,
+            country = country,
+            state = state,
         )
 
-        name?.let { city.name = name }
-        countryId?.let { city.country = country }
-        stateId?.let { city.state = state }
-        if (removeState) city.state = null
-
+        city.name = name
+        city.country = country
+        city.state = state
         return city
     }
 

@@ -16,14 +16,12 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.requests.CreateCountryDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCountryDto
-import de.fenste.ms.address.application.dtos.responses.CountryDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.test.SampleData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -82,67 +80,63 @@ class CountryControllerTest(
 
     @Test
     fun `test create`() {
-        val create = CreateCountryDto(
-            alpha2 = "CZ",
-            alpha3 = "CZE",
-            name = "Czechia",
-            localizedName = "Tschechien",
+        val alpha2 = "CZ"
+        val alpha3 = "CZE"
+        val name = "Czechia"
+        val localizedName = "Tschechien"
+
+        val create = CountryInputDto(
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+            name = name,
+            localizedName = localizedName,
         )
 
         val actual = controller.createCountry(
             country = create,
         )
 
-        assertNotNull(actual.id)
-        assertEquals(create.alpha2, actual.alpha2)
-        assertEquals(create.alpha3, actual.alpha3)
-        assertEquals(create.name, actual.name)
-        assertEquals(create.localizedName, actual.localizedName)
+        assertNotNull(actual)
+        assertEquals(alpha2, actual.alpha2)
+        assertEquals(alpha3, actual.alpha3)
+        assertEquals(name, actual.name)
+        assertEquals(localizedName, actual.localizedName)
     }
 
     @Test
     fun `test update all`() {
-        val sampleId = SampleData.countries.random().id.value.toString()
-        val update = UpdateCountryDto(
-            id = sampleId,
-            alpha2 = "XX",
-            alpha3 = "XXX",
-            name = "Name",
-            localizedName = "LocalizedName",
+        val country = SampleData.countries.random()
+        val alpha2 = "XX"
+        val alpha3 = "XXX"
+        val name = "Name"
+        val localizedName = "LocalizedName"
+
+        val update = CountryInputDto(
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+            name = name,
+            localizedName = localizedName,
         )
 
         val actual = controller.updateCountry(
+            id = country.id.value,
             country = update,
         )
 
         assertNotNull(actual)
-        assertEquals(update.alpha2, actual.alpha2)
-        assertEquals(update.alpha3, actual.alpha3)
-        assertEquals(update.name, actual.name)
-        assertEquals(update.localizedName, actual.localizedName)
-    }
-
-    @Test
-    fun `test update nothing`() {
-        val expected = SampleData.countries.random().let { c -> CountryDto(c) }
-        val update = UpdateCountryDto(
-            id = expected.id,
-        )
-
-        val actual = controller.updateCountry(
-            country = update,
-        )
-
-        assertEquals(expected, actual)
+        assertEquals(alpha2, actual.alpha2)
+        assertEquals(alpha3, actual.alpha3)
+        assertEquals(name, actual.name)
+        assertEquals(localizedName, actual.localizedName)
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
-        val sampleId = SampleData.countries.random().id.value.toString()
+        val id = SampleData.countries.random().id.value
 
-        controller.deleteCountry(sampleId)
+        controller.deleteCountry(id)
 
-        assertNull(Country.findById(UUID.fromString(sampleId)))
+        assertNull(Country.findById(id))
     }
 }

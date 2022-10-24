@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos.requests
+package de.fenste.ms.address.application.dtos
 
-data class CreateCountryDto(
-    val alpha2: String,
-    val alpha3: String,
-    val name: String,
-    val localizedName: String,
+import de.fenste.ms.address.domain.model.PostCode
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.UUID
+
+data class PostCodeInputDto(
+    val code: String,
+    val city: UUID,
 )
+
+data class PostCodeDto(private val postCode: PostCode) {
+
+    val id: UUID
+        get() = postCode.id.value
+
+    val code: String
+        get() = postCode.code
+
+    val city: CityDto
+        get() = transaction { CityDto(postCode.city) }
+
+    val streets: List<StreetDto>?
+        get() = transaction { postCode.streets.map { s -> StreetDto(s) }.ifEmpty { null } }
+}

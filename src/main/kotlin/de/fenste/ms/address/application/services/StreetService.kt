@@ -16,7 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.responses.StreetDto
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.infrastructure.repositories.StreetRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,7 +28,7 @@ import java.util.UUID
 class StreetService(
     @Autowired private val streetRepository: StreetRepository,
 ) {
-    fun streets(
+    fun list(
         limit: Int? = null,
         offset: Long? = null,
     ): List<StreetDto>? = transaction {
@@ -40,11 +41,44 @@ class StreetService(
             .ifEmpty { null }
     }
 
-    fun street(
+    fun find(
         id: UUID,
     ): StreetDto? = transaction {
         streetRepository
             .find(id)
             ?.let { s -> StreetDto(s) }
+    }
+
+    fun create(
+        street: StreetInputDto,
+    ): StreetDto = transaction {
+        streetRepository
+            .create(
+                name = street.name,
+                postCodeId = street.postCode,
+            )
+            .let { s -> StreetDto(s) }
+    }
+
+    fun update(
+        id: UUID,
+        street: StreetInputDto,
+    ): StreetDto = transaction {
+        streetRepository
+            .update(
+                id = id,
+                name = street.name,
+                postCodeId = street.postCode,
+            )
+            .let { s -> StreetDto(s) }
+    }
+
+    fun delete(
+        id: UUID,
+    ): Boolean = transaction {
+        streetRepository.delete(
+            id = id,
+        )
+        true
     }
 }

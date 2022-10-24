@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos.responses
+package de.fenste.ms.address.application.dtos
 
-import de.fenste.ms.address.domain.model.PostCode
+import de.fenste.ms.address.domain.model.Street
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.UUID
 
-@Suppress("unused")
-data class PostCodeDto(private val postCode: PostCode) {
+data class StreetInputDto(
+    val name: String,
+    val postCode: UUID,
+)
 
-    val id: String
-        get() = postCode.id.value.toString()
+data class StreetDto(private val street: Street) {
 
-    val code: String
-        get() = postCode.code
+    val id: UUID
+        get() = street.id.value
 
-    val city: CityDto
-        get() = transaction { CityDto(postCode.city) }
+    val name: String
+        get() = street.name
 
-    val streets: List<StreetDto>?
-        get() = transaction { postCode.streets.map { s -> StreetDto(s) }.ifEmpty { null } }
+    val postCode: PostCodeDto
+        get() = transaction { PostCodeDto(street.postCode) }
+
+    val addresses: List<AddressDto>?
+        get() = transaction { street.addresses.map { a -> AddressDto(a) }.ifEmpty { null } }
 }

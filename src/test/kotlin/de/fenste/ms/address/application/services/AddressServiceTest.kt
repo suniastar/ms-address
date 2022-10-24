@@ -16,13 +16,15 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.application.dtos.CountryInputDto
-import de.fenste.ms.address.domain.model.Country
+import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.AddressInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
+import de.fenste.ms.address.domain.model.Address
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -32,8 +34,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
-class CountryServiceTest(
-    @Autowired private val service: CountryService,
+class AddressServiceTest(
+    @Autowired private val service: AddressService,
 ) {
 
     @BeforeTest
@@ -42,26 +44,26 @@ class CountryServiceTest(
     }
 
     @Test
-    fun `list on sample data`() {
-        val expected = SampleData.countries.sortedBy { c -> c.id.value.toString() }.map { c -> CountryDto(c) }
+    fun `test list on sample data`() {
+        val expected = SampleData.addresses.sortedBy { a -> a.id.value.toString() }.map { s -> AddressDto(s) }
         val actual = service.list()
 
-        assertContentEquals(expected, actual)
+        transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.countries
-            .sortedBy { c -> c.id.value.toString() }
+        val expected = SampleData.addresses
+            .sortedBy { a -> a.id.value.toString() }
             .drop(2)
             .take(1)
-            .map { c -> CountryDto(c) }
+            .map { a -> AddressDto(a) }
         val actual = service.list(
             offset = 2,
             limit = 1,
         )
 
-        assertContentEquals(expected, actual)
+        transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
@@ -74,78 +76,71 @@ class CountryServiceTest(
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.countries.random().let { c -> CountryDto(c) }
+        val expected = SampleData.addresses.random().let { a -> AddressDto(a) }
         val actual = service.find(id = expected.id)
 
-        assertEquals(expected, actual)
+        transaction { assertEquals(expected, actual) }
     }
 
     @Test
-    fun `test find by alpha2 on non existing sample data`() {
-        val actual = service.find(alpha2 = "XX")
+    fun `test find by id on non existing sample data`() {
+        val actual = service.find(id = UUID.randomUUID())
 
         assertNull(actual)
     }
 
     @Test
     fun `test create`() {
-        val alpha2 = "CZ"
-        val alpha3 = "CZE"
-        val name = "Czechia"
-        val localizedName = "Tschechien"
+        val houseNumber = "42"
+        val street = SampleData.streets.random()
 
-        val create = CountryInputDto(
-            alpha2 = alpha2,
-            alpha3 = alpha3,
-            name = name,
-            localizedName = localizedName,
+        val create = AddressInputDto(
+            houseNumber = houseNumber,
+            street = street.id.value,
         )
 
         val actual = service.create(
-            country = create,
+            address = create,
         )
 
         assertNotNull(actual)
-        assertEquals(alpha2, actual.alpha2)
-        assertEquals(alpha3, actual.alpha3)
-        assertEquals(name, actual.name)
-        assertEquals(localizedName, actual.localizedName)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNull(actual.extra)
+        transaction { assertEquals(StreetDto(street), actual.street) }
     }
 
     @Test
     fun `test update all`() {
-        val country = SampleData.countries.random()
-        val alpha2 = "XX"
-        val alpha3 = "XXX"
-        val name = "Name"
-        val localizedName = "LocalizedName"
+        val address = SampleData.addresses.random()
+        val houseNumber = "42"
+        val extra = "extra"
+        val street = transaction { SampleData.streets.filterNot { s -> s.addresses.contains(address) }.random() }
 
-        val update = CountryInputDto(
-            alpha2 = alpha2,
-            alpha3 = alpha3,
-            name = name,
-            localizedName = localizedName,
+        val update = AddressInputDto(
+            houseNumber = "42",
+            extra = extra,
+            street = street.id.value,
         )
 
         val actual = service.update(
-            id = country.id.value,
-            country = update,
+            id = address.id.value,
+            address = update,
         )
 
         assertNotNull(actual)
-        assertEquals(alpha2, actual.alpha2)
-        assertEquals(alpha3, actual.alpha3)
-        assertEquals(name, actual.name)
-        assertEquals(localizedName, actual.localizedName)
+        assertEquals(houseNumber, actual.houseNumber)
+        assertNotNull(actual.extra)
+        assertEquals(extra, actual.extra)
+        transaction { assertEquals(StreetDto(street), actual.street) }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
-        val id = SampleData.countries.random().id.value
+        val id = SampleData.addresses.random().id.value
 
         service.delete(id)
 
-        transaction { assertNull(Country.findById(id)) }
+        transaction { assertNull(Address.findById(id)) }
     }
 }

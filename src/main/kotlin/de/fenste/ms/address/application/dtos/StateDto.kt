@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos.requests
+package de.fenste.ms.address.application.dtos
 
-data class UpdateCityDto(
-    val id: String,
-    val name: String? = null,
-    val country: String? = null,
-    val state: String? = null,
+import de.fenste.ms.address.domain.model.State
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.UUID
+
+data class StateInputDto(
+    val name: String,
+    val country: UUID,
 )
+
+data class StateDto(private val state: State) {
+
+    val id: UUID
+        get() = state.id.value
+
+    val name: String
+        get() = state.name
+
+    val country: CountryDto
+        get() = transaction { CountryDto(state.country) }
+
+    val cities: List<CityDto>?
+        get() = transaction { state.cities.map { c -> CityDto(c) }.ifEmpty { null } }
+}

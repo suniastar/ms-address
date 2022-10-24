@@ -20,11 +20,11 @@ import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
-import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.select
 import org.springframework.stereotype.Repository
 import java.util.UUID
@@ -34,16 +34,22 @@ class StateRepository {
 
     private companion object {
 
-        private fun idOf(
+        private fun checkDuplicate(
+            original: State? = null,
             name: String,
-            countryId: UUID,
-        ): EntityID<UUID>? = StateTable
-            .slice(StateTable.id)
-            .select { (StateTable.name eq name) and (StateTable.country eq countryId) }
-            .limit(1)
-            .notForUpdate()
-            .firstOrNull()
-            ?.let { r -> r[StateTable.id] }
+            country: Country,
+        ) {
+            val state = StateTable
+                .slice(StateTable.columns)
+                .select { (StateTable.name eq name) and (StateTable.country eq country.id) }
+                .apply { original?.let { andWhere { StateTable.id neq original.id } } }
+                .limit(1)
+                .notForUpdate()
+                .firstOrNull()
+                ?.let { r -> State.wrapRow(r) }
+
+            require(state == null) { "This State does already exist: $state" }
+        }
     }
 
     fun list(
@@ -77,13 +83,6 @@ class StateRepository {
         name: String,
         countryId: UUID,
     ): State {
-        require(
-            idOf(
-                name = name,
-                countryId = countryId,
-            ) == null,
-        ) { "A state with this name and parent country does already exist." }
-
         val country = Country
             .find { CountryTable.id eq countryId }
             .limit(1)
@@ -91,6 +90,11 @@ class StateRepository {
             .firstOrNull()
 
         requireNotNull(country) { "The country ($countryId) does not exist." }
+
+        checkDuplicate(
+            name = name,
+            country = country,
+        )
 
         return State.new {
             this.name = name
@@ -100,8 +104,8 @@ class StateRepository {
 
     fun update(
         id: UUID,
-        name: String? = null,
-        countryId: UUID? = null,
+        name: String,
+        countryId: UUID,
     ): State {
         val state = State
             .find { StateTable.id eq id }
@@ -111,25 +115,22 @@ class StateRepository {
 
         requireNotNull(state) { "The state ($id) does not exist." }
 
-        val uId = idOf(
-            name = name ?: state.name,
-            countryId = countryId ?: state.country.id.value,
+        val country = Country
+            .find { CountryTable.id eq countryId }
+            .limit(1)
+            .notForUpdate()
+            .firstOrNull()
+
+        requireNotNull(country) { "The country ($countryId) does not exist." }
+
+        checkDuplicate(
+            original = state,
+            name = name,
+            country = country,
         )
-        require(uId == null || uId == state.id) { "A state with this name and parent country does already exist." }
 
-        name?.let { state.name = name }
-        countryId?.let {
-            val country = Country
-                .find { CountryTable.id eq countryId }
-                .limit(1)
-                .forUpdate()
-                .firstOrNull()
-
-            requireNotNull(country) { "The country ($countryId) does not exist." }
-
-            state.country = country
-        }
-
+        state.name = name
+        state.country = country
         return state
     }
 

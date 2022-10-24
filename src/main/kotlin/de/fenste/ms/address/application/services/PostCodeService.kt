@@ -16,7 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.responses.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,7 +28,7 @@ import java.util.UUID
 class PostCodeService(
     @Autowired private val postCodeRepository: PostCodeRepository,
 ) {
-    fun postCodes(
+    fun list(
         limit: Int? = null,
         offset: Long? = null,
     ): List<PostCodeDto>? = transaction {
@@ -40,11 +41,45 @@ class PostCodeService(
             .ifEmpty { null }
     }
 
-    fun postCode(
+    fun find(
         id: UUID,
     ): PostCodeDto? = transaction {
         postCodeRepository
             .find(id)
             ?.let { p -> PostCodeDto(p) }
+    }
+
+    fun create(
+        postCode: PostCodeInputDto,
+    ): PostCodeDto = transaction {
+        postCodeRepository
+            .create(
+                code = postCode.code,
+                cityId = postCode.city,
+            )
+            .let { p -> PostCodeDto(p) }
+    }
+
+    fun update(
+        id: UUID,
+        postCode: PostCodeInputDto,
+    ): PostCodeDto = transaction {
+        postCodeRepository
+            .update(
+                id = id,
+                code = postCode.code,
+                cityId = postCode.city,
+            )
+            .let { p -> PostCodeDto(p) }
+    }
+
+    fun delete(
+        id: UUID,
+    ): Boolean = transaction {
+        postCodeRepository
+            .delete(
+                id = id,
+            )
+        true
     }
 }

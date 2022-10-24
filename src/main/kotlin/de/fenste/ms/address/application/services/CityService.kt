@@ -16,9 +16,8 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.requests.CreateCityDto
-import de.fenste.ms.address.application.dtos.requests.UpdateCityDto
-import de.fenste.ms.address.application.dtos.responses.CityDto
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.CityInputDto
 import de.fenste.ms.address.infrastructure.repositories.CityRepository
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,26 +50,28 @@ class CityService(
     }
 
     fun create(
-        create: CreateCityDto,
+        city: CityInputDto,
     ): CityDto = transaction {
         cityRepository
             .create(
-                name = create.name,
-                countryId = UUID.fromString(create.country),
-                stateId = create.state?.let { s -> UUID.fromString(s) },
+                name = city.name,
+                countryId = city.country,
+                stateId = city.state,
             )
             .let { c -> CityDto(c) }
     }
 
     fun update(
-        update: UpdateCityDto,
+        id: UUID,
+        city: CityInputDto,
     ): CityDto = transaction {
-        cityRepository.update(
-            id = UUID.fromString(update.id),
-            name = update.name,
-            countryId = update.country?.let { c -> UUID.fromString(c) },
-            stateId = update.state?.let { s -> UUID.fromString(s) },
-        )
+        cityRepository
+            .update(
+                id = id,
+                name = city.name,
+                countryId = city.country,
+                stateId = city.state,
+            )
             .let { c -> CityDto(c) }
     }
 
