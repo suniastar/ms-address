@@ -47,14 +47,14 @@ class AddressController(
     )
 
     @SchemaMapping(field = "createAddress", typeName = "Mutation")
-    fun createStreet(
-        @Argument create: AddressInputDto,
+    fun createAddress(
+        @Argument address: AddressInputDto,
     ): AddressDto = addressService.create(
-        address = create,
+        address = address,
     )
 
     @SchemaMapping(field = "updateAddress", typeName = "Mutation")
-    fun updateStreet(
+    fun updateAddress(
         @Argument id: UUID,
         @Argument address: AddressInputDto,
     ): AddressDto = addressService.update(
@@ -63,7 +63,7 @@ class AddressController(
     )
 
     @SchemaMapping(field = "deleteAddress", typeName = "Mutation")
-    fun deleteStreet(
+    fun deleteAddress(
         @Argument id: UUID,
     ): Boolean = addressService.delete(
         id = id,
