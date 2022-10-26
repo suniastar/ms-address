@@ -16,27 +16,28 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
-import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.graphql.test.tester.GraphQlTester
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
+@AutoConfigureGraphQlTester
 class CityControllerTest(
-    @Autowired private val controller: CityController,
+    @Autowired private val graphQlTester: GraphQlTester,
 ) {
 
     @BeforeTest
@@ -46,8 +47,23 @@ class CityControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }.map { c -> CityDto(c) }
-        val actual = controller.cities()
+        val expected = SampleData.cities.map { c -> c.id.value.toString() }.sorted()
+
+        val query = """
+            query {
+                cities {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("cities.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         transaction { assertContentEquals(expected, actual) }
     }
@@ -55,31 +71,67 @@ class CityControllerTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = SampleData.cities
-            .sortedBy { c -> c.id.value.toString() }
+            .map { c -> c.id.value.toString() }
+            .sorted()
             .drop(2)
             .take(1)
-            .map { c -> CityDto(c) }
-        val actual = controller.cities(
-            offset = 2,
-            limit = 1,
-        )
+
+        val query = """
+            query {
+                cities(offset: 2, limit: 1) {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("cities.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.cities.random().let { c -> CityDto(c) }
-        val actual = controller.city(id = expected.id)
+        val expected = SampleData.cities.random().id.value.toString()
+
+        val query = """
+            query {
+                city(id: "$expected") {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("city.id")
+            .entity(String::class.java)
+            .get()
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.city(id = UUID.randomUUID())
+        val query = """
+            query {
+                city(id: "${UUID.randomUUID()}") {
+                    id
+                }
+            }
+        """.trimIndent()
 
-        assertNull(actual)
+        graphQlTester
+            .document(query)
+            .execute()
+            .path("city")
+            .valueIsNull()
     }
 
     @Test
@@ -87,19 +139,36 @@ class CityControllerTest(
         val name = "Name"
         val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
 
+        val mutation = """
+            mutation CreateCityMutation(${D}city: CityInput!) {
+                createCity(city: ${D}city) {
+                    id
+                }
+            }
+        """.trimIndent()
         val create = CityInputDto(
             name = name,
             country = country.id.value,
         )
 
-        val actual = controller.createCity(
-            city = create,
-        )
+        val created = graphQlTester
+            .document(mutation)
+            .variable("city", create.asMap())
+            .execute()
+            .path("createCity.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals((CountryDto(country)), actual.country) }
-        assertNull(actual.state)
+        assertNotNull(created)
+        assertFalse(SampleData.cities.map { c -> c.id.value.toString() }.contains(created))
+
+        transaction {
+            val actual = City.findById(UUID.fromString(created))
+            assertNotNull(actual)
+            assertEquals(name, actual.name)
+            assertEquals(country, actual.country)
+            assertNull(actual.state)
+        }
     }
 
     @Test
@@ -111,30 +180,43 @@ class CityControllerTest(
         }
         val state = transaction { country.states.toList().random() }
 
+        val mutation = """
+            mutation UpdateCityMutation(${D}city: CityInput!) {
+                updateCity(id: "${city.id.value}", city: ${D}city) {
+                    id
+                }
+            }
+        """.trimIndent()
         val update = CityInputDto(
             name = name,
             country = country.id.value,
             state = state.id.value,
         )
 
-        val actual = controller.updateCity(
-            id = city.id.value,
-            city = update,
-        )
+        val updated = graphQlTester
+            .document(mutation)
+            .variable("city", update.asMap())
+            .execute()
+            .path("updateCity.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
-        assertNotNull(actual.state)
-        transaction { assertEquals(StateDto(state), actual.state) }
+        assertNotNull(updated)
+
+        transaction {
+            val actual = City.findById(UUID.fromString(updated))
+            assertNotNull(actual)
+            assertEquals(name, actual.name)
+            assertEquals(country, actual.country)
+            assertNotNull(actual.state)
+            assertEquals(state, actual.state)
+        }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.states.random().id.value
-
-        controller.deleteCity(id)
 
         transaction { assertNull(City.findById(id)) }
     }
