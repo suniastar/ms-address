@@ -62,7 +62,7 @@ class StateController(
         state = state,
     )
 
-    @SchemaMapping(field = "deleteState", typeName = "Muatation")
+    @SchemaMapping(field = "deleteState", typeName = "Mutation")
     fun deleteState(
         @Argument id: UUID,
     ): Boolean = stateService.delete(

@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import java.util.UUID
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -130,9 +129,10 @@ class StateServiceTest(
     }
 
     @Test
-    @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.states.random().id.value
+
+        transaction { assertNotNull(State.findById(id)) }
 
         service.delete(id)
 

@@ -24,7 +24,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -140,9 +139,10 @@ class CountryServiceTest(
     }
 
     @Test
-    @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.countries.random().id.value
+
+        transaction { assertNotNull(Country.findById(id)) }
 
         service.delete(id)
 

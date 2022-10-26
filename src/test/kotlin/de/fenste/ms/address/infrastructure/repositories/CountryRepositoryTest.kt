@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import java.util.UUID
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -396,9 +395,10 @@ class CountryRepositoryTest(
     }
 
     @Test
-    @Ignore // TODO allow cascade deletion?
     fun `test delete`(): Unit = transaction {
         val id = SampleData.countries.random().id.value
+
+        assertNotNull(Country.findById(id))
 
         repository.delete(id)
 
