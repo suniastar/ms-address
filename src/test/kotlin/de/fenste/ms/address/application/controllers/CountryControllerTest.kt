@@ -16,23 +16,28 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.test.SampleData
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.graphql.test.tester.GraphQlTester
+import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
+@AutoConfigureGraphQlTester
 class CountryControllerTest(
-    @Autowired private val controller: CountryController,
+    @Autowired private val graphQlTester: GraphQlTester,
 ) {
 
     @BeforeTest
@@ -42,8 +47,23 @@ class CountryControllerTest(
 
     @Test
     fun `list on sample data`() {
-        val expected = SampleData.countries.sortedBy { c -> c.id.value.toString() }.map { c -> CountryDto(c) }
-        val actual = controller.countries()
+        val expected = SampleData.countries.map { c -> c.id.value.toString() }.sorted()
+
+        val query = """
+            query {
+                countries {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("countries.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         assertContentEquals(expected, actual)
     }
@@ -51,31 +71,67 @@ class CountryControllerTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = SampleData.countries
-            .sortedBy { c -> c.id.value.toString() }
+            .map { c -> c.id.value.toString() }
+            .sorted()
             .drop(2)
             .take(1)
-            .map { c -> CountryDto(c) }
-        val actual = controller.countries(
-            offset = 2,
-            limit = 1,
-        )
+
+        val query = """
+            query {
+                countries(offset: 2, limit: 1) {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("countries.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         assertContentEquals(expected, actual)
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.countries.random().let { c -> CountryDto(c) }
-        val actual = controller.country(id = expected.id)
+        val expected = SampleData.countries.random().id.value.toString()
+
+        val query = """
+            query {
+                country(id: "$expected") {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("country.id")
+            .entity(String::class.java)
+            .get()
 
         assertEquals(expected, actual)
     }
 
     @Test
     fun `test find by alpha2 on non existing sample data`() {
-        val actual = controller.country(alpha2 = "XX")
+        val query = """
+            query {
+                country(id: "${UUID.randomUUID()}") {
+                    id
+                }
+            }
+        """.trimIndent()
 
-        assertNull(actual)
+        graphQlTester
+            .document(query)
+            .execute()
+            .path("country")
+            .valueIsNull()
     }
 
     @Test
@@ -85,6 +141,13 @@ class CountryControllerTest(
         val name = "Czechia"
         val localizedName = "Tschechien"
 
+        val mutation = """
+            mutation CreateCountryMutation(${D}country: CountryInput!) {
+                createCountry(country: ${D}country) {
+                    id
+                }
+            }
+        """.trimIndent()
         val create = CountryInputDto(
             alpha2 = alpha2,
             alpha3 = alpha3,
@@ -92,15 +155,25 @@ class CountryControllerTest(
             localizedName = localizedName,
         )
 
-        val actual = controller.createCountry(
-            country = create,
-        )
+        val created = graphQlTester
+            .document(mutation)
+            .variable("country", create.asMap())
+            .execute()
+            .path("createCountry.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(alpha2, actual.alpha2)
-        assertEquals(alpha3, actual.alpha3)
-        assertEquals(name, actual.name)
-        assertEquals(localizedName, actual.localizedName)
+        assertNotNull(created)
+        assertFalse(SampleData.countries.map { c -> c.id.value.toString() }.contains(created))
+
+        transaction {
+            val actual = Country.findById(UUID.fromString(created))
+            assertNotNull(actual)
+            assertEquals(alpha2, actual.alpha2)
+            assertEquals(alpha3, actual.alpha3)
+            assertEquals(name, actual.name)
+            assertEquals(localizedName, actual.localizedName)
+        }
     }
 
     @Test
@@ -111,6 +184,13 @@ class CountryControllerTest(
         val name = "Name"
         val localizedName = "LocalizedName"
 
+        val mutation = """
+            mutation UpdateCountryMutation(${D}country: CountryInput!) {
+                updateCountry(id: "${country.id.value}",country: ${D}country) {
+                    id
+                }
+            }
+        """.trimIndent()
         val update = CountryInputDto(
             alpha2 = alpha2,
             alpha3 = alpha3,
@@ -118,24 +198,30 @@ class CountryControllerTest(
             localizedName = localizedName,
         )
 
-        val actual = controller.updateCountry(
-            id = country.id.value,
-            country = update,
-        )
+        val updated = graphQlTester
+            .document(mutation)
+            .variable("country", update.asMap())
+            .execute()
+            .path("updateCountry.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(alpha2, actual.alpha2)
-        assertEquals(alpha3, actual.alpha3)
-        assertEquals(name, actual.name)
-        assertEquals(localizedName, actual.localizedName)
+        assertNotNull(updated)
+
+        transaction {
+            val actual = Country.findById(UUID.fromString(updated))
+            assertNotNull(actual)
+            assertEquals(alpha2, actual.alpha2)
+            assertEquals(alpha3, actual.alpha3)
+            assertEquals(name, actual.name)
+            assertEquals(localizedName, actual.localizedName)
+        }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.countries.random().id.value
-
-        controller.deleteCountry(id)
 
         assertNull(Country.findById(id))
     }

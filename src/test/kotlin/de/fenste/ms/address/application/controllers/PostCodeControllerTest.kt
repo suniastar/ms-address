@@ -16,26 +16,28 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.CityDto
-import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.graphql.test.tester.GraphQlTester
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
+@AutoConfigureGraphQlTester
 class PostCodeControllerTest(
-    @Autowired private val controller: PostCodeController,
+    @Autowired private val graphQlTester: GraphQlTester,
 ) {
 
     @BeforeTest
@@ -45,8 +47,23 @@ class PostCodeControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.postCodes.sortedBy { p -> p.id.value.toString() }.map { p -> PostCodeDto(p) }
-        val actual = controller.postCodes()
+        val expected = SampleData.postCodes.map { p -> p.id.value.toString() }.sorted()
+
+        val query = """
+            query {
+                postCodes {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("postCodes.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         transaction { assertContentEquals(expected, actual) }
     }
@@ -54,49 +71,103 @@ class PostCodeControllerTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = SampleData.postCodes
-            .sortedBy { p -> p.id.value.toString() }
+            .map { p -> p.id.value.toString() }
+            .sorted()
             .drop(2)
             .take(1)
-            .map { p -> PostCodeDto(p) }
-        val actual = controller.postCodes(
-            offset = 2,
-            limit = 1,
-        )
+
+        val query = """
+            query {
+                postCodes(offset: 2, limit: 1) {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("postCodes.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.postCodes.random().let { p -> PostCodeDto(p) }
-        val actual = controller.postCode(id = expected.id)
+        val expected = SampleData.postCodes.random().id.value.toString()
+
+        val query = """
+            query {
+                postCode(id: "$expected") {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("postCode.id")
+            .entity(String::class.java)
+            .get()
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.postCode(id = UUID.randomUUID())
+        val query = """
+            query {
+                postCode(id: "${UUID.randomUUID()}") {
+                    id
+                }
+            }
+        """.trimIndent()
 
-        assertNull(actual)
+        graphQlTester
+            .document(query)
+            .execute()
+            .path("postCode")
+            .valueIsNull()
     }
 
     @Test
     fun `test create`() {
         val code = "CODE"
         val city = transaction { SampleData.cities.random() }
+
+        val mutation = """
+            mutation CreatePostCodeMutation(${D}postCode: PostCodeInput!) {
+                createPostCode(postCode: ${D}postCode) {
+                    id
+                }
+            }
+        """.trimIndent()
         val create = PostCodeInputDto(
             code = code,
             city = city.id.value,
         )
 
-        val actual = controller.createPostCode(
-            postCode = create,
-        )
+        val created = graphQlTester
+            .document(mutation)
+            .variable("postCode", create.asMap())
+            .execute()
+            .path("createPostCode.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(code, actual.code)
-        transaction { assertEquals(CityDto(city), actual.city) }
+        assertNotNull(created)
+        assertFalse(SampleData.postCodes.map { p -> p.id.value.toString() }.contains(created))
+
+        transaction {
+            val actual = PostCode.findById(UUID.fromString(created))
+            assertNotNull(actual)
+            assertEquals(code, actual.code)
+            assertEquals(city, actual.city)
+        }
     }
 
     @Test
@@ -104,27 +175,41 @@ class PostCodeControllerTest(
         val postCode = transaction { SampleData.postCodes.random() }
         val code = "CODE"
         val city = transaction { SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random() }
+
+        val mutation = """
+            mutation UpdatePostCodeMutation(${D}postCode: PostCodeInput!) {
+                updatePostCode(id: "${postCode.id.value}", postCode: ${D}postCode) {
+                    id
+                }
+            }
+        """.trimIndent()
         val update = PostCodeInputDto(
             code = code,
             city = city.id.value,
         )
 
-        val actual = controller.updatePostCode(
-            id = postCode.id.value,
-            postCode = update,
-        )
+        val updated = graphQlTester
+            .document(mutation)
+            .variable("postCode", update.asMap())
+            .execute()
+            .path("updatePostCode.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(code, actual.code)
-        transaction { assertEquals(CityDto(city), actual.city) }
+        assertNotNull(updated)
+
+        transaction {
+            val actual = PostCode.findById(UUID.fromString(updated))
+            assertNotNull(actual)
+            assertEquals(code, actual.code)
+            assertEquals(city, actual.city)
+        }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.postCodes.random().id.value
-
-        controller.deletePostCode(id)
 
         transaction { assertNull(PostCode.findById(id)) }
     }

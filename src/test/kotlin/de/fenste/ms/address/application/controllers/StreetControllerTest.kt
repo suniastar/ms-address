@@ -16,26 +16,28 @@
 
 package de.fenste.ms.address.application.controllers
 
-import de.fenste.ms.address.application.dtos.PostCodeDto
-import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.graphql.test.tester.GraphQlTester
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @SpringBootTest
+@AutoConfigureGraphQlTester
 class StreetControllerTest(
-    @Autowired private val controller: StreetController,
+    @Autowired private val graphQlTester: GraphQlTester,
 ) {
 
     @BeforeTest
@@ -45,8 +47,23 @@ class StreetControllerTest(
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.streets.sortedBy { s -> s.id.value.toString() }.map { s -> StreetDto(s) }
-        val actual = controller.streets()
+        val expected = SampleData.streets.map { s -> s.id.value.toString() }.sorted()
+
+        val query = """
+            query {
+                streets {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("streets.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         transaction { assertContentEquals(expected, actual) }
     }
@@ -54,31 +71,67 @@ class StreetControllerTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = SampleData.streets
-            .sortedBy { s -> s.id.value.toString() }
+            .map { s -> s.id.value.toString() }
+            .sorted()
             .drop(2)
             .take(1)
-            .map { s -> StreetDto(s) }
-        val actual = controller.streets(
-            offset = 2,
-            limit = 1,
-        )
+
+        val query = """
+            query {
+                streets(offset: 2, limit: 1) {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("streets.[*].id")
+            .entityList(String::class.java)
+            .get()
+            .toList()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.streets.random().let { s -> StreetDto(s) }
-        val actual = controller.street(id = expected.id)
+        val expected = SampleData.streets.random().id.value.toString()
+
+        val query = """
+            query {
+                street(id: "$expected") {
+                    id
+                }
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(query)
+            .execute()
+            .path("street.id")
+            .entity(String::class.java)
+            .get()
 
         transaction { assertEquals(expected, actual) }
     }
 
     @Test
     fun `test find by id on non existing sample data`() {
-        val actual = controller.street(id = UUID.randomUUID())
+        val query = """
+            query {
+                street(id: "${UUID.randomUUID()}") {
+                    id
+                }
+            }
+        """.trimIndent()
 
-        assertNull(actual)
+        graphQlTester
+            .document(query)
+            .execute()
+            .path("street")
+            .valueIsNull()
     }
 
     @Test
@@ -86,18 +139,35 @@ class StreetControllerTest(
         val name = "Name"
         val postCode = SampleData.postCodes.random()
 
+        val mutation = """
+            mutation CreateStreetMutation(${D}street: StreetInput!) {
+                createStreet(street: ${D}street) {
+                    id
+                }
+            }
+        """.trimIndent()
         val create = StreetInputDto(
             name = name,
             postCode = postCode.id.value,
         )
 
-        val actual = controller.createStreet(
-            street = create,
-        )
+        val created = graphQlTester
+            .document(mutation)
+            .variable("street", create.asMap())
+            .execute()
+            .path("createStreet.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(PostCodeDto(postCode), actual.postCode) }
+        assertNotNull(created)
+        assertFalse(SampleData.streets.map { s -> s.id.value.toString() }.contains(created))
+
+        transaction {
+            val actual = Street.findById(UUID.fromString(created))
+            assertNotNull(actual)
+            assertEquals(name, actual.name)
+            assertEquals(postCode, actual.postCode)
+        }
     }
 
     @Test
@@ -106,27 +176,40 @@ class StreetControllerTest(
         val name = "Name"
         val postCode = transaction { SampleData.postCodes.filterNot { p -> p.streets.contains(state) }.random() }
 
+        val mutation = """
+            mutation UpdateStreetMutation(${D}street: StreetInput!) {
+                updateStreet(id: "${state.id.value}", street: ${D}street) {
+                    id
+                }
+            }
+        """.trimIndent()
         val update = StreetInputDto(
             name = name,
             postCode = postCode.id.value,
         )
 
-        val actual = controller.updateStreet(
-            id = state.id.value,
-            street = update,
-        )
+        val updated = graphQlTester
+            .document(mutation)
+            .variable("street", update.asMap())
+            .execute()
+            .path("updateStreet.id")
+            .entity(String::class.java)
+            .get()
 
-        assertNotNull(actual)
-        assertEquals(name, actual.name)
-        transaction { assertEquals(PostCodeDto(postCode), actual.postCode) }
+        assertNotNull(updated)
+
+        transaction {
+            val actual = Street.findById(UUID.fromString(updated))
+            assertNotNull(actual)
+            assertEquals(name, actual.name)
+            assertEquals(postCode, actual.postCode)
+        }
     }
 
     @Test
     @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.states.random().id.value
-
-        controller.deleteStreet(id)
 
         assertNull(Street.findById(id))
     }
