@@ -17,13 +17,14 @@
 package de.fenste.ms.address.infrastructure.tables
 
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.ReferenceOption
 
 object AddressTable : UUIDTable("addresses") {
 
-    const val HOUSE_NUMBER_MAX_LENGTH = 255
-    const val EXTRA_MAX_LENGTH = 255
+    private const val HOUSE_NUMBER_MAX_LENGTH = 255
+    private const val EXTRA_MAX_LENGTH = 255
 
-    val street = reference("street_id", StreetTable)
+    val street = reference("street_id", StreetTable, onDelete = ReferenceOption.CASCADE)
 
     val houseNumber = varchar("house_number", HOUSE_NUMBER_MAX_LENGTH)
 

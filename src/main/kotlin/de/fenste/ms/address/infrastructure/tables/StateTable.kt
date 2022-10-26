@@ -17,12 +17,13 @@
 package de.fenste.ms.address.infrastructure.tables
 
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.ReferenceOption
 
 object StateTable : UUIDTable("states") {
 
-    const val NAME_MAX_LENGTH = 255
+    private const val NAME_MAX_LENGTH = 255
 
-    val country = reference("state_id", CountryTable)
+    val country = reference("state_id", CountryTable, onDelete = ReferenceOption.CASCADE)
 
     val name = varchar("name", NAME_MAX_LENGTH)
 }

@@ -68,7 +68,7 @@ class CountryController(
 
     @SchemaMapping(field = "deleteCountry", typeName = "Mutation")
     fun deleteCountry(
-        id: UUID,
+        @Argument id: UUID,
     ): Boolean = countryService.delete(
         id = id,
     )

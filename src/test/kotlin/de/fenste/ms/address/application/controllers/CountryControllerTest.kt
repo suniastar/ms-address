@@ -26,13 +26,13 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.graphql.test.tester.GraphQlTester
 import java.util.UUID
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @SpringBootTest
 @AutoConfigureGraphQlTester
@@ -219,10 +219,25 @@ class CountryControllerTest(
     }
 
     @Test
-    @Ignore // TODO allow cascade deletion?
     fun `test delete`() {
         val id = SampleData.countries.random().id.value
 
-        assertNull(Country.findById(id))
+        transaction { assertNotNull(Country.findById(id)) }
+
+        val mutation = """
+            mutation {
+                deleteCountry(id: "$id")
+            }
+        """.trimIndent()
+
+        val actual = graphQlTester
+            .document(mutation)
+            .execute()
+            .path("deleteCountry")
+            .entity(Boolean::class.java)
+            .get()
+
+        assertTrue(actual)
+        transaction { assertNull(Country.findById(id)) }
     }
 }
