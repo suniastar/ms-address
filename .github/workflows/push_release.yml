@@ -147,7 +147,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Maven
-        run: mvn --batch-mode --update-snapshots spring-boot:build-image
+        run: mvn --batch-mode --update-snapshots -DskipTests spring-boot:build-image
       - name: Re-Tag image as latest
         run: docker tag ghcr.io/suniastar/ms-address:$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout) ghcr.io/suniastar/ms-address:latest
       - name: Publish Image (Version)
