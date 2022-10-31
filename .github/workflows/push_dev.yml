@@ -2,11 +2,11 @@ name: Build and Tests
 
 on:
   push:
-    branches: [ "dev", "release" ]
+    branches: [ "dev" ]
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "dev"
   cancel-in-progress: true
 
 permissions:

@@ -1,0 +1,158 @@
+name: Build and Tests
+
+on:
+  push:
+    branches:
+      - release
+    tags:
+      - v*
+  workflow_dispatch:
+
+concurrency:
+  group: "release"
+  cancel-in-progress: true
+
+permissions:
+  checks: write
+  pages: write
+  packages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+      - name: Cache Local Maven Repository
+        uses: actions/cache@v3.0.11
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Cache Local Maven Build
+        uses: actions/cache@v3.0.11
+        with:
+          path: target
+          key: ${{ github.workflow }}-build-${{ github.ref }}
+          restore-keys: |
+            ${{ github.workflow }}-build-${{ github.ref }}
+      - name: Set up Java JDK
+        uses: actions/setup-java@v3.6.0
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots package
+      - name: Upload Jar
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: ms-address
+          path: target/address-*.jar
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: test-report
+          path: target/site/jacoco/
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: documentation
+          path: target/dokka/
+
+  coverage:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Test Report
+        uses: actions/download-artifact@v3.0.1
+        with:
+          name: test-report
+          path: target/site/jacoco/
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: target/site/jacoco/
+      - name: JaCoCo Code Coverage Report
+        uses: PavanMudigonda/jacoco-reporter@v4.6
+        with:
+          coverage_results_path: target/site/jacoco/jacoco.xml
+          coverage_report_name: Coverage
+          coverage_report_title: JaCoCo
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          skip_check_run: false
+          minimum_coverage: 80
+          fail_below_threshold: false
+          publish_only_summary: true
+
+  documentation:
+    needs: build
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download Documentation
+        uses: actions/download-artifact@v3.0.1
+        with:
+          name: documentation
+          path: target/dokka/
+      - name: Setup Pages
+        uses: actions/configure-pages@v2.1.2
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1.0.4
+        with:
+          path: target/dokka
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1.2.2
+
+  image:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.1.0
+      - name: Cache Local Maven Repository
+        uses: actions/cache@v3.0.11
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Cache Local Maven Build
+        uses: actions/cache@v3.0.11
+        with:
+          path: target
+          key: ${{ github.workflow }}-build-${{ github.ref }}
+          restore-keys: |
+            ${{ github.workflow }}-build-${{ github.ref }}
+      - name: Cache Local Docker
+        uses: actions/cache@v3.0.11
+        with:
+          path: /var/lib/docker
+          key: ${{ github.workflow }}-docker-${{ github.ref }}
+          restore-keys: |
+            ${{ github.workflow }}-docker-${{ github.ref }}
+      - name: Set up Java JDK
+        uses: actions/setup-java@v3.6.0
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots spring-boot:build-image
+      - name: Re-Tag image as latest
+        run: docker tag ghcr.io/suniastar/ms-address:$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout) ghcr.io/suniastar/ms-address:latest
+      - name: Publish Image (Version)
+        if: github.ref != 'refs/heads/release'
+        run: docker push ghcr.io/suniastar/ms-address:$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+      - name: Publish Image (Latest)
+        if: github.ref == 'refs/heads/release'
+        run: docker push ghcr.io/suniastar/ms-address:latest
