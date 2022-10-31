@@ -1,4 +1,4 @@
-name: Build and Tests
+name: Build and Deploy Release
 
 on:
   push:
@@ -35,9 +35,9 @@ jobs:
         uses: actions/cache@v3.0.11
         with:
           path: target
-          key: ${{ github.workflow }}-build-${{ github.ref }}
+          key: release-build-${{ github.ref }}
           restore-keys: |
-            ${{ github.workflow }}-build-${{ github.ref }}
+            release-build-${{ github.ref }}
       - name: Set up Java JDK
         uses: actions/setup-java@v3.6.0
         with:
