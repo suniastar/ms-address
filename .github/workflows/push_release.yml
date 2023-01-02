@@ -106,7 +106,7 @@ jobs:
           path: target/dokka
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1.2.2
+        uses: actions/deploy-pages@v1.2.3
 
   image:
     needs: build
