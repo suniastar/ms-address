@@ -46,17 +46,17 @@ jobs:
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots package
       - name: Upload Jar
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: ms-address
           path: target/address-*.jar
       - name: Upload Test Report
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: test-report
           path: target/site/jacoco/
       - name: Upload Documentation
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: documentation
           path: target/dokka/
