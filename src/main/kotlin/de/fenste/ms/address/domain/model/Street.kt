@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Frederik Enste <frederik@fenste.de>.
+ * Copyright (c) 2023 Frederik Enste <frederik@fenste.de>.
  *
  * Licensed under the GNU General Public License, Version 3 (the "License");
  * you may not use this file except in compliance with the License.
