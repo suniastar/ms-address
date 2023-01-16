@@ -25,14 +25,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
       - name: Cache Local Maven Repository
-        uses: actions/cache@v3.2.2
+        uses: actions/cache@v3.2.3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Cache Local Maven Build
-        uses: actions/cache@v3.2.2
+        uses: actions/cache@v3.2.3
         with:
           path: target
           key: release-build-${{ github.ref }}
@@ -115,21 +115,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
       - name: Cache Local Maven Repository
-        uses: actions/cache@v3.2.2
+        uses: actions/cache@v3.2.3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Cache Local Maven Build
-        uses: actions/cache@v3.2.2
+        uses: actions/cache@v3.2.3
         with:
           path: target
           key: ${{ github.workflow }}-build-${{ github.ref }}
           restore-keys: |
             ${{ github.workflow }}-build-${{ github.ref }}
       - name: Cache Local Docker
-        uses: actions/cache@v3.2.2
+        uses: actions/cache@v3.2.3
         with:
           path: /var/lib/docker
           key: ${{ github.workflow }}-docker-${{ github.ref }}
