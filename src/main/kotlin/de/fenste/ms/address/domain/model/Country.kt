@@ -48,6 +48,7 @@ class Country(id: EntityID<UUID>) : UUIDEntity(id) {
                 alpha3 == other.alpha3 &&
                 name == other.name &&
                 localizedName == other.localizedName
+
         else -> false
     }
 

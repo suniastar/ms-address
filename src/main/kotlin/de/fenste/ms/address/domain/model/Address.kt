@@ -39,6 +39,7 @@ class Address(id: EntityID<UUID>) : UUIDEntity(id) {
                 street.id == other.street.id &&
                 houseNumber == other.houseNumber &&
                 extra == other.extra
+
         else -> false
     }
 

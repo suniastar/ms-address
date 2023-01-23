@@ -56,22 +56,26 @@ class CityRepository {
         }
     }
 
+    fun count(): Long = City
+        .all()
+        .count()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CityTable.id to SortOrder.ASC),
-    ): SizedIterable<City> = when {
-        limit != null ->
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<City> = when (size) {
+        null ->
             City
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, CityTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             City
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, CityTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

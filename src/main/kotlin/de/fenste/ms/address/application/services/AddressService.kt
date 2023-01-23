@@ -19,6 +19,8 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.AddressInputDto
 import de.fenste.ms.address.infrastructure.repositories.AddressRepository
+import de.fenste.ms.address.infrastructure.tables.AddressTable
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -28,17 +30,23 @@ import java.util.UUID
 class AddressService(
     @Autowired private val addressRepository: AddressRepository,
 ) {
+
+    fun count(): Long = transaction {
+        addressRepository.count()
+    }
+
     fun list(
-        limit: Int? = null,
-        offset: Long? = null,
-    ): List<AddressDto>? = transaction {
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<AddressDto> = transaction {
         addressRepository
             .list(
-                limit = limit,
-                offset = offset ?: 0L,
+                page = page,
+                size = size,
+                order = arrayOf(AddressTable.id to SortOrder.ASC),
             )
             .map { a -> AddressDto(a) }
-            .ifEmpty { null }
     }
 
     fun find(

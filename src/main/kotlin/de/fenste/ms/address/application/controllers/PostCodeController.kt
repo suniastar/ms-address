@@ -16,12 +16,14 @@
 
 package de.fenste.ms.address.application.controllers
 
+import de.fenste.ms.address.application.controllers.api.PostCodeApi
+import de.fenste.ms.address.application.controllers.graphql.PostCodeGraphql
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.application.services.PostCodeService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.graphql.data.method.annotation.Argument
-import org.springframework.graphql.data.method.annotation.SchemaMapping
+import org.springframework.hateoas.EntityModel
+import org.springframework.hateoas.PagedModel
 import org.springframework.stereotype.Controller
 import java.util.UUID
 
@@ -29,43 +31,111 @@ import java.util.UUID
 @Suppress("unused")
 class PostCodeController(
     @Autowired private val postCodeService: PostCodeService,
-) {
-    @SchemaMapping(field = "postCodes", typeName = "Query")
-    fun postCodes(
-        @Argument limit: Int? = null,
-        @Argument offset: Int? = null,
-    ): List<PostCodeDto>? = postCodeService.list(
-        limit = limit,
-        offset = offset?.toLong(),
-    )
+) : PostCodeApi, PostCodeGraphql {
 
-    @SchemaMapping(field = "postCode", typeName = "Query")
-    fun postCode(
-        @Argument id: UUID,
-    ): PostCodeDto? = postCodeService.find(
+    override fun restGetPostCodes(
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<PostCodeDto> = graphqlGetPostCodes(
+        page = page,
+        size = size,
+        sort = sort,
+    )
+        .let { list ->
+            val e = postCodeService.count()
+            val p = page?.toLong() ?: 0L
+            val s = size?.toLong() ?: e
+            val t = (e + s - 1) / s
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(s, p, e, t),
+                PostCodeApi.generatePageLinks(s, p, t, sort),
+            )
+        }
+
+    override fun graphqlGetPostCodes(
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<PostCodeDto> = postCodeService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
+
+    override fun restGetPostCode(
+        id: UUID,
+    ): EntityModel<PostCodeDto>? = graphqGetlPostCode(
         id = id,
     )
+        ?.let { p -> EntityModel.of(p) }
 
-    @SchemaMapping(field = "createPostCode", typeName = "Mutation")
-    fun createPostCode(
-        @Argument postCode: PostCodeInputDto,
-    ): PostCodeDto = postCodeService.create(
+    override fun graphqGetlPostCode(
+        id: UUID,
+    ): PostCodeDto? = postCodeService
+        .find(
+            id = id,
+        )
+
+    override fun restCreatePostCode(
+        postCode: PostCodeInputDto,
+    ): EntityModel<PostCodeDto> = graphqlCreatePostCode(
         postCode = postCode,
     )
+        .let { p -> EntityModel.of(p) }
 
-    @SchemaMapping(field = "updatePostCode", typeName = "Mutation")
-    fun updatePostCode(
-        @Argument id: UUID,
-        @Argument postCode: PostCodeInputDto,
-    ): PostCodeDto = postCodeService.update(
+    override fun graphqlCreatePostCode(
+        postCode: PostCodeInputDto,
+    ): PostCodeDto = postCodeService
+        .create(
+            postCode = postCode,
+        )
+
+    override fun restUpdatePostCode(
+        id: UUID,
+        postCode: PostCodeInputDto,
+    ): EntityModel<PostCodeDto> = graphqlUpdatePostCode(
         id = id,
         postCode = postCode,
     )
+        .let { p -> EntityModel.of(p) }
 
-    @SchemaMapping(field = "deletePostCode", typeName = "Mutation")
-    fun deletePostCode(
-        @Argument id: UUID,
-    ): Boolean = postCodeService.delete(
+    override fun graphqlUpdatePostCode(
+        id: UUID,
+        postCode: PostCodeInputDto,
+    ): PostCodeDto = postCodeService
+        .update(
+            id = id,
+            postCode = postCode,
+        )
+
+    override fun restDeletePostCode(
+        id: UUID,
+    ): Boolean = graphqlDeletePostCode(
         id = id,
     )
+
+    override fun graphqlDeletePostCode(
+        id: UUID,
+    ): Boolean = postCodeService
+        .delete(
+            id = id,
+        )
+
+    override fun restGetPostCodeCity(
+        id: UUID,
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override fun restGetPostCodeStreets(
+        id: UUID,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ) {
+        TODO("Not yet implemented")
+    }
 }

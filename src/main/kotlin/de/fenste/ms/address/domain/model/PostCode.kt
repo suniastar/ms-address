@@ -39,6 +39,7 @@ class PostCode(id: EntityID<UUID>) : UUIDEntity(id) {
             id == other.id &&
                 city.id == other.city.id &&
                 code == other.code
+
         else -> false
     }
 

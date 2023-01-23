@@ -52,22 +52,26 @@ class StreetRepository {
         }
     }
 
+    fun count(): Long = Street
+        .all()
+        .count()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(StreetTable.id to SortOrder.ASC),
-    ): SizedIterable<Street> = when {
-        limit != null ->
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<Street> = when (size) {
+        null ->
             Street
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, StreetTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             Street
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, StreetTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong())
                 .notForUpdate()
     }
 

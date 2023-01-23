@@ -39,6 +39,7 @@ class State(id: EntityID<UUID>) : UUIDEntity(id) {
             id == other.id &&
                 country.id == other.country.id &&
                 name == other.name
+
         else -> false
     }
 

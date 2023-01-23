@@ -19,6 +19,8 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.infrastructure.repositories.CountryRepository
+import de.fenste.ms.address.infrastructure.tables.CountryTable
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -29,17 +31,22 @@ class CountryService(
     @Autowired private val countryRepository: CountryRepository,
 ) {
 
+    fun count(): Long = transaction {
+        countryRepository.count()
+    }
+
     fun list(
-        limit: Int? = null,
-        offset: Long? = null,
-    ): List<CountryDto>? = transaction {
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<CountryDto> = transaction {
         countryRepository
             .list(
-                limit = limit,
-                offset = offset ?: 0L,
+                page = page,
+                size = size,
+                order = arrayOf(CountryTable.id to SortOrder.ASC),
             )
             .map { c -> CountryDto(c) }
-            .ifEmpty { null }
     }
 
     fun find(

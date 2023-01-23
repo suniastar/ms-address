@@ -21,7 +21,7 @@
 
     <groupId>de.fenste.ms</groupId>
     <artifactId>address</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.2.0</version>
     <name>ms-address</name>
     <description>Address Management System</description>
     <packaging>jar</packaging>
@@ -37,6 +37,7 @@
         <java.version>17</java.version>
         <kotlin.version>1.8.0</kotlin.version>
         <exposed.version>0.41.1</exposed.version>
+        <swagger.version>3.0.0</swagger.version>
         <ktlint.version>1.15.2</ktlint.version>
         <detekt.version>1.22.0</detekt.version>
         <dokka.version>1.7.20</dokka.version>
@@ -77,9 +78,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
+            <artifactId>spring-boot-starter-hateoas</artifactId>
         </dependency>
 
         <!-- exposed and dbs -->
@@ -110,6 +109,12 @@
         </dependency>
 
         <!-- test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit5</artifactId>

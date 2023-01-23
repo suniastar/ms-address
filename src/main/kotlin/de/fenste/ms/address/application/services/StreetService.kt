@@ -19,6 +19,8 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.infrastructure.repositories.StreetRepository
+import de.fenste.ms.address.infrastructure.tables.StreetTable
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -28,17 +30,23 @@ import java.util.UUID
 class StreetService(
     @Autowired private val streetRepository: StreetRepository,
 ) {
+
+    fun count(): Long = transaction {
+        streetRepository.count()
+    }
+
     fun list(
-        limit: Int? = null,
-        offset: Long? = null,
-    ): List<StreetDto>? = transaction {
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<StreetDto> = transaction {
         streetRepository
             .list(
-                limit = limit,
-                offset = offset ?: 0L,
+                page = page,
+                size = size,
+                order = arrayOf(StreetTable.id to SortOrder.ASC),
             )
             .map { s -> StreetDto(s) }
-            .ifEmpty { null }
     }
 
     fun find(

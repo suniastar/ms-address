@@ -16,56 +16,127 @@
 
 package de.fenste.ms.address.application.controllers
 
+import de.fenste.ms.address.application.controllers.api.StreetApi
+import de.fenste.ms.address.application.controllers.graphql.StreetGraphql
+import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.application.services.StreetService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.graphql.data.method.annotation.Argument
-import org.springframework.graphql.data.method.annotation.SchemaMapping
+import org.springframework.hateoas.EntityModel
+import org.springframework.hateoas.PagedModel
 import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
-@Suppress("unused")
 class StreetController(
     @Autowired private val streetService: StreetService,
-) {
-    @SchemaMapping(field = "streets", typeName = "Query")
-    fun streets(
-        @Argument limit: Int? = null,
-        @Argument offset: Int? = null,
-    ): List<StreetDto>? = streetService.list(
-        limit = limit,
-        offset = offset?.toLong(),
-    )
+) : StreetApi, StreetGraphql {
 
-    @SchemaMapping(field = "street", typeName = "Query")
-    fun street(
-        @Argument id: UUID,
-    ): StreetDto? = streetService.find(
+    override fun restGetStreets(
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<StreetDto> = graphqlGetStreets(
+        page = page,
+        size = size,
+        sort = sort,
+    )
+        .let { list ->
+            val e = streetService.count()
+            val p = page?.toLong() ?: 0L
+            val s = size?.toLong() ?: e
+            val t = (e + s - 1) / s
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(s, p, e, t),
+                StreetApi.generatePageLinks(s, p, t, sort),
+            )
+        }
+
+    override fun graphqlGetStreets(
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<StreetDto> = streetService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
+
+    override fun restGetStreet(
+        id: UUID,
+    ): EntityModel<StreetDto>? = graphqlGetStreet(
         id = id,
     )
+        ?.let { s -> EntityModel.of(s) }
 
-    @SchemaMapping(field = "createStreet", typeName = "Mutation")
-    fun createStreet(
-        @Argument street: StreetInputDto,
-    ): StreetDto = streetService.create(
+    override fun graphqlGetStreet(
+        id: UUID,
+    ): StreetDto? = streetService
+        .find(
+            id = id,
+        )
+
+    override fun restCreateStreet(
+        street: StreetInputDto,
+    ): EntityModel<StreetDto> = graphqlCreateStreet(
         street = street,
     )
+        .let { s -> EntityModel.of(s) }
 
-    @SchemaMapping(field = "updateStreet", typeName = "Mutation")
-    fun updateStreet(
-        @Argument id: UUID,
-        @Argument street: StreetInputDto,
-    ): StreetDto = streetService.update(
+    override fun graphqlCreateStreet(
+        street: StreetInputDto,
+    ): StreetDto = streetService
+        .create(
+            street = street,
+        )
+
+    override fun restUpdateStreet(
+        id: UUID,
+        street: StreetInputDto,
+    ): EntityModel<StreetDto> = graphqlUpdateStreet(
         id = id,
         street = street,
     )
+        .let { s -> EntityModel.of(s) }
 
-    @SchemaMapping(field = "deleteStreet", typeName = "Mutation")
-    fun deleteStreet(
-        @Argument id: UUID,
-    ): Boolean = streetService.delete(
+    override fun graphqlUpdateStreet(
+        id: UUID,
+        street: StreetInputDto,
+    ): StreetDto = streetService
+        .update(
+            id = id,
+            street = street,
+        )
+
+    override fun restDeleteStreet(
+        id: UUID,
+    ): Boolean = graphqlDeleteStreet(
         id = id,
     )
+
+    override fun graphqlDeleteStreet(
+        id: UUID,
+    ): Boolean = streetService
+        .delete(
+            id = id,
+        )
+
+    override fun restGetStreetPostCode(
+        id: UUID,
+    ): EntityModel<PostCodeDto> {
+        TODO("Not yet implemented")
+    }
+
+    override fun restGetStreetAddresses(
+        id: UUID,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<AddressDto> {
+        TODO("Not yet implemented")
+    }
 }

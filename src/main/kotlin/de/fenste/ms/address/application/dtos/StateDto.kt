@@ -16,8 +16,11 @@
 
 package de.fenste.ms.address.application.dtos
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import de.fenste.ms.address.application.controllers.api.StateApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.State
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
 
 data class StateInputDto(
@@ -25,7 +28,9 @@ data class StateInputDto(
     val country: UUID,
 )
 
-data class StateDto(private val state: State) {
+data class StateDto(
+    private val state: State,
+) : RepresentationModel<StateDto>(generateEntityLinks(state.id.value)) {
 
     val id: UUID
         get() = state.id.value
@@ -33,9 +38,11 @@ data class StateDto(private val state: State) {
     val name: String
         get() = state.name
 
+    @get:JsonIgnore
     val country: CountryDto
         get() = transaction { CountryDto(state.country) }
 
-    val cities: List<CityDto>?
-        get() = transaction { state.cities.map { c -> CityDto(c) }.ifEmpty { null } }
+    @get:JsonIgnore
+    val cities: List<CityDto>
+        get() = transaction { state.cities.map { c -> CityDto(c) } }
 }

@@ -52,22 +52,26 @@ class StateRepository {
         }
     }
 
+    fun count(): Long = State
+        .all()
+        .count()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(StateTable.id to SortOrder.ASC),
-    ): SizedIterable<State> = when (limit) {
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<State> = when (size) {
         null ->
             State
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, StateTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             State
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, StateTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

@@ -16,8 +16,11 @@
 
 package de.fenste.ms.address.application.dtos
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import de.fenste.ms.address.application.controllers.api.StreetApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.Street
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
 
 data class StreetInputDto(
@@ -25,7 +28,9 @@ data class StreetInputDto(
     val postCode: UUID,
 )
 
-data class StreetDto(private val street: Street) {
+data class StreetDto(
+    private val street: Street,
+) : RepresentationModel<StreetDto>(generateEntityLinks(street.id.value)) {
 
     val id: UUID
         get() = street.id.value
@@ -33,9 +38,11 @@ data class StreetDto(private val street: Street) {
     val name: String
         get() = street.name
 
+    @get:JsonIgnore
     val postCode: PostCodeDto
         get() = transaction { PostCodeDto(street.postCode) }
 
+    @get:JsonIgnore
     val addresses: List<AddressDto>?
         get() = transaction { street.addresses.map { a -> AddressDto(a) }.ifEmpty { null } }
 }

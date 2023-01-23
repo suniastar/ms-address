@@ -39,6 +39,7 @@ class Street(id: EntityID<UUID>) : UUIDEntity(id) {
             id == other.id &&
                 postCode.id == other.postCode.id &&
                 name == other.name
+
         else -> false
     }
 

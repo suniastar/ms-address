@@ -33,6 +33,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import java.util.UUID
 
 @Configuration
 @Profile("sample")
@@ -47,154 +48,154 @@ class SampleDataConfig : InitializingBean {
         StateTable.deleteAll()
         CountryTable.deleteAll()
 
-        val cGermany = Country.new {
+        val cGermany = Country.new(UUID.fromString("12345678-1234-1234-1234-000000000000")) {
             alpha2 = "DE"
             alpha3 = "DEU"
             name = "Germany"
             localizedName = "Deutschland"
         }
-        val cFrance = Country.new {
+        val cFrance = Country.new(UUID.fromString("12345678-1234-1234-1234-000000000001")) {
             alpha2 = "FR"
             alpha3 = "FRA"
             name = "France"
             localizedName = "Frankreich"
         }
-        val cGB = Country.new {
+        val cGB = Country.new(UUID.fromString("12345678-1234-1234-1234-000000000002")) {
             alpha2 = "GB"
             alpha3 = "GBR"
             name = "United Kingdom of Great Britain and Northern Ireland"
             localizedName = "Großbritannien und Nordirland"
         }
 
-        val sBerlin = State.new {
+        val sBerlin = State.new(UUID.fromString("12345678-1234-1234-1234-000000000000")) {
             name = "Berlin"
             country = cGermany
         }
-        val sBadenWuerttemberg = State.new {
+        val sBadenWuerttemberg = State.new(UUID.fromString("12345678-1234-1234-1234-000000000001")) {
             name = "Baden-Württemberg"
             country = cGermany
         }
-        val sIleDeFrance = State.new {
+        val sIleDeFrance = State.new(UUID.fromString("12345678-1234-1234-1234-000000000002")) {
             name = "Ile-de-France"
             country = cFrance
         }
 
-        val cBerlin = City.new {
+        val cBerlin = City.new(UUID.fromString("12345678-1234-1234-1234-000000000000")) {
             name = "Berlin"
             country = cGermany
             state = sBerlin
         }
-        val cSpandau = City.new {
+        val cSpandau = City.new(UUID.fromString("12345678-1234-1234-1234-000000000001")) {
             name = "Berlin-Spandau"
             country = cGermany
             state = sBerlin
         }
-        val cKarlsruhe = City.new {
+        val cKarlsruhe = City.new(UUID.fromString("12345678-1234-1234-1234-000000000002")) {
             name = "Karlsruhe"
             country = cGermany
             state = sBadenWuerttemberg
         }
-        val cParis = City.new {
+        val cParis = City.new(UUID.fromString("12345678-1234-1234-1234-000000000003")) {
             name = "Paris"
             country = cFrance
             state = sIleDeFrance
         }
-        val cBirmingham = City.new {
+        val cBirmingham = City.new(UUID.fromString("12345678-1234-1234-1234-000000000004")) {
             name = "Birmingham"
             country = cGB
             state = null
         }
 
-        val p10557 = PostCode.new {
+        val p10557 = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000000000")) {
             code = "10557"
             city = cBerlin
         }
-        val p10117 = PostCode.new {
+        val p10117 = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000000001")) {
             code = "10117"
             city = cBerlin
         }
-        val p13597 = PostCode.new {
+        val p13597 = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000000002")) {
             code = "13597"
             city = cSpandau
         }
-        val p76131 = PostCode.new {
+        val p76131 = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000000003")) {
             code = "76131"
             city = cKarlsruhe
         }
-        val p75007 = PostCode.new {
+        val p75007 = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000000004")) {
             code = "75007"
             city = cParis
         }
-        val pB100RJ = PostCode.new {
+        val pB100RJ = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000000005")) {
             code = "B10 0RJ"
             city = cBirmingham
         }
 
-        val sPlatzDerRepublik = Street.new {
+        val sPlatzDerRepublik = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000000")) {
             name = "Platz der Republik"
             postCode = p10557
         }
-        val sWillyBrandtStrasse = Street.new {
+        val sWillyBrandtStrasse = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000001")) {
             name = "Willy-Brandt-Straße"
             postCode = p10557
         }
-        val sFriedrichEbertPlatz = Street.new {
+        val sFriedrichEbertPlatz = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000002")) {
             name = "Friedrich-Ebert-Platz"
             postCode = p10117
         }
-        val sBreiteStrasse = Street.new {
+        val sBreiteStrasse = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000003")) {
             name = "Breite Str."
             postCode = p13597
         }
-        val sAmFasanengarten = Street.new {
+        val sAmFasanengarten = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000004")) {
             name = "Am Fasanengarten"
             postCode = p76131
         }
-        val sAnatoleFrance = Street.new {
+        val sAnatoleFrance = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000005")) {
             name = "Anatole France"
             postCode = p75007
         }
-        val sCoventryRoad = Street.new {
+        val sCoventryRoad = Street.new(UUID.fromString("12345678-1234-1234-1234-000000000006")) {
             name = "Coventry Rd"
             postCode = pB100RJ
         }
 
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000000")) {
             houseNumber = "1"
             extra = null
             street = sPlatzDerRepublik
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000001")) {
             houseNumber = "2a"
             extra = null
             street = sPlatzDerRepublik
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000002")) {
             houseNumber = "1"
             extra = null
             street = sWillyBrandtStrasse
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000003")) {
             houseNumber = "2"
             extra = null
             street = sFriedrichEbertPlatz
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000004")) {
             houseNumber = "25"
             extra = null
             street = sBreiteStrasse
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000005")) {
             houseNumber = "5"
             extra = null
             street = sAmFasanengarten
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000006")) {
             houseNumber = "5"
             extra = "Av."
             street = sAnatoleFrance
         }
-        Address.new {
+        Address.new(UUID.fromString("12345678-1234-1234-1234-000000000007")) {
             houseNumber = "109"
             extra = null
             street = sCoventryRoad

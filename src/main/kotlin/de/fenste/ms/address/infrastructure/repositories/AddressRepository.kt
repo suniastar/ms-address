@@ -54,22 +54,26 @@ class AddressRepository {
         }
     }
 
+    fun count(): Long = Address
+        .all()
+        .count()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(AddressTable.id to SortOrder.ASC),
-    ): SizedIterable<Address> = when {
-        limit != null ->
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(),
+    ): SizedIterable<Address> = when (size) {
+        null ->
             Address
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, AddressTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             Address
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, AddressTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong())
                 .notForUpdate()
     }
 
