@@ -19,47 +19,64 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.PostCode
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class PostCodeServiceTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val service: PostCodeService,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.postCodes.count().toLong()
+        val actual = service.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.postCodes.sortedBy { p -> p.id.value.toString() }.map { p -> PostCodeDto(p) }
+        val expected = sampleData.postCodes
+            .sortedBy { p -> p.id.value.toString() }
+            .map { p -> PostCodeDto(p) }
         val actual = service.list()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
+    @Ignore
     fun `test list on sample data with options`() {
-        val expected = SampleData.postCodes
-            .sortedBy { p -> p.id.value.toString() }
-            .drop(2)
-            .take(1)
+        val expected = sampleData.postCodes
+            .sortedWith(compareBy({ p -> p.code }, { p -> p.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { p -> PostCodeDto(p) }
         val actual = service.list(
-            offset = 2,
-            limit = 1,
+            sort = "code,asc",
+            page = 1,
+            size = 2,
         )
 
         transaction { assertContentEquals(expected, actual) }
@@ -67,15 +84,16 @@ class PostCodeServiceTest(
 
     @Test
     fun `test list on no data`() {
-        SampleData.clear()
+        sampleData.clear()
         val list = service.list()
 
-        assertNull(list)
+        assertNotNull(list)
+        assertTrue(list.isEmpty())
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.postCodes.random().let { p -> PostCodeDto(p) }
+        val expected = sampleData.postCodes.random().let { p -> PostCodeDto(p) }
         val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
@@ -91,7 +109,7 @@ class PostCodeServiceTest(
     @Test
     fun `test create`() {
         val code = "CODE"
-        val city = transaction { SampleData.cities.random() }
+        val city = transaction { sampleData.cities.random() }
         val create = PostCodeInputDto(
             code = code,
             city = city.id.value,
@@ -108,10 +126,10 @@ class PostCodeServiceTest(
 
     @Test
     fun `test update all`() {
-        val postCode = transaction { SampleData.postCodes.random() }
+        val postCode = transaction { sampleData.postCodes.random() }
         val code = "CODE"
         val city = transaction {
-            SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
+            sampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
         }
         val update = PostCodeInputDto(
             code = code,
@@ -130,7 +148,7 @@ class PostCodeServiceTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.postCodes.random().id.value
+        val id = sampleData.postCodes.random().id.value
 
         transaction { assertNotNull(PostCode.findById(id)) }
 

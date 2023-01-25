@@ -47,7 +47,10 @@ interface CityApi {
             PageHelper.generatePageLinks("$BASE_URI/api/city", size, page, total, sort)
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("${BASE_URI}/api/city/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/city/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/city/$id/country").withRel("country"),
+            Link.of("$BASE_URI/api/city/$id/state").withRel("state"),
+            Link.of("$BASE_URI/api/city/$id/postcodes").withRel("postcodes"),
         )
     }
 

@@ -46,7 +46,9 @@ interface StreetApi {
             PageHelper.generatePageLinks("$BASE_URI/api/street", size, page, total, sort)
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("${BASE_URI}/api/street/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/street/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/street/$id/postcode").withRel("postcode"),
+            Link.of("$BASE_URI/api/street/$id/addresses").withRel("addresses"),
         )
     }
 

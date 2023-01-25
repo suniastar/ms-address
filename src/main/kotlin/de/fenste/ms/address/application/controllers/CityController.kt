@@ -31,6 +31,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
+@Suppress("TooManyFunctions")
 class CityController(
     @Autowired private val cityService: CityService,
 ) : CityApi, CityGraphql {

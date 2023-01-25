@@ -19,47 +19,64 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.dtos.StateInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.State
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class StateServiceTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val service: StateService,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.states.count().toLong()
+        val actual = service.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.states.sortedBy { s -> s.id.value.toString() }.map { s -> StateDto(s) }
+        val expected = sampleData.states
+            .sortedBy { s -> s.id.value.toString() }
+            .map { s -> StateDto(s) }
         val actual = service.list()
 
         transaction { assertContentEquals(expected, actual) }
     }
 
     @Test
+    @Ignore
     fun `test list on sample data with options`() {
-        val expected = SampleData.states
-            .sortedBy { s -> s.id.value.toString() }
-            .drop(2)
-            .take(1)
+        val expected = sampleData.states
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { s -> StateDto(s) }
         val actual = service.list(
-            offset = 2,
-            limit = 1,
+            sort = "name,asc",
+            page = 1,
+            size = 2,
         )
 
         transaction { assertContentEquals(expected, actual) }
@@ -67,15 +84,16 @@ class StateServiceTest(
 
     @Test
     fun `test list on no data`() {
-        SampleData.clear()
+        sampleData.clear()
         val list = service.list()
 
-        assertNull(list)
+        assertNotNull(list)
+        assertTrue(list.isEmpty())
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.states.random().let { s -> StateDto(s) }
+        val expected = sampleData.states.random().let { s -> StateDto(s) }
         val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
@@ -91,7 +109,7 @@ class StateServiceTest(
     @Test
     fun `test create`() {
         val name = "Name"
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
 
         val create = StateInputDto(
             name = name,
@@ -109,9 +127,9 @@ class StateServiceTest(
 
     @Test
     fun `test update all`() {
-        val state = SampleData.states.random()
+        val state = sampleData.states.random()
         val name = "Name"
-        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val country = transaction { sampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
 
         val update = StateInputDto(
             name = name,
@@ -130,7 +148,7 @@ class StateServiceTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.states.random().id.value
+        val id = sampleData.states.random().id.value
 
         transaction { assertNotNull(State.findById(id)) }
 

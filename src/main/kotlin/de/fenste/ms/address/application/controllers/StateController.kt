@@ -30,6 +30,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
+@Suppress("TooManyFunctions")
 class StateController(
     @Autowired private val stateService: StateService,
 ) : StateApi, StateGraphql {

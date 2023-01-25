@@ -16,55 +16,62 @@
 
 package de.fenste.ms.address.domain.model
 
-import de.fenste.ms.address.test.SampleData
+import de.fenste.ms.address.config.SampleDataConfig
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class StreetTest {
+@SpringBootTest
+@ActiveProfiles("sample")
+class StreetTest(
+    @Autowired private val sampleData: SampleDataConfig,
+) {
     private lateinit var copy: Street
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
 
         copy = transaction {
-            Street.findById(SampleData.streets[0].id)!!
+            Street.findById(sampleData.streets[0].id)!!
         }
     }
 
     @Test
     fun `test equals`(): Unit = transaction {
-        assertEquals(SampleData.streets[0], SampleData.streets[0])
+        assertEquals(sampleData.streets[0], sampleData.streets[0])
         assertEquals(copy, copy)
-        assertEquals(SampleData.streets[0], copy)
-        assertEquals(copy, SampleData.streets[0])
+        assertEquals(sampleData.streets[0], copy)
+        assertEquals(copy, sampleData.streets[0])
 
-        assertNotEquals(SampleData.streets[0], SampleData.streets[1])
-        assertNotEquals(copy, SampleData.streets[1])
-        assertNotEquals(SampleData.streets[1], SampleData.streets[0])
-        assertNotEquals(SampleData.streets[1], copy)
+        assertNotEquals(sampleData.streets[0], sampleData.streets[1])
+        assertNotEquals(copy, sampleData.streets[1])
+        assertNotEquals(sampleData.streets[1], sampleData.streets[0])
+        assertNotEquals(sampleData.streets[1], copy)
 
         assertNotEquals<Street?>(copy, null)
-        assertNotEquals<Street?>(null, SampleData.streets[0])
+        assertNotEquals<Street?>(null, sampleData.streets[0])
     }
 
     @Test
     fun `test hashCode`(): Unit = transaction {
-        assertEquals(SampleData.streets[0].hashCode(), SampleData.streets[0].hashCode())
+        assertEquals(sampleData.streets[0].hashCode(), sampleData.streets[0].hashCode())
         assertEquals(copy.hashCode(), copy.hashCode())
-        assertEquals(SampleData.streets[0].hashCode(), copy.hashCode())
-        assertEquals(copy.hashCode(), SampleData.streets[0].hashCode())
+        assertEquals(sampleData.streets[0].hashCode(), copy.hashCode())
+        assertEquals(copy.hashCode(), sampleData.streets[0].hashCode())
 
-        assertNotEquals(SampleData.streets[0].hashCode(), SampleData.streets[1].hashCode())
-        assertNotEquals(copy.hashCode(), SampleData.streets[1].hashCode())
-        assertNotEquals(SampleData.streets[1].hashCode(), SampleData.streets[0].hashCode())
-        assertNotEquals(SampleData.streets[1].hashCode(), copy.hashCode())
+        assertNotEquals(sampleData.streets[0].hashCode(), sampleData.streets[1].hashCode())
+        assertNotEquals(copy.hashCode(), sampleData.streets[1].hashCode())
+        assertNotEquals(sampleData.streets[1].hashCode(), sampleData.streets[0].hashCode())
+        assertNotEquals(sampleData.streets[1].hashCode(), copy.hashCode())
 
         assertNotEquals(copy.hashCode(), null.hashCode())
-        assertNotEquals(null.hashCode(), SampleData.streets[0].hashCode())
+        assertNotEquals(null.hashCode(), sampleData.streets[0].hashCode())
     }
 
     @Test
@@ -72,7 +79,7 @@ class StreetTest {
         val cId = copy.id
         val pId = copy.postCode.id
         val cExpected = "Street(id='$cId', postCode='$pId', name='Platz der Republik')"
-        val cActual = SampleData.streets[0].toString()
+        val cActual = sampleData.streets[0].toString()
         assertEquals(cExpected, cActual)
     }
 }

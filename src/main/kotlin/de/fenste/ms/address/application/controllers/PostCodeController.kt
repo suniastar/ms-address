@@ -28,7 +28,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
-@Suppress("unused")
+@Suppress("TooManyFunctions")
 class PostCodeController(
     @Autowired private val postCodeService: PostCodeService,
 ) : PostCodeApi, PostCodeGraphql {

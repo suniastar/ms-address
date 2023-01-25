@@ -47,6 +47,8 @@ interface StateApi {
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
             Link.of("$BASE_URI/api/state/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/state/$id/country").withRel("country"),
+            Link.of("$BASE_URI/api/state/$id/cities").withRel("cities"),
         )
     }
 

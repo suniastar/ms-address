@@ -73,7 +73,7 @@ class AddressRepository {
             Address
                 .all()
                 .orderBy(*order, AddressTable.id to SortOrder.ASC)
-                .limit(size, (page ?: 0).toLong())
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

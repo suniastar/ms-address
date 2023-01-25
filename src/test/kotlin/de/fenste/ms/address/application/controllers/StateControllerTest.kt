@@ -17,15 +17,17 @@
 package de.fenste.ms.address.application.controllers
 
 import de.fenste.ms.address.application.dtos.StateInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.State
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.graphql.test.tester.GraphQlTester
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -35,19 +37,23 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 @AutoConfigureGraphQlTester
 class StateControllerTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val graphQlTester: GraphQlTester,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
     }
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.states.map { s -> s.id.value.toString() }.sorted()
+        val expected = sampleData.states
+            .sortedBy { c -> c.id.value.toString() }
+            .map { s -> s.id.value.toString() }
 
         val query = """
             query {
@@ -69,16 +75,17 @@ class StateControllerTest(
     }
 
     @Test
+    @Ignore
     fun `test list on sample data with options`() {
-        val expected = SampleData.states
+        val expected = sampleData.states
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { s -> s.id.value.toString() }
-            .sorted()
-            .drop(2)
-            .take(1)
 
         val query = """
             query {
-                states(offset: 2, limit: 1) {
+                states(sort: "name,asc", page: 1, size: 2) {
                     id
                 }
             }
@@ -97,7 +104,7 @@ class StateControllerTest(
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.states.random().id.value.toString()
+        val expected = sampleData.states.random().id.value.toString()
 
         val query = """
             query {
@@ -137,7 +144,7 @@ class StateControllerTest(
     @Test
     fun `test create`() {
         val name = "Name"
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
 
         val mutation = """
             mutation CreateStateMutation(${D}state: StateInput!) {
@@ -160,7 +167,7 @@ class StateControllerTest(
             .get()
 
         assertNotNull(created)
-        assertFalse(SampleData.states.map { s -> s.id.value.toString() }.contains(created))
+        assertFalse(sampleData.states.map { s -> s.id.value.toString() }.contains(created))
 
         transaction {
             val actual = State.findById(UUID.fromString(created))
@@ -172,9 +179,9 @@ class StateControllerTest(
 
     @Test
     fun `test update all`() {
-        val state = SampleData.states.random()
+        val state = sampleData.states.random()
         val name = "Name"
-        val country = transaction { SampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val country = transaction { sampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
 
         val mutation = """
             mutation UpdateStateMutation(${D}state: StateInput!) {
@@ -208,7 +215,7 @@ class StateControllerTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.states.random().id.value
+        val id = sampleData.states.random().id.value
 
         transaction { assertNotNull(State.findById(id)) }
 

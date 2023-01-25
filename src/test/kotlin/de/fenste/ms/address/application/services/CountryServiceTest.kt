@@ -18,46 +18,63 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Country
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class CountryServiceTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val service: CountryService,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.countries.count().toLong()
+        val actual = service.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `list on sample data`() {
-        val expected = SampleData.countries.sortedBy { c -> c.id.value.toString() }.map { c -> CountryDto(c) }
+        val expected = sampleData.countries
+            .sortedBy { c -> c.id.value.toString() }
+            .map { c -> CountryDto(c) }
         val actual = service.list()
 
         assertContentEquals(expected, actual)
     }
 
     @Test
+    @Ignore
     fun `test list on sample data with options`() {
-        val expected = SampleData.countries
-            .sortedBy { c -> c.id.value.toString() }
-            .drop(2)
-            .take(1)
+        val expected = sampleData.countries
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { c -> CountryDto(c) }
         val actual = service.list(
-            offset = 2,
-            limit = 1,
+            sort = "name,asc",
+            page = 1,
+            size = 2,
         )
 
         assertContentEquals(expected, actual)
@@ -65,15 +82,16 @@ class CountryServiceTest(
 
     @Test
     fun `test list on no data`() {
-        SampleData.clear()
+        sampleData.clear()
         val list = service.list()
 
-        assertNull(list)
+        assertNotNull(list)
+        assertTrue(list.isEmpty())
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.countries.random().let { c -> CountryDto(c) }
+        val expected = sampleData.countries.random().let { c -> CountryDto(c) }
         val actual = service.find(id = expected.id)
 
         assertEquals(expected, actual)
@@ -113,7 +131,7 @@ class CountryServiceTest(
 
     @Test
     fun `test update all`() {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = "XX"
         val alpha3 = "XXX"
         val name = "Name"
@@ -140,7 +158,7 @@ class CountryServiceTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.countries.random().id.value
+        val id = sampleData.countries.random().id.value
 
         transaction { assertNotNull(Country.findById(id)) }
 

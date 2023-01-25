@@ -16,14 +16,15 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.infrastructure.tables.CityTable
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -35,33 +36,57 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class CityRepositoryTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val repository: CityRepository,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.cities.count().toLong()
+        val actual = repository.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`(): Unit = transaction {
-        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }
+        val expected = sampleData.cities
+            .sortedBy { c -> c.id.value.toString() }
         val actual = repository.list()
 
         assertContentEquals(expected, actual)
     }
 
     @Test
-    fun `test list on sample data with options`(): Unit = transaction {
-        val expected = SampleData.cities
-            .sortedBy { c -> c.name }
-            .drop(2)
-            .take(1)
+    fun `test list on sample data with size`(): Unit = transaction {
+        val expected = sampleData.cities
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .take(2)
         val actual = repository.list(
             order = arrayOf(CityTable.name to SortOrder.ASC),
-            offset = 2,
-            limit = 1,
+            size = 2,
+        )
+
+        assertContentEquals(expected, actual)
+    }
+
+    @Test
+    fun `test list on sample data with options`(): Unit = transaction {
+        val expected = sampleData.cities
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
+        val actual = repository.list(
+            order = arrayOf(CityTable.name to SortOrder.ASC),
+            page = 1,
+            size = 2,
         )
 
         assertContentEquals(expected, actual)
@@ -69,7 +94,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test list on no data`(): Unit = transaction {
-        SampleData.clear()
+        sampleData.clear()
         val list = repository.list()
 
         assertTrue(list.empty())
@@ -77,7 +102,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test find by id on sample data`(): Unit = transaction {
-        val expected = SampleData.cities.random()
+        val expected = sampleData.cities.random()
         val actual = repository.find(id = expected.id.value)
 
         assertEquals(expected, actual)
@@ -85,7 +110,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test find by id on no data`(): Unit = transaction {
-        SampleData.clear()
+        sampleData.clear()
         val actual = repository.find(id = UUID.randomUUID())
 
         assertNull(actual)
@@ -101,7 +126,7 @@ class CityRepositoryTest(
     @Test
     fun `test create`(): Unit = transaction {
         val name = "Name"
-        val country = SampleData.countries.filter { c -> c.states.empty() }.random()
+        val country = sampleData.countries.filter { c -> c.states.empty() }.random()
 
         val actual = repository.create(
             name = name,
@@ -118,7 +143,7 @@ class CityRepositoryTest(
     @Test
     fun `test create all`(): Unit = transaction {
         val name = "Name"
-        val country = SampleData.countries.filterNot { c -> c.states.empty() }.random()
+        val country = sampleData.countries.filterNot { c -> c.states.empty() }.random()
         val state = country.states.toList().random()
 
         val actual = repository.create(
@@ -135,7 +160,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test create existing`(): Unit = transaction {
-        val country = SampleData.countries.filterNot { c -> c.states.empty() }.random()
+        val country = sampleData.countries.filterNot { c -> c.states.empty() }.random()
         val state = country.states.toList().random()
         val name = state.cities.first().name
 
@@ -151,8 +176,8 @@ class CityRepositoryTest(
     @Test
     fun `test create state does not belong to country`(): Unit = transaction {
         val name = "Name"
-        val country = SampleData.countries.random()
-        val state = SampleData.states.filterNot { s -> country.states.contains(s) }.random()
+        val country = sampleData.countries.random()
+        val state = sampleData.states.filterNot { s -> country.states.contains(s) }.random()
 
         assertFailsWith<IllegalArgumentException> {
             repository.create(
@@ -180,7 +205,7 @@ class CityRepositoryTest(
     @Test
     fun `test create non existing state`(): Unit = transaction {
         val name = "Name"
-        val countryId = SampleData.countries.random().id.value
+        val countryId = sampleData.countries.random().id.value
         val stateId = UUID.randomUUID()
 
         assertFailsWith<IllegalArgumentException> {
@@ -194,7 +219,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update name`(): Unit = transaction {
-        val city = SampleData.cities.random()
+        val city = sampleData.cities.random()
         val name = "Name"
         val country = city.country
         val state = city.state
@@ -212,7 +237,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country`(): Unit = transaction {
-        val city = SampleData.cities.filter { c -> c.country.states.empty() }.random()
+        val city = sampleData.cities.filter { c -> c.country.states.empty() }.random()
         val name = city.name
         val country = Country.new {
             this.alpha2 = "XX"
@@ -234,7 +259,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update state`(): Unit = transaction {
-        val city = SampleData.cities.filter { c -> c.country.states.count() >= 2 }.random()
+        val city = sampleData.cities.filter { c -> c.country.states.count() >= 2 }.random()
         val name = city.name
         val country = city.country
         val state = city.country.states.filterNot { s -> s == city.state }.random()
@@ -253,7 +278,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update remove state`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = sampleData.cities.filterNot { c -> c.state == null }.random()
         val name = city.name
         val country = city.country
 
@@ -270,9 +295,9 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country and state`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = sampleData.cities.filterNot { c -> c.state == null }.random()
         val name = city.name
-        val country = SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
+        val country = sampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         val state = country.states.toList().random()
 
         val actual = repository.update(
@@ -290,9 +315,9 @@ class CityRepositoryTest(
 
     @Test
     fun `test update all`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = sampleData.cities.filterNot { c -> c.state == null }.random()
         val name = "Name"
-        val country = SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
+        val country = sampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         val state = country.states.toList().random()
 
         val actual = repository.update(
@@ -311,9 +336,9 @@ class CityRepositoryTest(
 
     @Test
     fun `test update all remove state`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = sampleData.cities.filterNot { c -> c.state == null }.random()
         val name = "Name"
-        val country = SampleData.countries.filterNot { c -> c != city.country && c.states.empty() }.random()
+        val country = sampleData.countries.filterNot { c -> c != city.country && c.states.empty() }.random()
 
         val actual = repository.update(
             id = city.id.value,
@@ -330,7 +355,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update all to same`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = sampleData.cities.filterNot { c -> c.state == null }.random()
         val name = city.name
         val country = city.country
         val state = city.state
@@ -368,7 +393,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update name to existing`(): Unit = transaction {
-        val city = SampleData.cities.filter { c -> (c.state?.cities?.count() ?: 0) >= 2 }.random()
+        val city = sampleData.cities.filter { c -> (c.state?.cities?.count() ?: 0) >= 2 }.random()
         val name = city.state!!.cities.filterNot { c -> c == city }.random().name
         val country = city.country
         val state = city.state
@@ -385,7 +410,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country to not existing`(): Unit = transaction {
-        val city = SampleData.cities.first()
+        val city = sampleData.cities.first()
         val name = city.name
         val countryId = UUID.randomUUID()
         val state = city.state
@@ -402,7 +427,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test update state to not existing`(): Unit = transaction {
-        val city = SampleData.cities.first()
+        val city = sampleData.cities.first()
         val name = city.name
         val country = city.country
         val stateId = UUID.randomUUID()
@@ -419,9 +444,9 @@ class CityRepositoryTest(
 
     @Test
     fun `test update country where state does not belong to country`(): Unit = transaction {
-        val city = SampleData.cities.filterNot { c -> c.state == null }.random()
+        val city = sampleData.cities.filterNot { c -> c.state == null }.random()
         val name = city.name
-        val country = SampleData.countries.filterNot { c -> c == city.country }.random()
+        val country = sampleData.countries.filterNot { c -> c == city.country }.random()
         val state = city.state
 
         assertFailsWith<IllegalArgumentException> {
@@ -436,10 +461,10 @@ class CityRepositoryTest(
 
     @Test
     fun `test update state where state does not belong to country`(): Unit = transaction {
-        val city = SampleData.cities.random()
+        val city = sampleData.cities.random()
         val name = city.name
         val country = city.country
-        val state = SampleData.states.filterNot { s -> s.country == city.country || s == city.state }.random()
+        val state = sampleData.states.filterNot { s -> s.country == city.country || s == city.state }.random()
 
         assertFailsWith<IllegalArgumentException> {
             repository.update(
@@ -453,7 +478,7 @@ class CityRepositoryTest(
 
     @Test
     fun `test delete`(): Unit = transaction {
-        val id = SampleData.cities.random().id.value
+        val id = sampleData.cities.random().id.value
 
         assertNotNull(City.findById(id))
 

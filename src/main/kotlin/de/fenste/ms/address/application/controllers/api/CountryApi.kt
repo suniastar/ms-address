@@ -46,7 +46,9 @@ interface CountryApi {
             PageHelper.generatePageLinks("$BASE_URI/api/country", size, page, total, sort)
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("${BASE_URI}/api/country/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/country/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/country/$id/states").withRel("states"),
+            Link.of("$BASE_URI/api/country/$id/cities").withRel("cities"),
         )
     }
 

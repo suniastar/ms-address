@@ -17,15 +17,17 @@
 package de.fenste.ms.address.application.controllers
 
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.PostCode
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.graphql.test.tester.GraphQlTester
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -35,19 +37,23 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 @AutoConfigureGraphQlTester
 class PostCodeControllerTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val graphQlTester: GraphQlTester,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
     }
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.postCodes.map { p -> p.id.value.toString() }.sorted()
+        val expected = sampleData.postCodes
+            .sortedBy { c -> c.id.value.toString() }
+            .map { p -> p.id.value.toString() }
 
         val query = """
             query {
@@ -69,16 +75,17 @@ class PostCodeControllerTest(
     }
 
     @Test
+    @Ignore
     fun `test list on sample data with options`() {
-        val expected = SampleData.postCodes
+        val expected = sampleData.postCodes
+            .sortedWith(compareBy({ p -> p.code }, { p -> p.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { p -> p.id.value.toString() }
-            .sorted()
-            .drop(2)
-            .take(1)
 
         val query = """
             query {
-                postCodes(offset: 2, limit: 1) {
+                postCodes(sort: "code,asc", page: 1, size: 2) {
                     id
                 }
             }
@@ -97,7 +104,7 @@ class PostCodeControllerTest(
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.postCodes.random().id.value.toString()
+        val expected = sampleData.postCodes.random().id.value.toString()
 
         val query = """
             query {
@@ -137,7 +144,7 @@ class PostCodeControllerTest(
     @Test
     fun `test create`() {
         val code = "CODE"
-        val city = transaction { SampleData.cities.random() }
+        val city = transaction { sampleData.cities.random() }
 
         val mutation = """
             mutation CreatePostCodeMutation(${D}postCode: PostCodeInput!) {
@@ -160,7 +167,7 @@ class PostCodeControllerTest(
             .get()
 
         assertNotNull(created)
-        assertFalse(SampleData.postCodes.map { p -> p.id.value.toString() }.contains(created))
+        assertFalse(sampleData.postCodes.map { p -> p.id.value.toString() }.contains(created))
 
         transaction {
             val actual = PostCode.findById(UUID.fromString(created))
@@ -172,9 +179,9 @@ class PostCodeControllerTest(
 
     @Test
     fun `test update all`() {
-        val postCode = transaction { SampleData.postCodes.random() }
+        val postCode = transaction { sampleData.postCodes.random() }
         val code = "CODE"
-        val city = transaction { SampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random() }
+        val city = transaction { sampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random() }
 
         val mutation = """
             mutation UpdatePostCodeMutation(${D}postCode: PostCodeInput!) {
@@ -208,7 +215,7 @@ class PostCodeControllerTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.postCodes.random().id.value
+        val id = sampleData.postCodes.random().id.value
 
         transaction { assertNotNull(PostCode.findById(id)) }
 

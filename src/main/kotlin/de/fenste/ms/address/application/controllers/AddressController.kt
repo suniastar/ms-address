@@ -29,7 +29,7 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
-@Suppress("unused")
+@Suppress("TooManyFunctions")
 class AddressController(
     @Autowired private val addressService: AddressService,
 ) : AddressApi, AddressGraphql {

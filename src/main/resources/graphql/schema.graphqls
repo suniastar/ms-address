@@ -85,7 +85,7 @@ input AddressInput {
 
 type Address {
     id: UUID!
-    houseNumber: String!
+    houseNumber: Int!
     extra: String
 
     street: Street!

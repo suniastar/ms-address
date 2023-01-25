@@ -35,6 +35,7 @@ class CountryService(
         countryRepository.count()
     }
 
+    @Suppress("UnusedPrivateMember") // TODO implement sort
     fun list(
         page: Int? = null,
         size: Int? = null,

@@ -44,7 +44,9 @@ interface PostCodeApi {
             PageHelper.generatePageLinks("$BASE_URI/api/postcode", size, page, total, sort)
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("${BASE_URI}/api/postcode/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/postcode/$id").withSelfRel(),
+            Link.of("$BASE_URI/api/postcode/$id/city").withRel("city"),
+            Link.of("$BASE_URI/api/postcode/$id/streets").withRel("streets"),
         )
     }
 
