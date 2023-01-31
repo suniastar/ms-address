@@ -41,7 +41,7 @@ class PostCodeRepository {
         ) {
             val postCode = PostCodeTable
                 .slice(PostCodeTable.columns)
-                .select { (PostCodeTable.code eq code) and (PostCodeTable.city eq city.id) }
+                .select { (PostCodeTable.code eq code) and (PostCodeTable.cityId eq city.id) }
                 .apply { original?.let { andWhere { PostCodeTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -52,9 +52,10 @@ class PostCodeRepository {
         }
     }
 
-    fun count(): Long = PostCode
+    fun count(): Int = PostCode
         .all()
         .count()
+        .toInt()
 
     fun list(
         page: Int? = null,

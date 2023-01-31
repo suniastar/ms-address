@@ -48,7 +48,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test count`(): Unit = transaction {
-        val expected = sampleData.streets.count().toLong()
+        val expected = sampleData.streets.count()
         val actual = repository.count()
 
         assertEquals(expected, actual)

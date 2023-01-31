@@ -27,7 +27,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -49,7 +48,7 @@ class StreetServiceTest(
 
     @Test
     fun `test count`(): Unit = transaction {
-        val expected = sampleData.streets.count().toLong()
+        val expected = sampleData.streets.count()
         val actual = service.count()
 
         assertEquals(expected, actual)
@@ -66,7 +65,6 @@ class StreetServiceTest(
     }
 
     @Test
-    @Ignore
     fun `test list on sample data with options`() {
         val expected = sampleData.streets
             .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))

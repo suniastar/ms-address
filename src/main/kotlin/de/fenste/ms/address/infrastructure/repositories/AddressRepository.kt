@@ -42,7 +42,7 @@ class AddressRepository {
         ) {
             val address = AddressTable
                 .slice(AddressTable.columns)
-                .select { (AddressTable.houseNumber eq houseNumber) and (AddressTable.street eq street.id) }
+                .select { (AddressTable.houseNumber eq houseNumber) and (AddressTable.streetId eq street.id) }
                 .apply { extra?.let { andWhere { AddressTable.extra eq extra } } }
                 .apply { original?.let { andWhere { AddressTable.id neq original.id } } }
                 .limit(1)
@@ -54,9 +54,10 @@ class AddressRepository {
         }
     }
 
-    fun count(): Long = Address
+    fun count(): Int = Address
         .all()
         .count()
+        .toInt()
 
     fun list(
         page: Int? = null,

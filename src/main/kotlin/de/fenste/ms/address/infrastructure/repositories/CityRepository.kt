@@ -44,8 +44,8 @@ class CityRepository {
         ) {
             val city = CityTable
                 .slice(CityTable.columns)
-                .select { (CityTable.name eq name) and (CityTable.country eq country.id) }
-                .apply { state?.let { andWhere { CityTable.state eq state.id } } }
+                .select { (CityTable.name eq name) and (CityTable.countryId eq country.id) }
+                .apply { state?.let { andWhere { CityTable.stateId eq state.id } } }
                 .apply { original?.let { andWhere { CityTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -56,9 +56,10 @@ class CityRepository {
         }
     }
 
-    fun count(): Long = City
+    fun count(): Int = City
         .all()
         .count()
+        .toInt()
 
     fun list(
         page: Int? = null,

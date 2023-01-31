@@ -16,10 +16,13 @@
 
 package de.fenste.ms.address.application.controllers
 
+import org.springframework.http.MediaType
 import java.util.UUID
 import kotlin.reflect.full.memberProperties
 
 const val D = "\$"
+
+val MEDIA_TYPE_APPLICATION_HAL_JSON = MediaType("application", "hal+json")
 
 inline fun <reified T : Any> T.asMap(): Map<String, Any?> {
     val props = T::class.memberProperties.associateBy { m -> m.name }

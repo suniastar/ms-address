@@ -25,7 +25,9 @@ import de.fenste.ms.address.application.services.AddressService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @Controller
@@ -45,13 +47,13 @@ class AddressController(
     )
         .let { list ->
             val e = addressService.count()
-            val p = page?.toLong() ?: 0L
-            val s = size?.toLong() ?: e
+            val p = page ?: 0L
+            val s = size ?: e
             val t = (e + s - 1) / s
             PagedModel.of(
                 list,
-                PagedModel.PageMetadata(s, p, e, t),
-                AddressApi.generatePageLinks(s, p, t, sort),
+                PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
+                AddressApi.generatePageLinks(size, page, t, sort),
             )
         }
 
@@ -68,10 +70,11 @@ class AddressController(
 
     override fun restGetAddress(
         id: UUID,
-    ): EntityModel<AddressDto>? = graphqlGetAddress(
+    ): EntityModel<AddressDto> = graphqlGetAddress(
         id = id,
     )
         ?.let { a -> EntityModel.of(a) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The address ($id) does not exist.")
 
     override fun graphqlGetAddress(
         id: UUID,

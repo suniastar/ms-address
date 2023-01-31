@@ -53,9 +53,10 @@ class CountryRepository {
         }
     }
 
-    fun count(): Long = Country
+    fun count(): Int = Country
         .all()
         .count()
+        .toInt()
 
     fun list(
         page: Int? = null,

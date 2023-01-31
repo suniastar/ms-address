@@ -48,7 +48,7 @@ class PostCodeRepositoryTest(
 
     @Test
     fun `test count`(): Unit = transaction {
-        val expected = sampleData.postCodes.count().toLong()
+        val expected = sampleData.postCodes.count()
         val actual = repository.count()
 
         assertEquals(expected, actual)

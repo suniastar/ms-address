@@ -24,7 +24,9 @@ import de.fenste.ms.address.application.util.PageHelper
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.Link
 import org.springframework.hateoas.PagedModel
+import org.springframework.hateoas.mediatype.Affordances
 import org.springframework.hateoas.server.mvc.BasicLinkBuilder
+import org.springframework.http.HttpMethod
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -42,13 +44,36 @@ interface StreetApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Long, page: Long, total: Long, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks("$BASE_URI/api/street", size, page, total, sort)
+        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
+            PageHelper.generatePageLinks(
+                "$BASE_URI/api/street",
+                size,
+                page,
+                totalPages,
+                sort,
+            ) { l ->
+                Affordances.of(l)
+                    .afford(HttpMethod.TRACE)
+                    .andAfford(HttpMethod.POST)
+                    .withName("create")
+                    .withInput(StreetInputDto::class.java)
+                    .withOutput(StreetDto::class.java)
+                    .toLink()
+            }
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("$BASE_URI/api/street/$id").withSelfRel(),
+            Affordances.of(Link.of("$BASE_URI/api/street/$id").withSelfRel())
+                .afford(HttpMethod.TRACE)
+                .andAfford(HttpMethod.PUT)
+                .withName("update")
+                .withInput(StreetInputDto::class.java)
+                .withOutput(StreetDto::class.java)
+                .andAfford(HttpMethod.DELETE)
+                .withName("delete")
+                .withOutput(Boolean::class.java)
+                .toLink(),
             Link.of("$BASE_URI/api/street/$id/postcode").withRel("postcode"),
-            Link.of("$BASE_URI/api/street/$id/addresses").withRel("addresses"),
+            Link.of("$BASE_URI/api/street/$id/addresses{?page,size,sort}").withRel("addresses"),
         )
     }
 
@@ -64,7 +89,7 @@ interface StreetApi {
     @GetMapping("/{id}")
     fun restGetStreet(
         @PathVariable id: UUID,
-    ): EntityModel<StreetDto>?
+    ): EntityModel<StreetDto>
 
     @ResponseBody
     @PostMapping
@@ -76,7 +101,7 @@ interface StreetApi {
     @PutMapping("/{id}")
     fun restUpdateStreet(
         @PathVariable id: UUID,
-        @RequestParam street: StreetInputDto,
+        @RequestBody street: StreetInputDto,
     ): EntityModel<StreetDto>
 
     @ResponseBody

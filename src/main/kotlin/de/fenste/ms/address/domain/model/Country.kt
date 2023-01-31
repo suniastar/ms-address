@@ -35,9 +35,9 @@ class Country(id: EntityID<UUID>) : UUIDEntity(id) {
 
     var localizedName by CountryTable.localizedName
 
-    val states by State referrersOn StateTable.country
+    val states by State referrersOn StateTable.countryId
 
-    val cities by City referrersOn CityTable.country
+    val cities by City referrersOn CityTable.countryId
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false

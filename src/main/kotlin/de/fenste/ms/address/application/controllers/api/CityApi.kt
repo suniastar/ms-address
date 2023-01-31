@@ -25,7 +25,9 @@ import de.fenste.ms.address.application.util.PageHelper
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.Link
 import org.springframework.hateoas.PagedModel
+import org.springframework.hateoas.mediatype.Affordances
 import org.springframework.hateoas.server.mvc.BasicLinkBuilder
+import org.springframework.http.HttpMethod
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -43,14 +45,37 @@ interface CityApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Long, page: Long, total: Long, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks("$BASE_URI/api/city", size, page, total, sort)
+        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
+            PageHelper.generatePageLinks(
+                "$BASE_URI/api/city",
+                size,
+                page,
+                totalPages,
+                sort,
+            ) { l ->
+                Affordances.of(l)
+                    .afford(HttpMethod.TRACE)
+                    .andAfford(HttpMethod.POST)
+                    .withName("create")
+                    .withInput(CityInputDto::class.java)
+                    .withOutput(CityDto::class.java)
+                    .toLink()
+            }
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("$BASE_URI/api/city/$id").withSelfRel(),
+            Affordances.of(Link.of("$BASE_URI/api/city/$id").withSelfRel())
+                .afford(HttpMethod.TRACE)
+                .andAfford(HttpMethod.PUT)
+                .withName("update")
+                .withInput(CityInputDto::class.java)
+                .withOutput(CityDto::class.java)
+                .andAfford(HttpMethod.DELETE)
+                .withName("delete")
+                .withOutput(Boolean::class.java)
+                .toLink(),
             Link.of("$BASE_URI/api/city/$id/country").withRel("country"),
             Link.of("$BASE_URI/api/city/$id/state").withRel("state"),
-            Link.of("$BASE_URI/api/city/$id/postcodes").withRel("postcodes"),
+            Link.of("$BASE_URI/api/city/$id/postcodes{?page,size,sort}").withRel("postcodes"),
         )
     }
 
@@ -66,7 +91,7 @@ interface CityApi {
     @GetMapping("/{id}")
     fun restGetCity(
         @PathVariable id: UUID,
-    ): EntityModel<CityDto>?
+    ): EntityModel<CityDto>
 
     @ResponseBody
     @PostMapping

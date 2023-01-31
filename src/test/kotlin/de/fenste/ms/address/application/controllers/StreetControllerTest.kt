@@ -16,16 +16,26 @@
 
 package de.fenste.ms.address.application.controllers
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Street
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.graphql.test.tester.GraphQlTester
+import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
+import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import java.util.UUID
+import kotlin.math.ceil
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -35,14 +45,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 @SpringBootTest
 @ActiveProfiles("sample")
 @AutoConfigureGraphQlTester
+@AutoConfigureMockMvc
 class StreetControllerTest(
     @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val graphQlTester: GraphQlTester,
+    @Autowired private val mockMvc: MockMvc,
 ) {
+
+    private companion object {
+        private const val BASE_URI = "http://localhost"
+        private val MAPPER = jacksonObjectMapper()
+    }
 
     @BeforeTest
     fun `set up`() {
@@ -50,7 +68,7 @@ class StreetControllerTest(
     }
 
     @Test
-    fun `test list on sample data`() {
+    fun `graphql test list on sample data`() {
         val expected = sampleData.streets
             .sortedBy { c -> c.id.value.toString() }
             .map { s -> s.id.value.toString() }
@@ -75,8 +93,33 @@ class StreetControllerTest(
     }
 
     @Test
-    @Ignore
-    fun `test list on sample data with options`() {
+    fun `rest test list on sample data`() {
+        val expected = sampleData.streets
+            .sortedBy { c -> c.id.value.toString() }
+            .map { s -> s.id.value.toString() }
+
+        mockMvc
+            .get("$BASE_URI/api/street") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.streetDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `graphql test list on sample data with options`() {
         val expected = sampleData.streets
             .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
             .drop(1 * 2)
@@ -103,29 +146,54 @@ class StreetControllerTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.streets.random().id.value.toString()
+    fun `rest test list on sample data with options`() {
+        val expected = sampleData.streets
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
+            .map { s -> s.id.value.toString() }
 
-        val query = """
-            query {
-                street(id: "$expected") {
-                    id
-                }
+        mockMvc
+            .get("$BASE_URI/api/street?page=1&size=2&sort=name,asc") {
+                contentType = MediaType.APPLICATION_JSON
             }
-        """.trimIndent()
-
-        val actual = graphQlTester
-            .document(query)
-            .execute()
-            .path("street.id")
-            .entity(String::class.java)
-            .get()
-
-        transaction { assertEquals(expected, actual) }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(sampleData.streets.count()) } }
+            .andExpect { jsonPath("page.number") { value(1) } }
+            .andExpect { jsonPath("page.totalPages") { value(ceil(sampleData.streets.count() / 2f)) } }
+            .andExpect { jsonPath("_links.first.href") { exists() } }
+            .andExpect { jsonPath("_links.prev.href") { exists() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { exists() } }
+            .andExpect { jsonPath("_links.last.href") { exists() } }
+            .andExpect { jsonPath("_embedded.streetDtoes.[*].id") { value(expected) } }
     }
 
     @Test
-    fun `test find by id on non existing sample data`() {
+    fun `test find by id on sample data`() {
+        val expected = sampleData.streets.random().let { s -> StreetDto(s) }
+
+        mockMvc
+            .get("$BASE_URI/api/street/${expected.id}") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(expected.name) } }
+            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.postcode") { exists() } }
+            .andExpect { jsonPath("_links.addresses") { exists() } }
+    }
+
+    @Test
+    fun `graphql test find by id on non existing sample data`() {
         val query = """
             query {
                 street(id: "${UUID.randomUUID()}") {
@@ -142,31 +210,42 @@ class StreetControllerTest(
     }
 
     @Test
-    fun `test create`() {
+    fun `rest test find by id on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/street/${UUID.randomUUID()}") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
+    fun `rest test create`() {
         val name = "Name"
         val postCode = sampleData.postCodes.random()
 
-        val mutation = """
-            mutation CreateStreetMutation(${D}street: StreetInput!) {
-                createStreet(street: ${D}street) {
-                    id
-                }
-            }
-        """.trimIndent()
         val create = StreetInputDto(
             name = name,
             postCode = postCode.id.value,
         )
+        val result = mockMvc
+            .post("$BASE_URI/api/street") {
+                contentType = MediaType.APPLICATION_JSON
+                content = MAPPER.writeValueAsString(create)
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(name) } }
+            .andExpect { jsonPath("id") { exists() } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.postcode") { exists() } }
+            .andExpect { jsonPath("_links.addresses") { exists() } }
+            .andReturn()
 
-        val created = graphQlTester
-            .document(mutation)
-            .variable("street", create.asMap())
-            .execute()
-            .path("createStreet.id")
-            .entity(String::class.java)
-            .get()
-
-        assertNotNull(created)
+        val created = MAPPER.readTree(result.response.contentAsString).findValue("id").asText()
         assertFalse(sampleData.streets.map { s -> s.id.value.toString() }.contains(created))
 
         transaction {
@@ -178,14 +257,14 @@ class StreetControllerTest(
     }
 
     @Test
-    fun `test update all`() {
-        val state = sampleData.streets.random()
+    fun `graphql test update all`() {
+        val street = sampleData.streets.random()
         val name = "Name"
-        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.contains(state) }.random() }
+        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.contains(street) }.random() }
 
         val mutation = """
             mutation UpdateStreetMutation(${D}street: StreetInput!) {
-                updateStreet(id: "${state.id.value}", street: ${D}street) {
+                updateStreet(id: "${street.id.value}", street: ${D}street) {
                     id
                 }
             }
@@ -214,7 +293,43 @@ class StreetControllerTest(
     }
 
     @Test
-    fun `test delete`() {
+    fun `rest test update all`() {
+        val street = sampleData.streets.random()
+        val name = "Name"
+        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.contains(street) }.random() }
+
+        val update = StreetInputDto(
+            name = name,
+            postCode = postCode.id.value,
+        )
+        val result = mockMvc
+            .put("$BASE_URI/api/street/${street.id.value}") {
+                contentType = MediaType.APPLICATION_JSON
+                content = MAPPER.writeValueAsString(update)
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(name) } }
+            .andExpect { jsonPath("id") { value(street.id.value.toString()) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.postcode") { exists() } }
+            .andExpect { jsonPath("_links.addresses") { exists() } }
+            .andReturn()
+
+        val updated = MAPPER.readTree(result.response.contentAsString).findValue("id").asText()
+
+        transaction {
+            val actual = Street.findById(UUID.fromString(updated))
+            assertNotNull(actual)
+            assertEquals(name, actual.name)
+            assertEquals(postCode, actual.postCode)
+        }
+    }
+
+    @Test
+    fun `graphql test delete`() {
         val id = sampleData.streets.random().id.value
 
         transaction { assertNotNull(Street.findById(id)) }
@@ -234,5 +349,38 @@ class StreetControllerTest(
 
         assertTrue(actual)
         transaction { assertNull(Street.findById(id)) }
+    }
+
+    @Test
+    fun `rest test delete`() {
+        val id = sampleData.streets.random().id.value
+
+        transaction { assertNotNull(Street.findById(id)) }
+
+        val result = mockMvc
+            .delete("$BASE_URI/api/street/$id") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MediaType.APPLICATION_JSON) }
+            }
+            .andReturn()
+
+        val actual = result.response.contentAsString.toBoolean()
+        assertTrue(actual)
+        transaction { assertNull(Street.findById(id)) }
+    }
+
+    @Test
+    @Ignore // TODO implement (get inspired by dto tests for graphql)
+    fun `rest test get street post code`() {
+        fail("Not implemented yet")
+    }
+
+    @Test
+    @Ignore // TODO implement (get inspired by dto tests for graphql)
+    fun `rest test get street addresses`() {
+        fail("Not implemented yet")
     }
 }

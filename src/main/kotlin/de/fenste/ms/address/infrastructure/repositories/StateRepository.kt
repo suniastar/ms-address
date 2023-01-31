@@ -41,7 +41,7 @@ class StateRepository {
         ) {
             val state = StateTable
                 .slice(StateTable.columns)
-                .select { (StateTable.name eq name) and (StateTable.country eq country.id) }
+                .select { (StateTable.name eq name) and (StateTable.countryId eq country.id) }
                 .apply { original?.let { andWhere { StateTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -52,9 +52,10 @@ class StateRepository {
         }
     }
 
-    fun count(): Long = State
+    fun count(): Int = State
         .all()
         .count()
+        .toInt()
 
     fun list(
         page: Int? = null,

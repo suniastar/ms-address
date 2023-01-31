@@ -24,7 +24,9 @@ import de.fenste.ms.address.application.services.PostCodeService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @Controller
@@ -44,13 +46,13 @@ class PostCodeController(
     )
         .let { list ->
             val e = postCodeService.count()
-            val p = page?.toLong() ?: 0L
-            val s = size?.toLong() ?: e
+            val p = page ?: 0L
+            val s = size ?: e
             val t = (e + s - 1) / s
             PagedModel.of(
                 list,
-                PagedModel.PageMetadata(s, p, e, t),
-                PostCodeApi.generatePageLinks(s, p, t, sort),
+                PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
+                PostCodeApi.generatePageLinks(size, page, t, sort),
             )
         }
 
@@ -67,10 +69,11 @@ class PostCodeController(
 
     override fun restGetPostCode(
         id: UUID,
-    ): EntityModel<PostCodeDto>? = graphqGetlPostCode(
+    ): EntityModel<PostCodeDto> = graphqGetlPostCode(
         id = id,
     )
         ?.let { p -> EntityModel.of(p) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
 
     override fun graphqGetlPostCode(
         id: UUID,

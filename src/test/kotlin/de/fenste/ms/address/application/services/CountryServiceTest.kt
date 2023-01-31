@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -47,7 +46,7 @@ class CountryServiceTest(
 
     @Test
     fun `test count`(): Unit = transaction {
-        val expected = sampleData.countries.count().toLong()
+        val expected = sampleData.countries.count()
         val actual = service.count()
 
         assertEquals(expected, actual)
@@ -64,7 +63,6 @@ class CountryServiceTest(
     }
 
     @Test
-    @Ignore
     fun `test list on sample data with options`() {
         val expected = sampleData.countries
             .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))

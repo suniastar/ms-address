@@ -41,7 +41,7 @@ class StreetRepository {
         ) {
             val street = StreetTable
                 .slice(StreetTable.columns)
-                .select { (StreetTable.name eq name) and (StreetTable.postCode eq postCode.id) }
+                .select { (StreetTable.name eq name) and (StreetTable.postCodeId eq postCode.id) }
                 .apply { original?.let { andWhere { StreetTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -52,9 +52,10 @@ class StreetRepository {
         }
     }
 
-    fun count(): Long = Street
+    fun count(): Int = Street
         .all()
         .count()
+        .toInt()
 
     fun list(
         page: Int? = null,

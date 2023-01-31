@@ -48,7 +48,7 @@ class AddressRepositoryTest(
 
     @Test
     fun `test count`(): Unit = transaction {
-        val expected = sampleData.addresses.count().toLong()
+        val expected = sampleData.addresses.count()
         val actual = repository.count()
 
         assertEquals(expected, actual)

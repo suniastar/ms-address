@@ -17,25 +17,41 @@
 package de.fenste.ms.address.application.util
 
 import org.springframework.hateoas.Link
-import kotlin.math.max
-import kotlin.math.min
 
 object PageHelper {
 
-    fun generatePageLinks(
+    @Suppress("LongParameterList")
+    inline fun generatePageLinks(
         base: String,
-        size: Long,
-        page: Long,
-        total: Long,
+        size: Int?,
+        page: Int?,
+        totalPages: Int?,
         sort: String?,
+        affordanceBuilder: (Link) -> Link = { l -> l },
     ): Set<Link> {
+        val p = page ?: 0
+        val t = totalPages ?: 1
+
+        val self = affordanceBuilder(Link.of("$base{?page,size,sort}").withSelfRel())
         val sortUri = sort?.let { "&sort=$sort" } ?: ""
-        return setOf(
-            Link.of("$base?page=0&size=$size$sortUri").withRel("first"),
-            Link.of("$base?page=${max(0, page - 1)}&size=$size$sortUri").withRel("prev"),
-            Link.of("$base?page=$page&size=$size$sortUri").withSelfRel(),
-            Link.of("$base?page=${min(total - 1, page + 1)}&size=$size$sortUri").withRel("next"),
-            Link.of("$base?page=${total - 1}&size=$size$sortUri").withRel("last"),
-        )
+
+        return when (size) {
+            null -> setOf(self)
+            else -> setOfNotNull(
+                self,
+                Link.of("$base?page=0&size=$size$sortUri").withRel("first"),
+                if (p - 1 >= 0) {
+                    Link.of("$base?page=${p - 1}&size=$size$sortUri").withRel("prev")
+                } else {
+                    null
+                },
+                if (p + 1 < t) {
+                    Link.of("$base?page=${p + 1}&size=$size$sortUri").withRel("next")
+                } else {
+                    null
+                },
+                Link.of("$base?page=${t - 1}&size=$size$sortUri").withRel("last"),
+            )
+        }
     }
 }

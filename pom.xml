@@ -37,7 +37,6 @@
         <java.version>17</java.version>
         <kotlin.version>1.8.0</kotlin.version>
         <exposed.version>0.41.1</exposed.version>
-        <swagger.version>3.0.0</swagger.version>
         <ktlint.version>1.15.2</ktlint.version>
         <detekt.version>1.22.0</detekt.version>
         <dokka.version>1.7.20</dokka.version>
@@ -80,6 +79,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-hateoas</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-rest-hal-explorer</artifactId>
+        </dependency>
 
         <!-- exposed and dbs -->
         <dependency>
@@ -121,13 +124,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webflux</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webflux</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

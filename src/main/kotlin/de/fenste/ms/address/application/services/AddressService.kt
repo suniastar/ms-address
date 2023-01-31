@@ -18,9 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.AddressInputDto
+import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.infrastructure.repositories.AddressRepository
 import de.fenste.ms.address.infrastructure.tables.AddressTable
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -31,11 +31,10 @@ class AddressService(
     @Autowired private val addressRepository: AddressRepository,
 ) {
 
-    fun count(): Long = transaction {
+    fun count(): Int = transaction {
         addressRepository.count()
     }
 
-    @Suppress("UnusedPrivateMember") // TODO implement sort
     fun list(
         page: Int? = null,
         size: Int? = null,
@@ -45,7 +44,7 @@ class AddressService(
             .list(
                 page = page,
                 size = size,
-                order = arrayOf(AddressTable.id to SortOrder.ASC),
+                order = sort.parseSortOrder(AddressTable::valueOf),
             )
             .map { a -> AddressDto(a) }
     }

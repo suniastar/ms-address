@@ -27,7 +27,9 @@ import de.fenste.ms.address.application.services.CityService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @Controller
@@ -47,13 +49,13 @@ class CityController(
     )
         .let { list ->
             val e = cityService.count()
-            val p = page?.toLong() ?: 0L
-            val s = size?.toLong() ?: e
+            val p = page ?: 0L
+            val s = size ?: e
             val t = (e + s - 1) / s
             PagedModel.of(
                 list,
-                PagedModel.PageMetadata(s, p, e, t),
-                CityApi.generatePageLinks(s, p, t, sort),
+                PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
+                CityApi.generatePageLinks(size, page, t, sort),
             )
         }
 
@@ -70,10 +72,11 @@ class CityController(
 
     override fun restGetCity(
         id: UUID,
-    ): EntityModel<CityDto>? = graphqlGetCity(
+    ): EntityModel<CityDto> = graphqlGetCity(
         id = id,
     )
         ?.let { c -> EntityModel.of(c) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
 
     override fun graphqlGetCity(
         id: UUID,

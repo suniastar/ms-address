@@ -28,7 +28,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -50,7 +49,7 @@ class CityServiceTest(
 
     @Test
     fun `test count`(): Unit = transaction {
-        val expected = sampleData.cities.count().toLong()
+        val expected = sampleData.cities.count()
         val actual = service.count()
 
         assertEquals(expected, actual)
@@ -67,7 +66,6 @@ class CityServiceTest(
     }
 
     @Test
-    @Ignore
     fun `test list on sample data with options`() {
         val expected = sampleData.cities
             .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))

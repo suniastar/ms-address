@@ -18,9 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
+import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.infrastructure.repositories.StreetRepository
 import de.fenste.ms.address.infrastructure.tables.StreetTable
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -31,11 +31,10 @@ class StreetService(
     @Autowired private val streetRepository: StreetRepository,
 ) {
 
-    fun count(): Long = transaction {
+    fun count(): Int = transaction {
         streetRepository.count()
     }
 
-    @Suppress("UnusedPrivateMember") // TODO implement sort
     fun list(
         page: Int? = null,
         size: Int? = null,
@@ -45,7 +44,7 @@ class StreetService(
             .list(
                 page = page,
                 size = size,
-                order = arrayOf(StreetTable.id to SortOrder.ASC),
+                order = sort.parseSortOrder(StreetTable::valueOf),
             )
             .map { s -> StreetDto(s) }
     }

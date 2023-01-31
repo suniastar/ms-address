@@ -26,7 +26,9 @@ import de.fenste.ms.address.application.services.StateService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
+import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @Controller
@@ -46,13 +48,13 @@ class StateController(
     )
         .let { list ->
             val e = stateService.count()
-            val p = page?.toLong() ?: 0L
-            val s = size?.toLong() ?: e
+            val p = page ?: 0L
+            val s = size ?: e
             val t = (e + s - 1) / s
             PagedModel.of(
                 list,
-                PagedModel.PageMetadata(s, p, e, t),
-                StateApi.generatePageLinks(s, p, t, sort),
+                PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
+                StateApi.generatePageLinks(size, page, t, sort),
             )
         }
 
@@ -69,10 +71,11 @@ class StateController(
 
     override fun restGetState(
         id: UUID,
-    ): EntityModel<StateDto>? = graphqlGetState(
+    ): EntityModel<StateDto> = graphqlGetState(
         id = id,
     )
         ?.let { s -> EntityModel.of(s) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
 
     override fun graphqlGetState(
         id: UUID,

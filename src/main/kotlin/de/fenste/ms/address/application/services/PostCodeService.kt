@@ -18,9 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
 import de.fenste.ms.address.infrastructure.tables.PostCodeTable
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -31,11 +31,10 @@ class PostCodeService(
     @Autowired private val postCodeRepository: PostCodeRepository,
 ) {
 
-    fun count(): Long = transaction {
+    fun count(): Int = transaction {
         postCodeRepository.count()
     }
 
-    @Suppress("UnusedPrivateMember") // TODO implement sort
     fun list(
         page: Int? = null,
         size: Int? = null,
@@ -45,7 +44,7 @@ class PostCodeService(
             .list(
                 page = page,
                 size = size,
-                order = arrayOf(PostCodeTable.id to SortOrder.ASC),
+                order = sort.parseSortOrder(PostCodeTable::valueOf),
             )
             .map { p -> PostCodeDto(p) }
     }

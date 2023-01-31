@@ -24,7 +24,9 @@ import de.fenste.ms.address.application.util.PageHelper
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.Link
 import org.springframework.hateoas.PagedModel
+import org.springframework.hateoas.mediatype.Affordances
 import org.springframework.hateoas.server.mvc.BasicLinkBuilder
+import org.springframework.http.HttpMethod
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -42,13 +44,36 @@ interface CountryApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Long, page: Long, total: Long, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks("$BASE_URI/api/country", size, page, total, sort)
+        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
+            PageHelper.generatePageLinks(
+                "$BASE_URI/api/country",
+                size,
+                page,
+                totalPages,
+                sort,
+            ) { l ->
+                Affordances.of(l)
+                    .afford(HttpMethod.TRACE)
+                    .andAfford(HttpMethod.POST)
+                    .withName("create")
+                    .withInput(CountryInputDto::class.java)
+                    .withOutput(CountryDto::class.java)
+                    .toLink()
+            }
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("$BASE_URI/api/country/$id").withSelfRel(),
-            Link.of("$BASE_URI/api/country/$id/states").withRel("states"),
-            Link.of("$BASE_URI/api/country/$id/cities").withRel("cities"),
+            Affordances.of(Link.of("$BASE_URI/api/country/$id").withSelfRel())
+                .afford(HttpMethod.TRACE)
+                .andAfford(HttpMethod.PUT)
+                .withName("update")
+                .withInput(CountryInputDto::class.java)
+                .withOutput(CountryDto::class.java)
+                .andAfford(HttpMethod.DELETE)
+                .withName("delete")
+                .withOutput(Boolean::class.java)
+                .toLink(),
+            Link.of("$BASE_URI/api/country/$id/states{?page,size,sort}").withRel("states"),
+            Link.of("$BASE_URI/api/country/$id/cities{?page,size,sort}").withRel("cities"),
         )
     }
 
@@ -64,7 +89,7 @@ interface CountryApi {
     @GetMapping("/{id}")
     fun restGetCountry(
         @PathVariable id: UUID,
-    ): EntityModel<CountryDto>?
+    ): EntityModel<CountryDto>
 
     @ResponseBody
     @PostMapping

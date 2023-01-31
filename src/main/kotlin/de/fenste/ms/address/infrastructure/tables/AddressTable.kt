@@ -17,6 +17,7 @@
 package de.fenste.ms.address.infrastructure.tables
 
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 
 object AddressTable : UUIDTable("addresses") {
@@ -24,9 +25,17 @@ object AddressTable : UUIDTable("addresses") {
     private const val HOUSE_NUMBER_MAX_LENGTH = 255
     private const val EXTRA_MAX_LENGTH = 255
 
-    val street = reference("street_id", StreetTable, onDelete = ReferenceOption.CASCADE)
+    val streetId = reference("street_id", StreetTable, onDelete = ReferenceOption.CASCADE)
 
     val houseNumber = varchar("house_number", HOUSE_NUMBER_MAX_LENGTH)
 
     val extra = varchar("extra", EXTRA_MAX_LENGTH).nullable()
+
+    fun valueOf(value: String): Column<*> = when (value.lowercase()) {
+        "id" -> id
+        "street_id", "streetid" -> streetId
+        "house_number", "housenumber" -> houseNumber
+        "extra" -> extra
+        else -> throw IllegalArgumentException("\"$value\" is not a valid column name.")
+    }
 }

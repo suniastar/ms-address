@@ -22,7 +22,9 @@ import de.fenste.ms.address.application.util.PageHelper
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.Link
 import org.springframework.hateoas.PagedModel
+import org.springframework.hateoas.mediatype.Affordances
 import org.springframework.hateoas.server.mvc.BasicLinkBuilder
+import org.springframework.http.HttpMethod
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -40,13 +42,36 @@ interface PostCodeApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Long, page: Long, total: Long, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks("$BASE_URI/api/postcode", size, page, total, sort)
+        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
+            PageHelper.generatePageLinks(
+                "$BASE_URI/api/postcode",
+                size,
+                page,
+                totalPages,
+                sort,
+            ) { l ->
+                Affordances.of(l)
+                    .afford(HttpMethod.TRACE)
+                    .andAfford(HttpMethod.POST)
+                    .withName("create")
+                    .withInput(PostCodeInputDto::class.java)
+                    .withOutput(PostCodeDto::class.java)
+                    .toLink()
+            }
 
         fun generateEntityLinks(id: UUID): Set<Link> = setOf(
-            Link.of("$BASE_URI/api/postcode/$id").withSelfRel(),
+            Affordances.of(Link.of("$BASE_URI/api/postcode/$id").withSelfRel())
+                .afford(HttpMethod.TRACE)
+                .andAfford(HttpMethod.PUT)
+                .withName("update")
+                .withInput(PostCodeInputDto::class.java)
+                .withOutput(PostCodeDto::class.java)
+                .andAfford(HttpMethod.DELETE)
+                .withName("delete")
+                .withOutput(Boolean::class.java)
+                .toLink(),
             Link.of("$BASE_URI/api/postcode/$id/city").withRel("city"),
-            Link.of("$BASE_URI/api/postcode/$id/streets").withRel("streets"),
+            Link.of("$BASE_URI/api/postcode/$id/streets{?page,size,sort}").withRel("streets"),
         )
     }
 
@@ -62,7 +87,7 @@ interface PostCodeApi {
     @GetMapping("/{id}")
     fun restGetPostCode(
         @PathVariable id: UUID,
-    ): EntityModel<PostCodeDto>?
+    ): EntityModel<PostCodeDto>
 
     @ResponseBody
     @PostMapping

@@ -26,11 +26,11 @@ import java.util.UUID
 class State(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object EntityClass : UUIDEntityClass<State>(StateTable)
 
-    var country by Country referencedOn StateTable.country
+    var country by Country referencedOn StateTable.countryId
 
     var name by StateTable.name
 
-    val cities by City optionalReferrersOn CityTable.state
+    val cities by City optionalReferrersOn CityTable.stateId
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
