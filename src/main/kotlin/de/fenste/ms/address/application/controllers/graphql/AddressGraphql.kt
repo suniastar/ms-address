@@ -24,30 +24,30 @@ import java.util.UUID
 
 interface AddressGraphql {
 
-    @SchemaMapping(field = "addresses", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "addresses")
     fun graphqlGetAddresses(
         @Argument page: Int? = null,
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<AddressDto>
 
-    @SchemaMapping(field = "address", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "address")
     fun graphqlGetAddress(
         @Argument id: UUID,
     ): AddressDto?
 
-    @SchemaMapping(field = "createAddress", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "createAddress")
     fun graphqlCreateAddress(
         @Argument address: AddressInputDto,
     ): AddressDto
 
-    @SchemaMapping(field = "updateAddress", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "updateAddress")
     fun graphqlUpdateAddress(
         @Argument id: UUID,
         @Argument address: AddressInputDto,
     ): AddressDto
 
-    @SchemaMapping(field = "deleteAddress", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "deleteAddress")
     fun graphqlDeleteAddress(
         @Argument id: UUID,
     ): Boolean

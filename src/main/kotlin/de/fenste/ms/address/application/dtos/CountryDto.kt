@@ -19,6 +19,9 @@ package de.fenste.ms.address.application.dtos
 import com.fasterxml.jackson.annotation.JsonIgnore
 import de.fenste.ms.address.application.controllers.api.CountryApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.Country
+import de.fenste.ms.address.infrastructure.tables.CityTable
+import de.fenste.ms.address.infrastructure.tables.StateTable
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
@@ -51,9 +54,19 @@ data class CountryDto(
 
     @get:JsonIgnore
     val states: List<StateDto>
-        get() = transaction { country.states.map { s -> StateDto(s) } }
+        get() = transaction {
+            country.states
+                .orderBy(StateTable.id to SortOrder.ASC)
+                .notForUpdate()
+                .map { s -> StateDto(s) }
+        }
 
     @get:JsonIgnore
     val cities: List<CityDto>
-        get() = transaction { country.cities.map { c -> CityDto(c) } }
+        get() = transaction {
+            country.cities
+                .orderBy(CityTable.id to SortOrder.ASC)
+                .notForUpdate()
+                .map { c -> CityDto(c) }
+        }
 }

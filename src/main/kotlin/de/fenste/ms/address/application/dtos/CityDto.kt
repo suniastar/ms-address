@@ -19,6 +19,8 @@ package de.fenste.ms.address.application.dtos
 import com.fasterxml.jackson.annotation.JsonIgnore
 import de.fenste.ms.address.application.controllers.api.CityApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.City
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
@@ -49,5 +51,10 @@ data class CityDto(
 
     @get:JsonIgnore
     val postCodes: List<PostCodeDto>
-        get() = transaction { city.postCodes.map { p -> PostCodeDto(p) } }
+        get() = transaction {
+            city.postCodes
+                .orderBy(PostCodeTable.id to SortOrder.ASC)
+                .notForUpdate()
+                .map { p -> PostCodeDto(p) }
+        }
 }

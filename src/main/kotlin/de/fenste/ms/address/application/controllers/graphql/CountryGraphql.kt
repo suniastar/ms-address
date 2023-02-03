@@ -24,32 +24,32 @@ import java.util.UUID
 
 interface CountryGraphql {
 
-    @SchemaMapping(field = "countries", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "countries")
     fun graphqlGetCountries(
         @Argument page: Int? = null,
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<CountryDto>
 
-    @SchemaMapping(field = "country", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "country")
     fun graphqlGetCountry(
         @Argument id: UUID? = null,
         @Argument alpha2: String? = null,
         @Argument alpha3: String? = null,
     ): CountryDto?
 
-    @SchemaMapping(field = "createCountry", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "createCountry")
     fun graphqlCreateCountry(
         @Argument country: CountryInputDto,
     ): CountryDto
 
-    @SchemaMapping(field = "updateCountry", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "updateCountry")
     fun graphqlUpdateCountry(
         @Argument id: UUID,
         @Argument country: CountryInputDto,
     ): CountryDto
 
-    @SchemaMapping(field = "deleteCountry", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "deleteCountry")
     fun graphqlDeleteCountry(
         @Argument id: UUID,
     ): Boolean

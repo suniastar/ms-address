@@ -24,30 +24,30 @@ import java.util.UUID
 
 interface StateGraphql {
 
-    @SchemaMapping(field = "states", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "states")
     fun graphqlGetStates(
         @Argument page: Int? = null,
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<StateDto>
 
-    @SchemaMapping(field = "state", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "state")
     fun graphqlGetState(
         @Argument id: UUID,
     ): StateDto?
 
-    @SchemaMapping(field = "createState", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "createState")
     fun graphqlCreateState(
         @Argument state: StateInputDto,
     ): StateDto
 
-    @SchemaMapping(field = "updateState", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "updateState")
     fun graphqlUpdateState(
         @Argument id: UUID,
         @Argument state: StateInputDto,
     ): StateDto
 
-    @SchemaMapping(field = "deleteState", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "deleteState")
     fun graphqlDeleteState(
         @Argument id: UUID,
     ): Boolean

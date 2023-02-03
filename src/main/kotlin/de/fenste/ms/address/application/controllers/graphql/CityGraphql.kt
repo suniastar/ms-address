@@ -24,30 +24,30 @@ import java.util.UUID
 
 interface CityGraphql {
 
-    @SchemaMapping(field = "cities", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "cities")
     fun graphqlGetCities(
         @Argument page: Int? = null,
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<CityDto>
 
-    @SchemaMapping(field = "city", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "city")
     fun graphqlGetCity(
         @Argument id: UUID,
     ): CityDto?
 
-    @SchemaMapping(field = "createCity", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "createCity")
     fun graphqlCreateCity(
         @Argument city: CityInputDto,
     ): CityDto
 
-    @SchemaMapping(field = "updateCity", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "updateCity")
     fun graphqlUpdateCity(
         @Argument id: UUID,
         @Argument city: CityInputDto,
     ): CityDto
 
-    @SchemaMapping(field = "deleteCity", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "deleteCity")
     fun graphqlDeleteCity(
         @Argument id: UUID,
     ): Boolean

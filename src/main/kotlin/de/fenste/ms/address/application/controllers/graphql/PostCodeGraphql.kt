@@ -24,30 +24,30 @@ import java.util.UUID
 
 interface PostCodeGraphql {
 
-    @SchemaMapping(field = "postCodes", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "postCodes")
     fun graphqlGetPostCodes(
         @Argument page: Int? = null,
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<PostCodeDto>
 
-    @SchemaMapping(field = "postCode", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "postCode")
     fun graphqGetlPostCode(
         @Argument id: UUID,
     ): PostCodeDto?
 
-    @SchemaMapping(field = "createPostCode", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "createPostCode")
     fun graphqlCreatePostCode(
         @Argument postCode: PostCodeInputDto,
     ): PostCodeDto
 
-    @SchemaMapping(field = "updatePostCode", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "updatePostCode")
     fun graphqlUpdatePostCode(
         @Argument id: UUID,
         @Argument postCode: PostCodeInputDto,
     ): PostCodeDto
 
-    @SchemaMapping(field = "deletePostCode", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "deletePostCode")
     fun graphqlDeletePostCode(
         @Argument id: UUID,
     ): Boolean

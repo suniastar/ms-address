@@ -24,30 +24,30 @@ import java.util.UUID
 
 interface StreetGraphql {
 
-    @SchemaMapping(field = "streets", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "streets")
     fun graphqlGetStreets(
         @Argument page: Int? = null,
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<StreetDto>
 
-    @SchemaMapping(field = "street", typeName = "Query")
+    @SchemaMapping(typeName = "Query", field = "street")
     fun graphqlGetStreet(
         @Argument id: UUID,
     ): StreetDto?
 
-    @SchemaMapping(field = "createStreet", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "createStreet")
     fun graphqlCreateStreet(
         @Argument street: StreetInputDto,
     ): StreetDto
 
-    @SchemaMapping(field = "updateStreet", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "updateStreet")
     fun graphqlUpdateStreet(
         @Argument id: UUID,
         @Argument street: StreetInputDto,
     ): StreetDto
 
-    @SchemaMapping(field = "deleteStreet", typeName = "Mutation")
+    @SchemaMapping(typeName = "Mutation", field = "deleteStreet")
     fun graphqlDeleteStreet(
         @Argument id: UUID,
     ): Boolean
