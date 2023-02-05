@@ -26,11 +26,11 @@ import java.util.UUID
 class PostCode(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object EntityClass : UUIDEntityClass<PostCode>(PostCodeTable)
 
-    var city by City referencedOn PostCodeTable.city
+    var city by City referencedOn PostCodeTable.cityId
 
     var code by PostCodeTable.code
 
-    val streets by Street referrersOn StreetTable.postCode
+    val streets by Street referrersOn StreetTable.postCodeId
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
@@ -39,6 +39,7 @@ class PostCode(id: EntityID<UUID>) : UUIDEntity(id) {
             id == other.id &&
                 city.id == other.city.id &&
                 code == other.code
+
         else -> false
     }
 

@@ -17,6 +17,7 @@
 package de.fenste.ms.address.infrastructure.tables
 
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.Column
 
 object CountryTable : UUIDTable("countries") {
 
@@ -32,4 +33,13 @@ object CountryTable : UUIDTable("countries") {
     val name = varchar("name", NAME_MAX_LENGTH)
 
     val localizedName = varchar("localized_name", LOCALIZED_NAME_MAX_LENGTH)
+
+    fun valueOf(value: String): Column<*> = when (value.lowercase()) {
+        "id" -> id
+        "alpha2" -> alpha2
+        "alpha3" -> alpha3
+        "name" -> name
+        "localized_name", "localizedname" -> localizedName
+        else -> throw IllegalArgumentException("\"$value\" is not a valid column name.")
+    }
 }

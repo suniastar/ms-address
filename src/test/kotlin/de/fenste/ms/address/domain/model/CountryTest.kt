@@ -16,24 +16,31 @@
 
 package de.fenste.ms.address.domain.model
 
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.infrastructure.tables.CountryTable
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class CountryTest {
+@SpringBootTest
+@ActiveProfiles("sample")
+class CountryTest(
+    @Autowired private val sampleData: SampleDataConfig,
+) {
     private lateinit var copy: Country
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
 
         copy = transaction {
             Country
-                .find { CountryTable.id eq SampleData.countries[0].id }
+                .find { CountryTable.id eq sampleData.countries[0].id }
                 .limit(1)
                 .notForUpdate()
                 .first()
@@ -42,34 +49,34 @@ class CountryTest {
 
     @Test
     fun `test equals`(): Unit = transaction {
-        assertEquals(SampleData.countries[0], SampleData.countries[0])
+        assertEquals(sampleData.countries[0], sampleData.countries[0])
         assertEquals(copy, copy)
-        assertEquals(SampleData.countries[0], copy)
-        assertEquals(copy, SampleData.countries[0])
+        assertEquals(sampleData.countries[0], copy)
+        assertEquals(copy, sampleData.countries[0])
 
-        assertNotEquals(SampleData.countries[0], SampleData.countries[1])
-        assertNotEquals(copy, SampleData.countries[1])
-        assertNotEquals(SampleData.countries[1], SampleData.countries[0])
-        assertNotEquals(SampleData.countries[1], copy)
+        assertNotEquals(sampleData.countries[0], sampleData.countries[1])
+        assertNotEquals(copy, sampleData.countries[1])
+        assertNotEquals(sampleData.countries[1], sampleData.countries[0])
+        assertNotEquals(sampleData.countries[1], copy)
 
         assertNotEquals<Country?>(copy, null)
-        assertNotEquals<Country?>(null, SampleData.countries[0])
+        assertNotEquals<Country?>(null, sampleData.countries[0])
     }
 
     @Test
     fun `test hashCode`(): Unit = transaction {
-        assertEquals(SampleData.countries[0].hashCode(), SampleData.countries[0].hashCode())
+        assertEquals(sampleData.countries[0].hashCode(), sampleData.countries[0].hashCode())
         assertEquals(copy.hashCode(), copy.hashCode())
-        assertEquals(SampleData.countries[0].hashCode(), copy.hashCode())
-        assertEquals(copy.hashCode(), SampleData.countries[0].hashCode())
+        assertEquals(sampleData.countries[0].hashCode(), copy.hashCode())
+        assertEquals(copy.hashCode(), sampleData.countries[0].hashCode())
 
-        assertNotEquals(SampleData.countries[0].hashCode(), SampleData.countries[1].hashCode())
-        assertNotEquals(copy.hashCode(), SampleData.countries[1].hashCode())
-        assertNotEquals(SampleData.countries[1].hashCode(), SampleData.countries[0].hashCode())
-        assertNotEquals(SampleData.countries[1].hashCode(), copy.hashCode())
+        assertNotEquals(sampleData.countries[0].hashCode(), sampleData.countries[1].hashCode())
+        assertNotEquals(copy.hashCode(), sampleData.countries[1].hashCode())
+        assertNotEquals(sampleData.countries[1].hashCode(), sampleData.countries[0].hashCode())
+        assertNotEquals(sampleData.countries[1].hashCode(), copy.hashCode())
 
         assertNotEquals(copy.hashCode(), null.hashCode())
-        assertNotEquals(null.hashCode(), SampleData.countries[0].hashCode())
+        assertNotEquals(null.hashCode(), sampleData.countries[0].hashCode())
     }
 
     @Test
@@ -77,7 +84,7 @@ class CountryTest {
         val cId = copy.id
         val cExpected =
             "Country(id='$cId', alpha2='DE', alpha3='DEU', name='Germany', localizedName='Deutschland')"
-        val cActual = SampleData.countries[0].toString()
+        val cActual = sampleData.countries[0].toString()
         assertEquals(cExpected, cActual)
     }
 }

@@ -16,13 +16,14 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.infrastructure.tables.StreetTable
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -34,33 +35,57 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class StreetRepositoryTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val repository: StreetRepository,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.streets.count()
+        val actual = repository.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`(): Unit = transaction {
-        val expected = SampleData.streets.sortedBy { s -> s.id.value.toString() }
+        val expected = sampleData.streets
+            .sortedBy { s -> s.id.value.toString() }
         val actual = repository.list()
 
         assertContentEquals(expected, actual)
     }
 
     @Test
-    fun `test list on sample data with options`(): Unit = transaction {
-        val expected = SampleData.streets
-            .sortedBy { s -> s.name }
-            .drop(2)
-            .take(1)
+    fun `test list on sample data with size`(): Unit = transaction {
+        val expected = sampleData.streets
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .take(2)
         val actual = repository.list(
             order = arrayOf(StreetTable.name to SortOrder.ASC),
-            offset = 2,
-            limit = 1,
+            size = 2,
+        )
+
+        assertContentEquals(expected, actual)
+    }
+
+    @Test
+    fun `test list on sample data with options`(): Unit = transaction {
+        val expected = sampleData.streets
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .drop(1 * 2)
+            .take(2)
+        val actual = repository.list(
+            order = arrayOf(StreetTable.name to SortOrder.ASC),
+            page = 1,
+            size = 2,
         )
 
         assertContentEquals(expected, actual)
@@ -68,7 +93,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test list on no data`(): Unit = transaction {
-        SampleData.clear()
+        sampleData.clear()
         val list = repository.list()
 
         assertTrue(list.empty())
@@ -76,7 +101,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test find by id on sample data`(): Unit = transaction {
-        val expected = SampleData.streets.random()
+        val expected = sampleData.streets.random()
         val actual = repository.find(id = expected.id.value)
 
         assertEquals(expected, actual)
@@ -84,7 +109,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test find by id on no data`(): Unit = transaction {
-        SampleData.clear()
+        sampleData.clear()
         val actual = repository.find(id = UUID.randomUUID())
 
         assertNull(actual)
@@ -100,7 +125,7 @@ class StreetRepositoryTest(
     @Test
     fun `test create`(): Unit = transaction {
         val name = "Name"
-        val postCode = SampleData.postCodes.random()
+        val postCode = sampleData.postCodes.random()
 
         val actual = repository.create(
             name = name,
@@ -114,7 +139,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test create existing`(): Unit = transaction {
-        val postCode = SampleData.postCodes.filterNot { p -> p.streets.empty() }.random()
+        val postCode = sampleData.postCodes.filterNot { p -> p.streets.empty() }.random()
         val name = postCode.streets.toList().random().name
 
         assertFailsWith<IllegalArgumentException> {
@@ -140,7 +165,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test update name`(): Unit = transaction {
-        val street = SampleData.streets.random()
+        val street = sampleData.streets.random()
         val name = "Name"
         val postCode = street.postCode
 
@@ -156,9 +181,9 @@ class StreetRepositoryTest(
 
     @Test
     fun `test update post code`(): Unit = transaction {
-        val street = SampleData.streets.random()
+        val street = sampleData.streets.random()
         val name = street.name
-        val postCode = SampleData.postCodes.filterNot { p -> p.streets.contains(street) }.random()
+        val postCode = sampleData.postCodes.filterNot { p -> p.streets.contains(street) }.random()
 
         val actual = repository.update(
             id = street.id.value,
@@ -172,9 +197,9 @@ class StreetRepositoryTest(
 
     @Test
     fun `test update all`(): Unit = transaction {
-        val street = SampleData.streets.random()
+        val street = sampleData.streets.random()
         val name = "Name"
-        val postCode = SampleData.postCodes.filterNot { p -> p.streets.contains(street) }.random()
+        val postCode = sampleData.postCodes.filterNot { p -> p.streets.contains(street) }.random()
 
         val actual = repository.update(
             id = street.id.value,
@@ -189,7 +214,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test update all to same`(): Unit = transaction {
-        val street = SampleData.streets.random()
+        val street = sampleData.streets.random()
         val name = street.name
         val postCode = street.postCode
 
@@ -221,7 +246,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test update name to existing`(): Unit = transaction {
-        val street = SampleData.streets.filter { s -> s.postCode.streets.count() >= 2 }.random()
+        val street = sampleData.streets.filter { s -> s.postCode.streets.count() >= 2 }.random()
         val name = street.postCode.streets.filterNot { s -> s == street }.random().name
         val postCode = street.postCode
 
@@ -236,7 +261,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test update post code to not existing`(): Unit = transaction {
-        val state = SampleData.streets.random()
+        val state = sampleData.streets.random()
         val name = state.name
         val postCodeId = UUID.randomUUID()
 
@@ -251,7 +276,7 @@ class StreetRepositoryTest(
 
     @Test
     fun `test delete`(): Unit = transaction {
-        val id = SampleData.streets.random().id.value
+        val id = sampleData.streets.random().id.value
 
         transaction { assertNotNull(Street.findById(id)) }
 

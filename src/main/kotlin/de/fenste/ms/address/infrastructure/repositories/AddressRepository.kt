@@ -42,7 +42,7 @@ class AddressRepository {
         ) {
             val address = AddressTable
                 .slice(AddressTable.columns)
-                .select { (AddressTable.houseNumber eq houseNumber) and (AddressTable.street eq street.id) }
+                .select { (AddressTable.houseNumber eq houseNumber) and (AddressTable.streetId eq street.id) }
                 .apply { extra?.let { andWhere { AddressTable.extra eq extra } } }
                 .apply { original?.let { andWhere { AddressTable.id neq original.id } } }
                 .limit(1)
@@ -54,22 +54,27 @@ class AddressRepository {
         }
     }
 
+    fun count(): Int = Address
+        .all()
+        .count()
+        .toInt()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(AddressTable.id to SortOrder.ASC),
-    ): SizedIterable<Address> = when {
-        limit != null ->
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(),
+    ): SizedIterable<Address> = when (size) {
+        null ->
             Address
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, AddressTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             Address
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, AddressTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

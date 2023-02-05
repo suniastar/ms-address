@@ -20,11 +20,12 @@ import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.City
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -32,20 +33,33 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class CityServiceTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val service: CityService,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.cities.count()
+        val actual = service.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.cities.sortedBy { c -> c.id.value.toString() }.map { c -> CityDto(c) }
+        val expected = sampleData.cities
+            .sortedBy { c -> c.id.value.toString() }
+            .map { c -> CityDto(c) }
         val actual = service.list()
 
         transaction { assertContentEquals(expected, actual) }
@@ -53,14 +67,15 @@ class CityServiceTest(
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.cities
-            .sortedBy { c -> c.id.value.toString() }
-            .drop(2)
-            .take(1)
+        val expected = sampleData.cities
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { c -> CityDto(c) }
         val actual = service.list(
-            offset = 2,
-            limit = 1,
+            sort = "name,asc",
+            page = 1,
+            size = 2,
         )
 
         transaction { assertContentEquals(expected, actual) }
@@ -68,15 +83,16 @@ class CityServiceTest(
 
     @Test
     fun `test list on no data`() {
-        SampleData.clear()
+        sampleData.clear()
         val list = service.list()
 
-        assertNull(list)
+        assertNotNull(list)
+        assertTrue(list.isEmpty())
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.cities.random().let { c -> CityDto(c) }
+        val expected = sampleData.cities.random().let { c -> CityDto(c) }
         val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
@@ -92,7 +108,7 @@ class CityServiceTest(
     @Test
     fun `test create`() {
         val name = "Name"
-        val country = transaction { SampleData.countries.filter { c -> c.states.empty() }.random() }
+        val country = transaction { sampleData.countries.filter { c -> c.states.empty() }.random() }
 
         val create = CityInputDto(
             name = name,
@@ -111,7 +127,7 @@ class CityServiceTest(
 
     @Test
     fun `test create all`() {
-        val country = transaction { SampleData.countries.filterNot { c -> c.states.empty() }.random() }
+        val country = transaction { sampleData.countries.filterNot { c -> c.states.empty() }.random() }
         val name = "Name"
         val state = transaction { country.states.toList().random() }
 
@@ -134,10 +150,10 @@ class CityServiceTest(
 
     @Test
     fun `test update all`() {
-        val city = transaction { SampleData.cities.filterNot { c -> c.state == null }.random() }
+        val city = transaction { sampleData.cities.filterNot { c -> c.state == null }.random() }
         val name = "Name"
         val country = transaction {
-            SampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
+            sampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
         }
         val state = transaction { country.states.toList().random() }
 
@@ -161,7 +177,7 @@ class CityServiceTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.cities.random().id.value
+        val id = sampleData.cities.random().id.value
 
         transaction { assertNotNull(City.findById(id)) }
 

@@ -26,13 +26,13 @@ import java.util.UUID
 class City(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object EntityClass : UUIDEntityClass<City>(CityTable)
 
-    var country by Country referencedOn CityTable.country
+    var country by Country referencedOn CityTable.countryId
 
-    var state by State optionalReferencedOn CityTable.state
+    var state by State optionalReferencedOn CityTable.stateId
 
     var name by CityTable.name
 
-    val postCodes by PostCode referrersOn PostCodeTable.city
+    val postCodes by PostCode referrersOn PostCodeTable.cityId
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
@@ -42,6 +42,7 @@ class City(id: EntityID<UUID>) : UUIDEntity(id) {
                 country.id == other.country.id &&
                 state?.id == other.state?.id &&
                 name == other.name
+
         else -> false
     }
 

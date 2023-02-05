@@ -41,7 +41,7 @@ class PostCodeRepository {
         ) {
             val postCode = PostCodeTable
                 .slice(PostCodeTable.columns)
-                .select { (PostCodeTable.code eq code) and (PostCodeTable.city eq city.id) }
+                .select { (PostCodeTable.code eq code) and (PostCodeTable.cityId eq city.id) }
                 .apply { original?.let { andWhere { PostCodeTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -52,22 +52,27 @@ class PostCodeRepository {
         }
     }
 
+    fun count(): Int = PostCode
+        .all()
+        .count()
+        .toInt()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(PostCodeTable.id to SortOrder.ASC),
-    ): SizedIterable<PostCode> = when {
-        limit != null ->
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<PostCode> = when (size) {
+        null ->
             PostCode
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, PostCodeTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             PostCode
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, PostCodeTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

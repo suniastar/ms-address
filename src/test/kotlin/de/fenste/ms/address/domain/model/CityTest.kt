@@ -16,55 +16,62 @@
 
 package de.fenste.ms.address.domain.model
 
-import de.fenste.ms.address.test.SampleData
+import de.fenste.ms.address.config.SampleDataConfig
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class CityTest {
+@SpringBootTest
+@ActiveProfiles("sample")
+class CityTest(
+    @Autowired private val sampleData: SampleDataConfig,
+) {
     private lateinit var copy: City
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
 
         copy = transaction {
-            City.findById(SampleData.cities[0].id)!!
+            City.findById(sampleData.cities[0].id)!!
         }
     }
 
     @Test
     fun `test equals`(): Unit = transaction {
-        assertEquals(SampleData.cities[0], SampleData.cities[0])
+        assertEquals(sampleData.cities[0], sampleData.cities[0])
         assertEquals(copy, copy)
-        assertEquals(SampleData.cities[0], copy)
-        assertEquals(copy, SampleData.cities[0])
+        assertEquals(sampleData.cities[0], copy)
+        assertEquals(copy, sampleData.cities[0])
 
-        assertNotEquals(SampleData.cities[0], SampleData.cities[1])
-        assertNotEquals(copy, SampleData.cities[1])
-        assertNotEquals(SampleData.cities[1], SampleData.cities[0])
-        assertNotEquals(SampleData.cities[1], copy)
+        assertNotEquals(sampleData.cities[0], sampleData.cities[1])
+        assertNotEquals(copy, sampleData.cities[1])
+        assertNotEquals(sampleData.cities[1], sampleData.cities[0])
+        assertNotEquals(sampleData.cities[1], copy)
 
         assertNotEquals<City?>(copy, null)
-        assertNotEquals<City?>(null, SampleData.cities[0])
+        assertNotEquals<City?>(null, sampleData.cities[0])
     }
 
     @Test
     fun `test hashCode`(): Unit = transaction {
-        assertEquals(SampleData.cities[0].hashCode(), SampleData.cities[0].hashCode())
+        assertEquals(sampleData.cities[0].hashCode(), sampleData.cities[0].hashCode())
         assertEquals(copy.hashCode(), copy.hashCode())
-        assertEquals(SampleData.cities[0].hashCode(), copy.hashCode())
-        assertEquals(copy.hashCode(), SampleData.cities[0].hashCode())
+        assertEquals(sampleData.cities[0].hashCode(), copy.hashCode())
+        assertEquals(copy.hashCode(), sampleData.cities[0].hashCode())
 
-        assertNotEquals(SampleData.cities[0].hashCode(), SampleData.cities[1].hashCode())
-        assertNotEquals(copy.hashCode(), SampleData.cities[1].hashCode())
-        assertNotEquals(SampleData.cities[1].hashCode(), SampleData.cities[0].hashCode())
-        assertNotEquals(SampleData.cities[1].hashCode(), copy.hashCode())
+        assertNotEquals(sampleData.cities[0].hashCode(), sampleData.cities[1].hashCode())
+        assertNotEquals(copy.hashCode(), sampleData.cities[1].hashCode())
+        assertNotEquals(sampleData.cities[1].hashCode(), sampleData.cities[0].hashCode())
+        assertNotEquals(sampleData.cities[1].hashCode(), copy.hashCode())
 
         assertNotEquals(copy.hashCode(), null.hashCode())
-        assertNotEquals(null.hashCode(), SampleData.cities[0].hashCode())
+        assertNotEquals(null.hashCode(), sampleData.cities[0].hashCode())
     }
 
     @Test
@@ -73,7 +80,7 @@ class CityTest {
         val pIdC = copy.country.id
         val pIdS = copy.state?.id
         val cExpected = "City(id='$cId', country='$pIdC', state='$pIdS', name='Berlin')"
-        val cActual = SampleData.cities[0].toString()
+        val cActual = sampleData.cities[0].toString()
         assertEquals(cExpected, cActual)
     }
 }

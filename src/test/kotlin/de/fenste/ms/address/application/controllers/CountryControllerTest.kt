@@ -16,15 +16,26 @@
 
 package de.fenste.ms.address.application.controllers
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Country
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.graphql.test.tester.GraphQlTester
+import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
+import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import java.util.UUID
+import kotlin.math.ceil
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -35,19 +46,30 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 @AutoConfigureGraphQlTester
+@AutoConfigureMockMvc
 class CountryControllerTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val graphQlTester: GraphQlTester,
+    @Autowired private val mockMvc: MockMvc,
 ) {
+
+    private companion object {
+        private const val BASE_URI = "http://localhost"
+        private val MAPPER = jacksonObjectMapper()
+    }
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
     }
 
     @Test
-    fun `list on sample data`() {
-        val expected = SampleData.countries.map { c -> c.id.value.toString() }.sorted()
+    fun `graphql list on sample data`() {
+        val expected = sampleData.countries
+            .sortedBy { c -> c.id.value.toString() }
+            .map { c -> c.id.value.toString() }
 
         val query = """
             query {
@@ -69,16 +91,42 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test list on sample data with options`() {
-        val expected = SampleData.countries
+    fun `rest list on sample data`() {
+        val expected = sampleData.countries
+            .sortedBy { c -> c.id.value.toString() }
             .map { c -> c.id.value.toString() }
-            .sorted()
-            .drop(2)
-            .take(1)
+
+        mockMvc
+            .get("$BASE_URI/api/country") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.countryDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `graphql test list on sample data with options`() {
+        val expected = sampleData.countries
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
+            .map { c -> c.id.value.toString() }
 
         val query = """
             query {
-                countries(offset: 2, limit: 1) {
+                countries(sort: "name,asc", page: 1, size: 2) {
                     id
                 }
             }
@@ -96,8 +144,36 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = SampleData.countries.random().id.value.toString()
+    fun `rest test list on sample data with options`() {
+        val expected = sampleData.countries
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
+            .map { c -> c.id.value.toString() }
+
+        mockMvc
+            .get("$BASE_URI/api/country?page=1&size=2&sort=name,asc") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(sampleData.countries.count()) } }
+            .andExpect { jsonPath("page.number") { value(1) } }
+            .andExpect { jsonPath("page.totalPages") { value(ceil(sampleData.countries.count() / 2f)) } }
+            .andExpect { jsonPath("_links.first.href") { exists() } }
+            .andExpect { jsonPath("_links.prev.href") { exists() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { exists() } }
+            .andExpect { jsonPath("_embedded.countryDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `graphql test find by id on sample data`() {
+        val expected = sampleData.countries.random().id.value.toString()
 
         val query = """
             query {
@@ -118,7 +194,29 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test find by alpha2 on non existing sample data`() {
+    fun `rest test find by id on sample data`() {
+        val expected = sampleData.countries.random().let { c -> CountryDto(c) }
+
+        mockMvc
+            .get("$BASE_URI/api/country/${expected.id}") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(expected.name) } }
+            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
+            .andExpect { jsonPath("localizedName") { value(expected.localizedName) } }
+            .andExpect { jsonPath("alpha2") { value(expected.alpha2) } }
+            .andExpect { jsonPath("alpha3") { value(expected.alpha3) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.states") { exists() } }
+            .andExpect { jsonPath("_links.cities") { exists() } }
+    }
+
+    @Test
+    fun `graphql test find by id on non existing sample data`() {
         val query = """
             query {
                 country(id: "${UUID.randomUUID()}") {
@@ -135,7 +233,18 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test create`() {
+    fun `rest test find by id on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/country/${UUID.randomUUID()}") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
+    fun `graphql test create`() {
         val alpha2 = "CZ"
         val alpha3 = "CZE"
         val name = "Czechia"
@@ -164,7 +273,7 @@ class CountryControllerTest(
             .get()
 
         assertNotNull(created)
-        assertFalse(SampleData.countries.map { c -> c.id.value.toString() }.contains(created))
+        assertFalse(sampleData.countries.map { c -> c.id.value.toString() }.contains(created))
 
         transaction {
             val actual = Country.findById(UUID.fromString(created))
@@ -177,8 +286,53 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test update all`() {
-        val country = SampleData.countries.random()
+    fun `rest test create`() {
+        val alpha2 = "CZ"
+        val alpha3 = "CZE"
+        val name = "Czechia"
+        val localizedName = "Tschechien"
+
+        val create = CountryInputDto(
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+            name = name,
+            localizedName = localizedName,
+        )
+        val result = mockMvc
+            .post("$BASE_URI/api/country") {
+                contentType = MediaType.APPLICATION_JSON
+                content = MAPPER.writeValueAsString(create)
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(name) } }
+            .andExpect { jsonPath("id") { exists() } }
+            .andExpect { jsonPath("localizedName") { value(localizedName) } }
+            .andExpect { jsonPath("alpha2") { value(alpha2) } }
+            .andExpect { jsonPath("alpha3") { value(alpha3) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.states") { exists() } }
+            .andExpect { jsonPath("_links.cities") { exists() } }
+            .andReturn()
+
+        val created = MAPPER.readTree(result.response.contentAsString).findValue("id").asText()
+        assertFalse(sampleData.countries.map { c -> c.id.value.toString() }.contains(created))
+
+        transaction {
+            val actual = Country.findById(UUID.fromString(created))
+            assertNotNull(actual)
+            assertEquals(alpha2, actual.alpha2)
+            assertEquals(alpha3, actual.alpha3)
+            assertEquals(name, actual.name)
+            assertEquals(localizedName, actual.localizedName)
+        }
+    }
+
+    @Test
+    fun `graphql test update all`() {
+        val country = sampleData.countries.random()
         val alpha2 = "XX"
         val alpha3 = "XXX"
         val name = "Name"
@@ -219,8 +373,53 @@ class CountryControllerTest(
     }
 
     @Test
-    fun `test delete`() {
-        val id = SampleData.countries.random().id.value
+    fun `rest test update all`() {
+        val country = sampleData.countries.random()
+        val alpha2 = "XX"
+        val alpha3 = "XXX"
+        val name = "Name"
+        val localizedName = "LocalizedName"
+
+        val update = CountryInputDto(
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+            name = name,
+            localizedName = localizedName,
+        )
+        val result = mockMvc
+            .put("$BASE_URI/api/country/${country.id.value}") {
+                contentType = MediaType.APPLICATION_JSON
+                content = MAPPER.writeValueAsString(update)
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(name) } }
+            .andExpect { jsonPath("id") { value(country.id.value.toString()) } }
+            .andExpect { jsonPath("localizedName") { value(localizedName) } }
+            .andExpect { jsonPath("alpha2") { value(alpha2) } }
+            .andExpect { jsonPath("alpha3") { value(alpha3) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.states") { exists() } }
+            .andExpect { jsonPath("_links.cities") { exists() } }
+            .andReturn()
+
+        val updated = MAPPER.readTree(result.response.contentAsString).findValue("id").asText()
+
+        transaction {
+            val actual = Country.findById(UUID.fromString(updated))
+            assertNotNull(actual)
+            assertEquals(alpha2, actual.alpha2)
+            assertEquals(alpha3, actual.alpha3)
+            assertEquals(name, actual.name)
+            assertEquals(localizedName, actual.localizedName)
+        }
+    }
+
+    @Test
+    fun `graphql test delete`() {
+        val id = sampleData.countries.random().id.value
 
         transaction { assertNotNull(Country.findById(id)) }
 
@@ -239,5 +438,106 @@ class CountryControllerTest(
 
         assertTrue(actual)
         transaction { assertNull(Country.findById(id)) }
+    }
+
+    @Test
+    fun `rest test delete`() {
+        val id = sampleData.countries.random().id.value
+
+        transaction { assertNotNull(Country.findById(id)) }
+
+        val result = mockMvc
+            .delete("$BASE_URI/api/country/$id") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MediaType.APPLICATION_JSON) }
+            }
+            .andReturn()
+
+        val actual = result.response.contentAsString.toBoolean()
+        assertTrue(actual)
+        transaction { assertNull(Country.findById(id)) }
+    }
+
+    @Test
+    fun `rest test get country states on sample data`() {
+        val country = transaction { sampleData.countries.filterNot { c -> c.states.empty() }.random() }
+        val expected = transaction {
+            country.states
+                .sortedBy { s -> s.id.value.toString() }
+                .map { s -> s.id.value.toString() }
+        }
+
+        mockMvc
+            .get("$BASE_URI/api/country/${country.id.value}/states") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.stateDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `rest test get country states on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/country/${UUID.randomUUID()}/states") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
+    fun `rest test get country cities on sample data`() {
+        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
+        val expected = transaction {
+            country.cities
+                .sortedBy { s -> s.id.value.toString() }
+                .map { s -> s.id.value.toString() }
+        }
+
+        mockMvc
+            .get("$BASE_URI/api/country/${country.id.value}/cities") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.cityDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `rest test get country cities on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/country/${UUID.randomUUID()}/cities") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
     }
 }

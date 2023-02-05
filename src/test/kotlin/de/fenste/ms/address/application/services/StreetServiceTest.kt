@@ -19,11 +19,12 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Street
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -31,20 +32,33 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class StreetServiceTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val service: StreetService,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.streets.count()
+        val actual = service.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`() {
-        val expected = SampleData.streets.sortedBy { s -> s.id.value.toString() }.map { s -> StreetDto(s) }
+        val expected = sampleData.streets
+            .sortedBy { s -> s.id.value.toString() }
+            .map { s -> StreetDto(s) }
         val actual = service.list()
 
         transaction { assertContentEquals(expected, actual) }
@@ -52,14 +66,15 @@ class StreetServiceTest(
 
     @Test
     fun `test list on sample data with options`() {
-        val expected = SampleData.streets
-            .sortedBy { s -> s.id.value.toString() }
-            .drop(2)
-            .take(1)
+        val expected = sampleData.streets
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .drop(1 * 2)
+            .take(2)
             .map { s -> StreetDto(s) }
         val actual = service.list(
-            offset = 2,
-            limit = 1,
+            sort = "name,asc",
+            page = 1,
+            size = 2,
         )
 
         transaction { assertContentEquals(expected, actual) }
@@ -67,15 +82,16 @@ class StreetServiceTest(
 
     @Test
     fun `test list on no data`() {
-        SampleData.clear()
+        sampleData.clear()
         val list = service.list()
 
-        assertNull(list)
+        assertNotNull(list)
+        assertTrue(list.isEmpty())
     }
 
     @Test
     fun `test find by id on sample data`() {
-        val expected = SampleData.streets.random().let { s -> StreetDto(s) }
+        val expected = sampleData.streets.random().let { s -> StreetDto(s) }
         val actual = service.find(id = expected.id)
 
         transaction { assertEquals(expected, actual) }
@@ -91,7 +107,7 @@ class StreetServiceTest(
     @Test
     fun `test create`() {
         val name = "Name"
-        val postCode = SampleData.postCodes.random()
+        val postCode = sampleData.postCodes.random()
 
         val create = StreetInputDto(
             name = name,
@@ -109,9 +125,9 @@ class StreetServiceTest(
 
     @Test
     fun `test update all`() {
-        val state = SampleData.streets.random()
+        val state = sampleData.streets.random()
         val name = "Name"
-        val postCode = transaction { SampleData.postCodes.filterNot { p -> p.streets.contains(state) }.random() }
+        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.contains(state) }.random() }
 
         val update = StreetInputDto(
             name = name,
@@ -130,7 +146,7 @@ class StreetServiceTest(
 
     @Test
     fun `test delete`() {
-        val id = SampleData.streets.random().id.value
+        val id = sampleData.streets.random().id.value
 
         transaction { assertNotNull(Street.findById(id)) }
 

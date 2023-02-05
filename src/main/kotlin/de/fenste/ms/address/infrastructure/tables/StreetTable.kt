@@ -17,13 +17,21 @@
 package de.fenste.ms.address.infrastructure.tables
 
 import org.jetbrains.exposed.dao.id.UUIDTable
+import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
 
 object StreetTable : UUIDTable("streets") {
 
     private const val NAME_MAX_LENGTH = 255
 
-    val postCode = reference("post_code_id", PostCodeTable, onDelete = ReferenceOption.CASCADE)
+    val postCodeId = reference("post_code_id", PostCodeTable, onDelete = ReferenceOption.CASCADE)
 
     val name = varchar("name", NAME_MAX_LENGTH)
+
+    fun valueOf(value: String): Column<*> = when (value.lowercase()) {
+        "id" -> id
+        "post_code_id", "postcodeid" -> postCodeId
+        "name" -> name
+        else -> throw IllegalArgumentException("\"$value\" is not a valid column name.")
+    }
 }

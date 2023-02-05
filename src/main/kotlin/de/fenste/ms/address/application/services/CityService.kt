@@ -18,7 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
+import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.infrastructure.repositories.CityRepository
+import de.fenste.ms.address.infrastructure.tables.CityTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -28,17 +30,23 @@ import java.util.UUID
 class CityService(
     @Autowired private val cityRepository: CityRepository,
 ) {
+
+    fun count(): Int = transaction {
+        cityRepository.count()
+    }
+
     fun list(
-        limit: Int? = null,
-        offset: Long? = null,
-    ): List<CityDto>? = transaction {
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<CityDto> = transaction {
         cityRepository
             .list(
-                limit = limit,
-                offset = offset ?: 0L,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(CityTable::valueOf),
             )
             .map { c -> CityDto(c) }
-            .ifEmpty { null }
     }
 
     fun find(

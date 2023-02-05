@@ -53,22 +53,27 @@ class CountryRepository {
         }
     }
 
+    fun count(): Int = Country
+        .all()
+        .count()
+        .toInt()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CountryTable.id to SortOrder.ASC),
-    ): SizedIterable<Country> = when (limit) {
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<Country> = when (size) {
         null ->
             Country
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, CountryTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             Country
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, CountryTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

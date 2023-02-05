@@ -25,7 +25,7 @@ import java.util.UUID
 class Address(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object EntityClass : UUIDEntityClass<Address>(AddressTable)
 
-    var street by Street referencedOn AddressTable.street
+    var street by Street referencedOn AddressTable.streetId
 
     var houseNumber by AddressTable.houseNumber
 
@@ -39,6 +39,7 @@ class Address(id: EntityID<UUID>) : UUIDEntity(id) {
                 street.id == other.street.id &&
                 houseNumber == other.houseNumber &&
                 extra == other.extra
+
         else -> false
     }
 

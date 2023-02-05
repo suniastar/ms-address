@@ -41,7 +41,7 @@ class StateRepository {
         ) {
             val state = StateTable
                 .slice(StateTable.columns)
-                .select { (StateTable.name eq name) and (StateTable.country eq country.id) }
+                .select { (StateTable.name eq name) and (StateTable.countryId eq country.id) }
                 .apply { original?.let { andWhere { StateTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -52,22 +52,27 @@ class StateRepository {
         }
     }
 
+    fun count(): Int = State
+        .all()
+        .count()
+        .toInt()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(StateTable.id to SortOrder.ASC),
-    ): SizedIterable<State> = when (limit) {
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<State> = when (size) {
         null ->
             State
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, StateTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             State
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, StateTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

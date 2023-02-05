@@ -16,55 +16,62 @@
 
 package de.fenste.ms.address.domain.model
 
-import de.fenste.ms.address.test.SampleData
+import de.fenste.ms.address.config.SampleDataConfig
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 
-class PostCodeTest {
+@SpringBootTest
+@ActiveProfiles("sample")
+class PostCodeTest(
+    @Autowired private val sampleData: SampleDataConfig,
+) {
     private lateinit var copy: PostCode
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
 
         copy = transaction {
-            PostCode.findById(SampleData.postCodes[0].id)!!
+            PostCode.findById(sampleData.postCodes[0].id)!!
         }
     }
 
     @Test
     fun `test equals`(): Unit = transaction {
-        assertEquals(SampleData.postCodes[0], SampleData.postCodes[0])
+        assertEquals(sampleData.postCodes[0], sampleData.postCodes[0])
         assertEquals(copy, copy)
-        assertEquals(SampleData.postCodes[0], copy)
-        assertEquals(copy, SampleData.postCodes[0])
+        assertEquals(sampleData.postCodes[0], copy)
+        assertEquals(copy, sampleData.postCodes[0])
 
-        assertNotEquals(SampleData.postCodes[0], SampleData.postCodes[1])
-        assertNotEquals(copy, SampleData.postCodes[1])
-        assertNotEquals(SampleData.postCodes[1], SampleData.postCodes[0])
-        assertNotEquals(SampleData.postCodes[1], copy)
+        assertNotEquals(sampleData.postCodes[0], sampleData.postCodes[1])
+        assertNotEquals(copy, sampleData.postCodes[1])
+        assertNotEquals(sampleData.postCodes[1], sampleData.postCodes[0])
+        assertNotEquals(sampleData.postCodes[1], copy)
 
         assertNotEquals<PostCode?>(copy, null)
-        assertNotEquals<PostCode?>(null, SampleData.postCodes[0])
+        assertNotEquals<PostCode?>(null, sampleData.postCodes[0])
     }
 
     @Test
     fun `test hashCode`(): Unit = transaction {
-        assertEquals(SampleData.postCodes[0].hashCode(), SampleData.postCodes[0].hashCode())
+        assertEquals(sampleData.postCodes[0].hashCode(), sampleData.postCodes[0].hashCode())
         assertEquals(copy.hashCode(), copy.hashCode())
-        assertEquals(SampleData.postCodes[0].hashCode(), copy.hashCode())
-        assertEquals(copy.hashCode(), SampleData.postCodes[0].hashCode())
+        assertEquals(sampleData.postCodes[0].hashCode(), copy.hashCode())
+        assertEquals(copy.hashCode(), sampleData.postCodes[0].hashCode())
 
-        assertNotEquals(SampleData.postCodes[0].hashCode(), SampleData.postCodes[1].hashCode())
-        assertNotEquals(copy.hashCode(), SampleData.postCodes[1].hashCode())
-        assertNotEquals(SampleData.postCodes[1].hashCode(), SampleData.postCodes[0].hashCode())
-        assertNotEquals(SampleData.postCodes[1].hashCode(), copy.hashCode())
+        assertNotEquals(sampleData.postCodes[0].hashCode(), sampleData.postCodes[1].hashCode())
+        assertNotEquals(copy.hashCode(), sampleData.postCodes[1].hashCode())
+        assertNotEquals(sampleData.postCodes[1].hashCode(), sampleData.postCodes[0].hashCode())
+        assertNotEquals(sampleData.postCodes[1].hashCode(), copy.hashCode())
 
         assertNotEquals(copy.hashCode(), null.hashCode())
-        assertNotEquals(null.hashCode(), SampleData.postCodes[0].hashCode())
+        assertNotEquals(null.hashCode(), sampleData.postCodes[0].hashCode())
     }
 
     @Test
@@ -72,7 +79,7 @@ class PostCodeTest {
         val cId = copy.id
         val pId = copy.city.id
         val cExpected = "PostCode(id='$cId', city='$pId', code='10557')"
-        val cActual = SampleData.postCodes[0].toString()
+        val cActual = sampleData.postCodes[0].toString()
         assertEquals(cExpected, cActual)
     }
 }

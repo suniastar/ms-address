@@ -31,8 +31,8 @@ import org.springframework.test.context.ActiveProfiles
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
-@ActiveProfiles("sample")
 @SpringBootTest
+@ActiveProfiles("sample")
 class SampleDataConfigTest(
     @Autowired private val countryRepository: CountryRepository,
     @Autowired private val stateRepository: StateRepository,

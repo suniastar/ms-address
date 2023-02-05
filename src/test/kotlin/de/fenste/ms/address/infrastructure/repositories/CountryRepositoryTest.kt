@@ -16,13 +16,14 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.infrastructure.tables.CountryTable
-import de.fenste.ms.address.test.SampleData
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -34,33 +35,57 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
+@ActiveProfiles("sample")
 class CountryRepositoryTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val repository: CountryRepository,
 ) {
 
     @BeforeTest
     fun `set up`() {
-        SampleData.reset()
+        sampleData.reset()
+    }
+
+    @Test
+    fun `test count`(): Unit = transaction {
+        val expected = sampleData.countries.count()
+        val actual = repository.count()
+
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `test list on sample data`(): Unit = transaction {
-        val expected = SampleData.countries.sortedBy { c -> c.id.value.toString() }
+        val expected = sampleData.countries
+            .sortedBy { c -> c.id.value.toString() }
         val actual = repository.list()
 
         assertContentEquals(expected, actual)
     }
 
     @Test
-    fun `test list on sample data with options`(): Unit = transaction {
-        val expected = SampleData.countries
-            .sortedBy { c -> c.alpha2 }
-            .drop(2)
-            .take(1)
+    fun `test list on sample data with size`(): Unit = transaction {
+        val expected = sampleData.countries
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .take(2)
         val actual = repository.list(
-            order = arrayOf(CountryTable.alpha2 to SortOrder.ASC),
-            offset = 2,
-            limit = 1,
+            order = arrayOf(CountryTable.name to SortOrder.ASC),
+            size = 2,
+        )
+
+        assertContentEquals(expected, actual)
+    }
+
+    @Test
+    fun `test list on sample data with options`(): Unit = transaction {
+        val expected = sampleData.countries
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .drop(1 * 2)
+            .take(2)
+        val actual = repository.list(
+            order = arrayOf(CountryTable.name to SortOrder.ASC),
+            page = 1,
+            size = 2,
         )
 
         assertContentEquals(expected, actual)
@@ -68,7 +93,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test list on no data`(): Unit = transaction {
-        SampleData.clear()
+        sampleData.clear()
         val list = repository.list()
 
         assertTrue(list.empty())
@@ -76,7 +101,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test find by id on sample data`(): Unit = transaction {
-        val expected = SampleData.countries.random()
+        val expected = sampleData.countries.random()
         val actual = repository.find(id = expected.id.value)
 
         assertEquals(expected, actual)
@@ -84,7 +109,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test find by alpha2 on sample data`(): Unit = transaction {
-        val expected = SampleData.countries.random()
+        val expected = sampleData.countries.random()
         val actual = repository.find(alpha2 = expected.alpha2)
 
         assertEquals(expected, actual)
@@ -92,7 +117,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test find by alpha3 on sample data`(): Unit = transaction {
-        val expected = SampleData.countries.random()
+        val expected = sampleData.countries.random()
         val actual = repository.find(alpha3 = expected.alpha3)
 
         assertEquals(expected, actual)
@@ -100,7 +125,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test find by id on no data`(): Unit = transaction {
-        SampleData.clear()
+        sampleData.clear()
         val actual = repository.find(id = UUID.randomUUID())
 
         assertNull(actual)
@@ -143,7 +168,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test create existing alpha2`(): Unit = transaction {
-        val alpha2 = SampleData.countries.random().alpha2
+        val alpha2 = sampleData.countries.random().alpha2
         val alpha3 = "XXX"
         val name = "Name"
         val localizedName = "LocalizedName"
@@ -161,7 +186,7 @@ class CountryRepositoryTest(
     @Test
     fun `test create existing alpha3`(): Unit = transaction {
         val alpha2 = "XX"
-        val alpha3 = SampleData.countries.random().alpha3
+        val alpha3 = sampleData.countries.random().alpha3
         val name = "Name"
         val localizedName = "LocalizedName"
 
@@ -179,7 +204,7 @@ class CountryRepositoryTest(
     fun `test create existing name`(): Unit = transaction {
         val alpha2 = "XX"
         val alpha3 = "XXX"
-        val name = SampleData.countries.random().name
+        val name = sampleData.countries.random().name
         val localizedName = "LocalizedName"
 
         assertFailsWith<IllegalArgumentException> {
@@ -194,7 +219,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha2`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = "XX"
         val alpha3 = country.alpha3
         val name = country.name
@@ -214,7 +239,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha3`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = country.alpha2
         val alpha3 = "XXX"
         val name = country.name
@@ -234,7 +259,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update name`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = country.alpha2
         val alpha3 = country.alpha3
         val name = "Name"
@@ -254,7 +279,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update localizedName`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = country.alpha2
         val alpha3 = country.alpha3
         val name = country.name
@@ -274,7 +299,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update all`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = "XX"
         val alpha3 = "XXX"
         val name = "Name"
@@ -297,7 +322,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update all to same`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = country.alpha2
         val alpha3 = country.alpha3
         val name = country.name
@@ -339,8 +364,8 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha2 to existing`(): Unit = transaction {
-        val country = SampleData.countries.random()
-        val alpha2 = SampleData.countries.filterNot { c -> c.alpha2 == country.alpha2 }.random().alpha2
+        val country = sampleData.countries.random()
+        val alpha2 = sampleData.countries.filterNot { c -> c.alpha2 == country.alpha2 }.random().alpha2
         val alpha3 = country.alpha3
         val name = country.name
         val localizedName = country.localizedName
@@ -358,9 +383,9 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update alpha3 to existing`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = country.alpha2
-        val alpha3 = SampleData.countries.filterNot { c -> c.alpha3 == country.alpha3 }.random().alpha3
+        val alpha3 = sampleData.countries.filterNot { c -> c.alpha3 == country.alpha3 }.random().alpha3
         val name = country.name
         val localizedName = country.localizedName
 
@@ -377,10 +402,10 @@ class CountryRepositoryTest(
 
     @Test
     fun `test update name to existing`(): Unit = transaction {
-        val country = SampleData.countries.random()
+        val country = sampleData.countries.random()
         val alpha2 = country.alpha2
         val alpha3 = country.alpha3
-        val name = SampleData.countries.filterNot { c -> c == country }.random().name
+        val name = sampleData.countries.filterNot { c -> c == country }.random().name
         val localizedName = country.localizedName
 
         assertFailsWith<IllegalArgumentException> {
@@ -396,7 +421,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test delete`(): Unit = transaction {
-        val id = SampleData.countries.random().id.value
+        val id = sampleData.countries.random().id.value
 
         assertNotNull(Country.findById(id))
 

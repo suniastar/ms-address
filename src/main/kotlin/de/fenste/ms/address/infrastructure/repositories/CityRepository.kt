@@ -44,8 +44,8 @@ class CityRepository {
         ) {
             val city = CityTable
                 .slice(CityTable.columns)
-                .select { (CityTable.name eq name) and (CityTable.country eq country.id) }
-                .apply { state?.let { andWhere { CityTable.state eq state.id } } }
+                .select { (CityTable.name eq name) and (CityTable.countryId eq country.id) }
+                .apply { state?.let { andWhere { CityTable.stateId eq state.id } } }
                 .apply { original?.let { andWhere { CityTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
@@ -56,22 +56,27 @@ class CityRepository {
         }
     }
 
+    fun count(): Int = City
+        .all()
+        .count()
+        .toInt()
+
     fun list(
-        limit: Int? = null,
-        offset: Long = 0L,
-        vararg order: Pair<Expression<*>, SortOrder> = arrayOf(CityTable.id to SortOrder.ASC),
-    ): SizedIterable<City> = when {
-        limit != null ->
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<City> = when (size) {
+        null ->
             City
                 .all()
-                .orderBy(*order)
-                .limit(limit, offset)
+                .orderBy(*order, CityTable.id to SortOrder.ASC)
                 .notForUpdate()
 
         else ->
             City
                 .all()
-                .orderBy(*order)
+                .orderBy(*order, CityTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }
 

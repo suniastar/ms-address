@@ -18,7 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -28,17 +30,23 @@ import java.util.UUID
 class PostCodeService(
     @Autowired private val postCodeRepository: PostCodeRepository,
 ) {
+
+    fun count(): Int = transaction {
+        postCodeRepository.count()
+    }
+
     fun list(
-        limit: Int? = null,
-        offset: Long? = null,
-    ): List<PostCodeDto>? = transaction {
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<PostCodeDto> = transaction {
         postCodeRepository
             .list(
-                limit = limit,
-                offset = offset ?: 0L,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(PostCodeTable::valueOf),
             )
             .map { p -> PostCodeDto(p) }
-            .ifEmpty { null }
     }
 
     fun find(

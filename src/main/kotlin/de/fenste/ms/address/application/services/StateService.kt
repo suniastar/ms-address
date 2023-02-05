@@ -18,7 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.dtos.StateInputDto
+import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.infrastructure.repositories.StateRepository
+import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -28,17 +30,23 @@ import java.util.UUID
 class StateService(
     @Autowired private val stateRepository: StateRepository,
 ) {
+
+    fun count(): Int = transaction {
+        stateRepository.count()
+    }
+
     fun list(
-        limit: Int? = null,
-        offset: Long? = null,
-    ): List<StateDto>? = transaction {
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<StateDto> = transaction {
         stateRepository
             .list(
-                limit = limit,
-                offset = offset ?: 0L,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(StateTable::valueOf),
             )
             .map { s -> StateDto(s) }
-            .ifEmpty { null }
     }
 
     fun find(
