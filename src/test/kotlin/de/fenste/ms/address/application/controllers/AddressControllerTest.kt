@@ -19,6 +19,7 @@ package de.fenste.ms.address.application.controllers
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.AddressInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Address
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -37,7 +38,6 @@ import org.springframework.test.web.servlet.put
 import java.util.UUID
 import kotlin.math.ceil
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -45,7 +45,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 @SpringBootTest
 @ActiveProfiles("sample")
@@ -441,8 +440,33 @@ class AddressControllerTest(
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
-    fun `rest test get address street`() {
-        fail("Not implemented yet")
+    fun `rest test get address street on sample data`() {
+        val address = transaction { sampleData.addresses.random() }
+        val expected = transaction { StreetDto(address.street) }
+
+        mockMvc
+            .get("$BASE_URI/api/address/${address.id.value}/street") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(expected.name) } }
+            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.postcode") { exists() } }
+            .andExpect { jsonPath("_links.addresses") { exists() } }
+    }
+
+    @Test
+    fun `rest test get address street on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/address/${UUID.randomUUID()}/street") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
     }
 }

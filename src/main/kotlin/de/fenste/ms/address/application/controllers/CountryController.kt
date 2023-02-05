@@ -54,7 +54,7 @@ class CountryController(
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
-                CountryApi.generatePageLinks(size, page, t, sort),
+                CountryApi.generateCountryPageLinks(size, page, t, sort),
             )
         }
 
@@ -138,16 +138,36 @@ class CountryController(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<StateDto> {
-        TODO("Not yet implemented")
-    }
+    ): PagedModel<StateDto> = graphqlGetCountry(
+        id = id,
+    )
+        ?.let { c ->
+            val list = c.states.toList()
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                CountryApi.generateStatePageLinks(id),
+            )
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The country ($id) does not exist.")
 
     override fun restGetCountryCities(
         id: UUID,
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<CityDto> {
-        TODO("Not yet implemented")
-    }
+    ): PagedModel<CityDto> = graphqlGetCountry(
+        id = id,
+    )
+        ?.let { c ->
+            val list = c.cities.toList()
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                CountryApi.generateCityPageLinks(id),
+            )
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The country ($id) does not exist.")
 }

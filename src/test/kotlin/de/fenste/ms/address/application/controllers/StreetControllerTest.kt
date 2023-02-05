@@ -17,6 +17,7 @@
 package de.fenste.ms.address.application.controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.config.SampleDataConfig
@@ -37,7 +38,6 @@ import org.springframework.test.web.servlet.put
 import java.util.UUID
 import kotlin.math.ceil
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -45,7 +45,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 @SpringBootTest
 @ActiveProfiles("sample")
@@ -373,14 +372,73 @@ class StreetControllerTest(
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
-    fun `rest test get street post code`() {
-        fail("Not implemented yet")
+    fun `rest test get street post code on sample data`() {
+        val street = transaction { sampleData.streets.random() }
+        val expected = transaction { PostCodeDto(street.postCode) }
+
+        mockMvc
+            .get("$BASE_URI/api/street/${street.id.value}/postcode") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
+            .andExpect { jsonPath("code") { value(expected.code) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.city") { exists() } }
+            .andExpect { jsonPath("_links.streets") { exists() } }
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
+    fun `rest test get street post code on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/street/${UUID.randomUUID()}/postcode") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
     fun `rest test get street addresses`() {
-        fail("Not implemented yet")
+        val street = transaction { sampleData.streets.filterNot { s -> s.addresses.empty() }.random() }
+        val expected = transaction {
+            street.addresses
+                .sortedBy { a -> a.id.value.toString() }
+                .map { a -> a.id.value.toString() }
+        }
+
+        mockMvc
+            .get("$BASE_URI/api/street/${street.id.value}/addresses") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.addressDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `rest test get street addresses on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/street/${UUID.randomUUID()}/addresses") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
     }
 }

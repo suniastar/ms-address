@@ -44,8 +44,8 @@ interface StreetApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks(
+        fun generateStreetPageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> = PageHelper
+            .generatePageLinks(
                 "$BASE_URI/api/street",
                 size,
                 page,
@@ -75,6 +75,15 @@ interface StreetApi {
             Link.of("$BASE_URI/api/street/$id/postcode").withRel("postcode"),
             Link.of("$BASE_URI/api/street/$id/addresses{?page,size,sort}").withRel("addresses"),
         )
+
+        fun generateAddressPageLinks(id: UUID): Set<Link> = PageHelper
+            .generatePageLinks(
+                "$BASE_URI/api/street/$id/addresses",
+                null,
+                null,
+                null,
+                null,
+            )
     }
 
     @ResponseBody

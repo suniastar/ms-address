@@ -45,7 +45,7 @@ interface CityApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
+        fun generateCityPageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
             PageHelper.generatePageLinks(
                 "$BASE_URI/api/city",
                 size,
@@ -77,6 +77,15 @@ interface CityApi {
             Link.of("$BASE_URI/api/city/$id/state").withRel("state"),
             Link.of("$BASE_URI/api/city/$id/postcodes{?page,size,sort}").withRel("postcodes"),
         )
+
+        fun generatePostCodesPageLinks(id: UUID): Set<Link> = PageHelper
+            .generatePageLinks(
+                "$BASE_URI/api/city/$id/postcodes",
+                null,
+                null,
+                null,
+                null,
+            )
     }
 
     @ResponseBody
@@ -122,7 +131,7 @@ interface CityApi {
     @GetMapping("/{id}/state")
     fun restGetCityStates(
         @PathVariable id: UUID,
-    ): PagedModel<StateDto>
+    ): EntityModel<StateDto>
 
     @ResponseBody
     @GetMapping("/{id}/postcodes")

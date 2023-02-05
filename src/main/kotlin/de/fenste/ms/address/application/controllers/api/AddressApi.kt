@@ -43,8 +43,8 @@ interface AddressApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks(
+        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> = PageHelper
+            .generatePageLinks(
                 "$BASE_URI/api/address",
                 size,
                 page,

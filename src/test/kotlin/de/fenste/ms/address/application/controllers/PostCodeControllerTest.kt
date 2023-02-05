@@ -17,6 +17,7 @@
 package de.fenste.ms.address.application.controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
 import de.fenste.ms.address.config.SampleDataConfig
@@ -37,7 +38,6 @@ import org.springframework.test.web.servlet.put
 import java.util.UUID
 import kotlin.math.ceil
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -45,7 +45,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 @SpringBootTest
 @ActiveProfiles("sample")
@@ -431,14 +430,74 @@ class PostCodeControllerTest(
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
-    fun `rest test get post code city`() {
-        fail("Not implemented yet")
+    fun `rest test get post code city on sample data`() {
+        val postCode = transaction { sampleData.postCodes.random() }
+        val expected = transaction { CityDto(postCode.city) }
+
+        mockMvc
+            .get("$BASE_URI/api/postcode/${postCode.id.value}/city") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(expected.name) } }
+            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.country") { exists() } }
+            .andExpect { jsonPath("_links.state") { exists() } }
+            .andExpect { jsonPath("_links.postcodes") { exists() } }
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
+    fun `rest test get post code city on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/postcode/${UUID.randomUUID()}/city") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
     fun `rest test get post code streets`() {
-        fail("Not implemented yet")
+        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.empty() }.random() }
+        val expected = transaction {
+            postCode.streets
+                .sortedBy { s -> s.id.value.toString() }
+                .map { s -> s.id.value.toString() }
+        }
+
+        mockMvc
+            .get("$BASE_URI/api/postcode/${postCode.id.value}/streets") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.streetDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `rest test get post code streets on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/postcode/${UUID.randomUUID()}/streets") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
     }
 }

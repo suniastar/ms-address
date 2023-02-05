@@ -44,8 +44,8 @@ interface StateApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks(
+        fun generateStatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> = PageHelper
+            .generatePageLinks(
                 "$BASE_URI/api/state",
                 size,
                 page,
@@ -75,6 +75,15 @@ interface StateApi {
             Link.of("$BASE_URI/api/state/$id/country").withRel("country"),
             Link.of("$BASE_URI/api/state/$id/cities{?page,size,sort}").withRel("cities"),
         )
+
+        fun generateCityPageLinks(id: UUID): Set<Link> = PageHelper
+            .generatePageLinks(
+                "$BASE_URI/api/state/$id/cities",
+                null,
+                null,
+                null,
+                null,
+            )
     }
 
     @ResponseBody

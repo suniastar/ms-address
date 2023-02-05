@@ -54,7 +54,7 @@ class StreetController(
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
-                StreetApi.generatePageLinks(size, page, t, sort),
+                StreetApi.generateStreetPageLinks(size, page, t, sort),
             )
         }
 
@@ -131,16 +131,28 @@ class StreetController(
 
     override fun restGetStreetPostCode(
         id: UUID,
-    ): EntityModel<PostCodeDto> {
-        TODO("Not yet implemented")
-    }
+    ): EntityModel<PostCodeDto> = graphqlGetStreet(
+        id = id,
+    )
+        ?.let { s -> EntityModel.of(s.postCode) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The street ($id) does not exist.")
 
     override fun restGetStreetAddresses(
         id: UUID,
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<AddressDto> {
-        TODO("Not yet implemented")
-    }
+    ): PagedModel<AddressDto> = graphqlGetStreet(
+        id = id,
+    )
+        ?.let { s ->
+            val list = s.addresses
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                StreetApi.generateAddressPageLinks(id),
+            )
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The street ($id) does not exist.")
 }

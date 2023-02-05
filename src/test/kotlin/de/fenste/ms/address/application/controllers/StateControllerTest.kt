@@ -17,6 +17,7 @@
 package de.fenste.ms.address.application.controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.dtos.StateInputDto
 import de.fenste.ms.address.config.SampleDataConfig
@@ -37,7 +38,6 @@ import org.springframework.test.web.servlet.put
 import java.util.UUID
 import kotlin.math.ceil
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -45,7 +45,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 @SpringBootTest
 @ActiveProfiles("sample")
@@ -431,14 +430,76 @@ class StateControllerTest(
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
-    fun `rest test get state country`() {
-        fail("Not implemented yet")
+    fun `rest test get state country on sample data`() {
+        val state = transaction { sampleData.states.random() }
+        val expected = transaction { CountryDto(state.country) }
+
+        mockMvc
+            .get("$BASE_URI/api/state/${state.id.value}/country") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("name") { value(expected.name) } }
+            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
+            .andExpect { jsonPath("localizedName") { value(expected.localizedName) } }
+            .andExpect { jsonPath("alpha2") { value(expected.alpha2) } }
+            .andExpect { jsonPath("alpha3") { value(expected.alpha3) } }
+            .andExpect { jsonPath("_links.self") { exists() } }
+            .andExpect { jsonPath("_links.states") { exists() } }
+            .andExpect { jsonPath("_links.cities") { exists() } }
     }
 
     @Test
-    @Ignore // TODO implement (get inspired by dto tests for graphql)
+    fun `rest test get state country on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/state/${UUID.randomUUID()}/country") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
     fun `rest test get state cities`() {
-        fail("Not implemented yet")
+        val state = transaction { sampleData.states.filterNot { c -> c.cities.empty() }.random() }
+        val expected = transaction {
+            state.cities
+                .sortedBy { c -> c.id.value.toString() }
+                .map { c -> c.id.value.toString() }
+        }
+
+        mockMvc
+            .get("$BASE_URI/api/state/${state.id.value}/cities") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isOk() }
+                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
+            }
+            .andExpect { jsonPath("page.size") { value(expected.count()) } }
+            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
+            .andExpect { jsonPath("page.number") { value(0) } }
+            .andExpect { jsonPath("page.totalPages") { value(1) } }
+            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.self.href") { exists() } }
+            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
+            .andExpect { jsonPath("_embedded.cityDtoes.[*].id") { value(expected) } }
+    }
+
+    @Test
+    fun `rest test get state cities on non existing sample data`() {
+        mockMvc
+            .get("$BASE_URI/api/state/${UUID.randomUUID()}/cities") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+            .andExpect {
+                status { isNotFound() }
+            }
     }
 }

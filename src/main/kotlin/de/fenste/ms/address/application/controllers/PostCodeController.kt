@@ -18,8 +18,10 @@ package de.fenste.ms.address.application.controllers
 
 import de.fenste.ms.address.application.controllers.api.PostCodeApi
 import de.fenste.ms.address.application.controllers.graphql.PostCodeGraphql
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.services.PostCodeService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.EntityModel
@@ -52,7 +54,7 @@ class PostCodeController(
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
-                PostCodeApi.generatePageLinks(size, page, t, sort),
+                PostCodeApi.generatePostCodePageLinks(size, page, t, sort),
             )
         }
 
@@ -129,16 +131,28 @@ class PostCodeController(
 
     override fun restGetPostCodeCity(
         id: UUID,
-    ) {
-        TODO("Not yet implemented")
-    }
+    ): EntityModel<CityDto> = graphqGetlPostCode(
+        id = id,
+    )
+        ?.let { p -> EntityModel.of(p.city) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
 
     override fun restGetPostCodeStreets(
         id: UUID,
         page: Int?,
         size: Int?,
         sort: String?,
-    ) {
-        TODO("Not yet implemented")
-    }
+    ): PagedModel<StreetDto> = graphqGetlPostCode(
+        id = id,
+    )
+        ?.let { p ->
+            val list = p.streets
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                PostCodeApi.generateStreetsPageLinks(id),
+            )
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
 }

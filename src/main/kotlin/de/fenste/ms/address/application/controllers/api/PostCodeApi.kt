@@ -16,8 +16,10 @@
 
 package de.fenste.ms.address.application.controllers.api
 
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.util.PageHelper
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.Link
@@ -42,8 +44,8 @@ interface PostCodeApi {
     companion object LINKER {
         private val BASE_URI = BasicLinkBuilder.linkToCurrentMapping()
 
-        fun generatePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> =
-            PageHelper.generatePageLinks(
+        fun generatePostCodePageLinks(size: Int?, page: Int?, totalPages: Int?, sort: String?): Set<Link> = PageHelper
+            .generatePageLinks(
                 "$BASE_URI/api/postcode",
                 size,
                 page,
@@ -73,6 +75,15 @@ interface PostCodeApi {
             Link.of("$BASE_URI/api/postcode/$id/city").withRel("city"),
             Link.of("$BASE_URI/api/postcode/$id/streets{?page,size,sort}").withRel("streets"),
         )
+
+        fun generateStreetsPageLinks(id: UUID): Set<Link> = PageHelper
+            .generatePageLinks(
+                "$BASE_URI/api/postcode/$id/streets",
+                null,
+                null,
+                null,
+                null,
+            )
     }
 
     @ResponseBody
@@ -112,7 +123,7 @@ interface PostCodeApi {
     @GetMapping("/{id}/city")
     fun restGetPostCodeCity(
         @PathVariable id: UUID,
-    )
+    ): EntityModel<CityDto>
 
     @ResponseBody
     @GetMapping("/{id}/streets")
@@ -121,5 +132,5 @@ interface PostCodeApi {
         @RequestParam page: Int? = null,
         @RequestParam size: Int? = null,
         @RequestParam sort: String? = null,
-    )
+    ): PagedModel<StreetDto>
 }

@@ -54,7 +54,7 @@ class StateController(
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
-                StateApi.generatePageLinks(size, page, t, sort),
+                StateApi.generateStatePageLinks(size, page, t, sort),
             )
         }
 
@@ -131,16 +131,28 @@ class StateController(
 
     override fun restGetStateCountry(
         id: UUID,
-    ): EntityModel<CountryDto> {
-        TODO("Not yet implemented")
-    }
+    ): EntityModel<CountryDto> = graphqlGetState(
+        id = id,
+    )
+        ?.let { s -> EntityModel.of(s.country) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
 
     override fun restGetStateCities(
         id: UUID,
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<CityDto> {
-        TODO("Not yet implemented")
-    }
+    ): PagedModel<CityDto> = graphqlGetState(
+        id = id,
+    )
+        ?.let { s ->
+            val list = s.cities
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                StateApi.generateCityPageLinks(id),
+            )
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
 }

@@ -55,7 +55,7 @@ class CityController(
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(list.count().toLong(), p.toLong(), e.toLong(), t.toLong()),
-                CityApi.generatePageLinks(size, page, t, sort),
+                CityApi.generateCityPageLinks(size, page, t, sort),
             )
         }
 
@@ -132,22 +132,39 @@ class CityController(
 
     override fun restGetCityCountry(
         id: UUID,
-    ): EntityModel<CountryDto> {
-        TODO("Not yet implemented")
-    }
+    ): EntityModel<CountryDto> = graphqlGetCity(
+        id = id,
+    )
+        ?.let { c -> EntityModel.of(c.country) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
 
     override fun restGetCityStates(
         id: UUID,
-    ): PagedModel<StateDto> {
-        TODO("Not yet implemented")
-    }
+    ): EntityModel<StateDto> = graphqlGetCity(
+        id = id,
+    )
+        ?.let { c ->
+            c.state?.let { s -> EntityModel.of(s) }
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not ly within a state")
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
 
     override fun restGetCityPostCodes(
         id: UUID,
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<PostCodeDto> {
-        TODO("Not yet implemented")
-    }
+    ): PagedModel<PostCodeDto> = graphqlGetCity(
+        id = id,
+    )
+        ?.let { c ->
+            val list = c.postCodes
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                CityApi.generatePostCodesPageLinks(id),
+            )
+        }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
 }

@@ -130,7 +130,9 @@ class AddressController(
 
     override fun restGetAddressStreet(
         id: UUID,
-    ): EntityModel<StreetDto> {
-        TODO("Not yet implemented")
-    }
+    ): EntityModel<StreetDto> = graphqlGetAddress(
+        id = id,
+    )
+        ?.let { a -> EntityModel.of(a.street) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The address ($id) does not exist.")
 }
