@@ -99,7 +99,7 @@ jobs:
           name: documentation
           path: target/dokka/
       - name: Setup Pages
-        uses: actions/configure-pages@v3.0.0
+        uses: actions/configure-pages@v3.0.2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1.0.7
         with:
