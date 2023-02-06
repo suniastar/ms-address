@@ -37,7 +37,7 @@
         <java.version>17</java.version>
         <kotlin.version>1.8.0</kotlin.version>
         <exposed.version>0.41.1</exposed.version>
-        <ktlint.version>1.15.2</ktlint.version>
+        <ktlint.version>1.16.0</ktlint.version>
         <detekt.version>1.22.0</detekt.version>
         <dokka.version>1.7.20</dokka.version>
         <jacoco.version>0.8.8</jacoco.version>
