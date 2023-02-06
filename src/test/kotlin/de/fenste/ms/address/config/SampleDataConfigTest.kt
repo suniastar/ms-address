@@ -24,16 +24,19 @@ import de.fenste.ms.address.infrastructure.repositories.StateRepository
 import de.fenste.ms.address.infrastructure.repositories.StreetRepository
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 @SpringBootTest
 @ActiveProfiles("sample")
+@SuppressWarnings("LongParameterList")
 class SampleDataConfigTest(
+    @Autowired private val sampleData: SampleDataConfig,
     @Autowired private val countryRepository: CountryRepository,
     @Autowired private val stateRepository: StateRepository,
     @Autowired private val cityRepository: CityRepository,
@@ -47,6 +50,11 @@ class SampleDataConfigTest(
             assertFalse(empty(), message.invoke())
             this.forEach { println(it) }
         }
+    }
+
+    @BeforeTest
+    fun `set up`() {
+        sampleData.reset()
     }
 
     @Test
