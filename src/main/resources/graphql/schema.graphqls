@@ -14,8 +14,8 @@ type Country {
     name: String!
     localizedName: String
 
-    states: [State!]!
-    cities: [City!]!
+    states(page: Int, size: Int, sort: String): [State!]!
+    cities(page: Int, size: Int, sort: String): [City!]!
 }
 
 input StateInput {

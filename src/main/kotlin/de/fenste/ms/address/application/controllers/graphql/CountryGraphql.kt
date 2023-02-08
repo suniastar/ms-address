@@ -16,8 +16,10 @@
 
 package de.fenste.ms.address.application.controllers.graphql
 
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
+import de.fenste.ms.address.application.dtos.StateDto
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import java.util.UUID
@@ -53,4 +55,20 @@ interface CountryGraphql {
     fun graphqlDeleteCountry(
         @Argument id: UUID,
     ): Boolean
+
+    @SchemaMapping(typeName = "Country", field = "states")
+    fun graphqlGetCountryStates(
+        country: CountryDto,
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<StateDto>
+
+    @SchemaMapping(typeName = "Country", field = "cities")
+    fun graphqlGetCountryCities(
+        country: CountryDto,
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<CityDto>
 }

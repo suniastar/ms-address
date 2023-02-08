@@ -16,13 +16,8 @@
 
 package de.fenste.ms.address.application.dtos
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import de.fenste.ms.address.application.controllers.api.CountryApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.Country
-import de.fenste.ms.address.infrastructure.tables.CityTable
-import de.fenste.ms.address.infrastructure.tables.StateTable
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
 
@@ -34,39 +29,18 @@ data class CountryInputDto(
 )
 
 data class CountryDto(
-    private val country: Country,
-) : RepresentationModel<CountryDto>(generateEntityLinks(country.id.value)) {
+    val id: UUID,
+    val alpha2: String,
+    val alpha3: String,
+    val name: String,
+    val localizedName: String,
+) : RepresentationModel<CountryDto>(generateEntityLinks(id)) {
 
-    val id: UUID
-        get() = country.id.value
-
-    val alpha2: String
-        get() = country.alpha2
-
-    val alpha3: String
-        get() = country.alpha3
-
-    val name: String
-        get() = country.name
-
-    val localizedName: String
-        get() = country.localizedName
-
-    @get:JsonIgnore
-    val states: List<StateDto>
-        get() = transaction {
-            country.states
-                .orderBy(StateTable.id to SortOrder.ASC)
-                .notForUpdate()
-                .map { s -> StateDto(s) }
-        }
-
-    @get:JsonIgnore
-    val cities: List<CityDto>
-        get() = transaction {
-            country.cities
-                .orderBy(CityTable.id to SortOrder.ASC)
-                .notForUpdate()
-                .map { c -> CityDto(c) }
-        }
+    constructor(country: Country) : this(
+        id = country.id.value,
+        alpha2 = country.alpha2,
+        alpha3 = country.alpha3,
+        name = country.name,
+        localizedName = country.localizedName,
+    )
 }

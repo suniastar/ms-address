@@ -23,12 +23,11 @@ import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.services.CountryService
+import de.fenste.ms.address.domain.exception.NotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Controller
-import org.springframework.web.server.ResponseStatusException
 import java.util.UUID
 
 @Controller
@@ -41,11 +40,12 @@ class CountryController(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<CountryDto> = graphqlGetCountries(
-        page = page,
-        size = size,
-        sort = sort,
-    )
+    ): PagedModel<CountryDto> = countryService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
         .let { list ->
             val e = countryService.count()
             val p = page ?: 0
@@ -71,11 +71,12 @@ class CountryController(
 
     override fun restGetCountry(
         id: UUID,
-    ): EntityModel<CountryDto> = graphqlGetCountry(
-        id = id,
-    )
+    ): EntityModel<CountryDto> = countryService
+        .find(
+            id = id,
+        )
         ?.let { c -> EntityModel.of(c) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The country ($id) does not exist.")
+        ?: throw NotFoundException("The country ($id) does not exist.")
 
     override fun graphqlGetCountry(
         id: UUID?,
@@ -90,9 +91,10 @@ class CountryController(
 
     override fun restCreateCountry(
         country: CountryInputDto,
-    ): EntityModel<CountryDto> = graphqlCreateCountry(
-        country = country,
-    )
+    ): EntityModel<CountryDto> = countryService
+        .create(
+            country = country,
+        )
         .let { c -> EntityModel.of(c) }
 
     override fun graphqlCreateCountry(
@@ -105,10 +107,11 @@ class CountryController(
     override fun restUpdateCountry(
         id: UUID,
         country: CountryInputDto,
-    ): EntityModel<CountryDto> = graphqlUpdateCountry(
-        id = id,
-        country = country,
-    )
+    ): EntityModel<CountryDto> = countryService
+        .update(
+            id = id,
+            country = country,
+        )
         .let { c -> EntityModel.of(c) }
 
     override fun graphqlUpdateCountry(
@@ -122,9 +125,10 @@ class CountryController(
 
     override fun restDeleteCountry(
         id: UUID,
-    ): Boolean = graphqlDeleteCountry(
-        id = id,
-    )
+    ): Boolean = countryService
+        .delete(
+            id = id,
+        )
 
     override fun graphqlDeleteCountry(
         id: UUID,
@@ -138,11 +142,14 @@ class CountryController(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<StateDto> = graphqlGetCountry(
-        id = id,
-    )
-        ?.let { c ->
-            val list = c.states.toList()
+    ): PagedModel<StateDto> = countryService
+        .listStates(
+            id = id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
+        .let { list ->
             val count = list.count()
             PagedModel.of(
                 list,
@@ -150,24 +157,51 @@ class CountryController(
                 CountryApi.generateStatePageLinks(id),
             )
         }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The country ($id) does not exist.")
+
+    override fun graphqlGetCountryStates(
+        country: CountryDto,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<StateDto> = countryService
+        .listStates(
+            id = country.id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
 
     override fun restGetCountryCities(
         id: UUID,
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<CityDto> = graphqlGetCountry(
-        id = id,
-    )
-        ?.let { c ->
-            val list = c.cities.toList()
+    ): PagedModel<CityDto> = countryService
+        .listCities(
+            id = id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
+        .let { list ->
             val count = list.count()
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                CountryApi.generateCityPageLinks(id),
+                CountryApi.generateStatePageLinks(id),
             )
         }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The country ($id) does not exist.")
+
+    override fun graphqlGetCountryCities(
+        country: CountryDto,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<CityDto> = countryService
+        .listCities(
+            id = country.id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
 }
