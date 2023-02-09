@@ -26,13 +26,6 @@ import java.util.UUID
 
 interface CountryGraphql {
 
-    @SchemaMapping(typeName = "Query", field = "countries")
-    fun graphqlGetCountries(
-        @Argument page: Int? = null,
-        @Argument size: Int? = null,
-        @Argument sort: String? = null,
-    ): List<CountryDto>
-
     @SchemaMapping(typeName = "Query", field = "country")
     fun graphqlGetCountry(
         @Argument id: UUID? = null,
@@ -40,21 +33,12 @@ interface CountryGraphql {
         @Argument alpha3: String? = null,
     ): CountryDto?
 
-    @SchemaMapping(typeName = "Mutation", field = "createCountry")
-    fun graphqlCreateCountry(
-        @Argument country: CountryInputDto,
-    ): CountryDto
-
-    @SchemaMapping(typeName = "Mutation", field = "updateCountry")
-    fun graphqlUpdateCountry(
-        @Argument id: UUID,
-        @Argument country: CountryInputDto,
-    ): CountryDto
-
-    @SchemaMapping(typeName = "Mutation", field = "deleteCountry")
-    fun graphqlDeleteCountry(
-        @Argument id: UUID,
-    ): Boolean
+    @SchemaMapping(typeName = "Query", field = "countries")
+    fun graphqlGetCountries(
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<CountryDto>
 
     @SchemaMapping(typeName = "Country", field = "states")
     fun graphqlGetCountryStates(
@@ -71,4 +55,20 @@ interface CountryGraphql {
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<CityDto>
+
+    @SchemaMapping(typeName = "Mutation", field = "createCountry")
+    fun graphqlCreateCountry(
+        @Argument country: CountryInputDto,
+    ): CountryDto
+
+    @SchemaMapping(typeName = "Mutation", field = "updateCountry")
+    fun graphqlUpdateCountry(
+        @Argument id: UUID,
+        @Argument country: CountryInputDto,
+    ): CountryDto
+
+    @SchemaMapping(typeName = "Mutation", field = "deleteCountry")
+    fun graphqlDeleteCountry(
+        @Argument id: UUID,
+    ): Boolean
 }

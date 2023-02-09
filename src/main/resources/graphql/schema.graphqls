@@ -29,7 +29,7 @@ type State {
     name: String!
 
     country: Country!
-    cities: [City!]!
+    cities(page: Int, size: Int, sort: String): [City!]!
 }
 
 input CityInput {
@@ -45,7 +45,7 @@ type City {
 
     country: Country!
     state: State
-    postCodes: [PostCode!]!
+    postCodes(page: Int, size: Int, sort: String): [PostCode!]!
 }
 
 input PostCodeInput {
@@ -59,7 +59,7 @@ type PostCode {
     code: String!
 
     city: City!
-    streets: [Street!]!
+    streets(page: Int, size: Int, sort: String): [Street!]!
 }
 
 input StreetInput {
@@ -73,7 +73,7 @@ type Street {
     name: String!
 
     postCode: PostCode!
-    addresses: [Address!]!
+    addresses(page: Int, size: Int, sort: String): [Address!]!
 }
 
 input AddressInput {

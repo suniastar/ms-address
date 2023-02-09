@@ -18,6 +18,7 @@ package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.State
+import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -52,6 +53,29 @@ class StateRepositoryTest(
         val actual = repository.count()
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `test find by id on sample data`(): Unit = transaction {
+        val expected = sampleData.states.random()
+        val actual = repository.find(id = expected.id.value)
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `test find by id on no data`(): Unit = transaction {
+        sampleData.clear()
+        val actual = repository.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`(): Unit = transaction {
+        val actual = repository.find(id = UUID.randomUUID())
+
+        assertNull(actual)
     }
 
     @Test
@@ -100,26 +124,63 @@ class StateRepositoryTest(
     }
 
     @Test
-    fun `test find by id on sample data`(): Unit = transaction {
-        val expected = sampleData.states.random()
-        val actual = repository.find(id = expected.id.value)
+    fun `test list cities on sample data`() {
+        val state = transaction { sampleData.states.filterNot { s -> s.cities.empty() }.random() }
+        val expected = transaction {
+            state
+                .cities
+                .sortedBy { c -> c.id.toString() }
+        }
 
-        assertEquals(expected, actual)
+        transaction {
+            val actual = repository.listCities(state)
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by id on no data`(): Unit = transaction {
-        sampleData.clear()
-        val actual = repository.find(id = UUID.randomUUID())
+    fun `test list cities on sample data with size`() {
+        val state = transaction { sampleData.states.filterNot { s -> s.cities.empty() }.random() }
+        val expected = transaction {
+            state
+                .cities
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .take(2)
+        }
 
-        assertNull(actual)
+        transaction {
+            val actual = repository.listCities(
+                state = state,
+                order = arrayOf(CityTable.name to SortOrder.ASC),
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by id on non existing sample data`(): Unit = transaction {
-        val actual = repository.find(id = UUID.randomUUID())
+    fun `test list cities on sample data with options`() {
+        val state = transaction { sampleData.states.filterNot { s -> s.cities.empty() }.random() }
+        val expected = transaction {
+            state
+                .cities
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .drop(1 * 2)
+                .take(2)
+        }
 
-        assertNull(actual)
+        transaction {
+            val actual = repository.listCities(
+                state = state,
+                order = arrayOf(CityTable.name to SortOrder.ASC),
+                page = 1,
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test

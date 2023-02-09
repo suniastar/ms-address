@@ -16,10 +16,14 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.dtos.StateInputDto
 import de.fenste.ms.address.application.util.parseSortOrder
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.StateRepository
+import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,6 +37,14 @@ class StateService(
 
     fun count(): Int = transaction {
         stateRepository.count()
+    }
+
+    fun find(
+        id: UUID,
+    ): StateDto? = transaction {
+        stateRepository
+            .find(id)
+            ?.let { s -> StateDto(s) }
     }
 
     fun list(
@@ -49,12 +61,40 @@ class StateService(
             .map { s -> StateDto(s) }
     }
 
-    fun find(
+    fun getCountry(
         id: UUID,
-    ): StateDto? = transaction {
+    ): CountryDto = transaction {
+        val state = stateRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The state ($id) does not exist.")
+
+        state
+            .country
+            .let { c -> CountryDto(c) }
+    }
+
+    fun listCities(
+        id: UUID,
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<CityDto> = transaction {
+        val state = stateRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The state ($id) does not exist.")
+
         stateRepository
-            .find(id)
-            ?.let { s -> StateDto(s) }
+            .listCities(
+                state = state,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(CityTable::valueOf),
+            )
+            .map { c -> CityDto(c) }
     }
 
     fun create(

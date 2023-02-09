@@ -16,11 +16,16 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.InvalidArgumentException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.Country
+import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
@@ -52,7 +57,7 @@ class CityRepository {
                 .map { r -> City.wrapRow(r) }
                 .firstOrNull()
 
-            require(city == null) { "The city does already exist: $city" }
+            city?.let { throw DuplicateException("The city does already exist: $city") }
         }
     }
 
@@ -60,6 +65,14 @@ class CityRepository {
         .all()
         .count()
         .toInt()
+
+    fun find(
+        id: UUID,
+    ): City? = City
+        .find { CityTable.id eq id }
+        .limit(1)
+        .notForUpdate()
+        .firstOrNull()
 
     fun list(
         page: Int? = null,
@@ -80,13 +93,25 @@ class CityRepository {
                 .notForUpdate()
     }
 
-    fun find(
-        id: UUID,
-    ): City? = City
-        .find { CityTable.id eq id }
-        .limit(1)
-        .notForUpdate()
-        .firstOrNull()
+    fun listPostCodes(
+        city: City,
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<PostCode> = when (size) {
+        null ->
+            city
+                .postCodes
+                .orderBy(*order, PostCodeTable.id to SortOrder.ASC)
+                .notForUpdate()
+
+        else ->
+            city
+                .postCodes
+                .orderBy(*order, PostCodeTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
+                .notForUpdate()
+    }
 
     fun create(
         name: String,
@@ -98,8 +123,7 @@ class CityRepository {
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($countryId) does not exist." }
+            ?: throw NotFoundException("The country ($countryId) does not exist.")
 
         val state = stateId?.let {
             val s = State
@@ -107,9 +131,10 @@ class CityRepository {
                 .limit(1)
                 .notForUpdate()
                 .firstOrNull()
+                ?: throw NotFoundException("The state ($stateId) does not exist.")
 
-            requireNotNull(s) { "The state ($stateId) does not exist." }
-            require(country.states.contains(s)) { "The state ($stateId) does not belong to the country ($countryId)." }
+            if (!country.states.contains(s))
+                throw InvalidArgumentException("The state ($stateId) does not belong to the country ($countryId).")
 
             s
         }
@@ -138,16 +163,14 @@ class CityRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(city) { "The city ($id) does not exist." }
+            ?: throw NotFoundException("The city ($id) does not exist.")
 
         val country = Country
             .find { CountryTable.id eq countryId }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($countryId) does not exist." }
+            ?: throw NotFoundException("The country ($countryId) does not exist.")
 
         val state = stateId?.let {
             val s = State
@@ -155,9 +178,10 @@ class CityRepository {
                 .limit(1)
                 .notForUpdate()
                 .firstOrNull()
+                ?: throw NotFoundException("The state ($stateId) does not exist.")
 
-            requireNotNull(s) { "The state ($stateId) does not exist." }
-            require(country.states.contains(s)) { "The state ($stateId) does not belong to the country ($countryId)." }
+            if (!country.states.contains(s))
+                throw InvalidArgumentException("The state ($stateId) does not belong to the country ($countryId).")
 
             s
         }
@@ -183,8 +207,7 @@ class CityRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(city) { "The city ($id) does not exist. " }
+            ?: throw NotFoundException("The city ($id) does not exist. ")
 
         city.delete()
     }

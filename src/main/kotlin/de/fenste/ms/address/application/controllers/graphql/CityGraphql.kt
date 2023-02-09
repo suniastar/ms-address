@@ -18,11 +18,19 @@ package de.fenste.ms.address.application.controllers.graphql
 
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
+import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.StateDto
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import java.util.UUID
 
 interface CityGraphql {
+
+    @SchemaMapping(typeName = "Query", field = "city")
+    fun graphqlGetCity(
+        @Argument id: UUID,
+    ): CityDto?
 
     @SchemaMapping(typeName = "Query", field = "cities")
     fun graphqlGetCities(
@@ -31,10 +39,23 @@ interface CityGraphql {
         @Argument sort: String? = null,
     ): List<CityDto>
 
-    @SchemaMapping(typeName = "Query", field = "city")
-    fun graphqlGetCity(
-        @Argument id: UUID,
-    ): CityDto?
+    @SchemaMapping(typeName = "City", field = "country")
+    fun graphqlGetCityCountry(
+        city: CityDto,
+    ): CountryDto
+
+    @SchemaMapping(typeName = "City", field = "state")
+    fun graphqlGetCityState(
+        city: CityDto,
+    ): StateDto?
+
+    @SchemaMapping(typeName = "City", field = "postCodes")
+    fun graphqlGetCityPostCodes(
+        city: CityDto,
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<PostCodeDto>
 
     @SchemaMapping(typeName = "Mutation", field = "createCity")
     fun graphqlCreateCity(

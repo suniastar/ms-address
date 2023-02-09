@@ -16,8 +16,12 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.NotFoundException
+import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.domain.model.State
+import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.Expression
@@ -48,7 +52,7 @@ class StateRepository {
                 .firstOrNull()
                 ?.let { r -> State.wrapRow(r) }
 
-            require(state == null) { "This State does already exist: $state" }
+            state?.let { throw DuplicateException("This state does already exist: $state") }
         }
     }
 
@@ -56,6 +60,14 @@ class StateRepository {
         .all()
         .count()
         .toInt()
+
+    fun find(
+        id: UUID,
+    ): State? = State
+        .find { StateTable.id eq id }
+        .limit(1)
+        .notForUpdate()
+        .firstOrNull()
 
     fun list(
         page: Int? = null,
@@ -76,13 +88,25 @@ class StateRepository {
                 .notForUpdate()
     }
 
-    fun find(
-        id: UUID,
-    ): State? = State
-        .find { StateTable.id eq id }
-        .limit(1)
-        .notForUpdate()
-        .firstOrNull()
+    fun listCities(
+        state: State,
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<City> = when (size) {
+        null ->
+            state
+                .cities
+                .orderBy(*order, CityTable.id to SortOrder.ASC)
+                .notForUpdate()
+
+        else ->
+            state
+                .cities
+                .orderBy(*order, CityTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
+                .notForUpdate()
+    }
 
     fun create(
         name: String,
@@ -93,8 +117,7 @@ class StateRepository {
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($countryId) does not exist." }
+            ?: throw NotFoundException("The country ($countryId) does not exist.")
 
         checkDuplicate(
             name = name,
@@ -117,16 +140,14 @@ class StateRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(state) { "The state ($id) does not exist." }
+            ?: throw NotFoundException("The state ($id) does not exist.")
 
         val country = Country
             .find { CountryTable.id eq countryId }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($countryId) does not exist." }
+            ?: throw NotFoundException("The country ($countryId) does not exist.")
 
         checkDuplicate(
             original = state,
@@ -147,8 +168,7 @@ class StateRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(state) { "The state ($id) does not exist." }
+            ?: throw NotFoundException("The state ($id) does not exist.")
 
         state.delete()
     }

@@ -1,4 +1,10 @@
 complexity:
+  TooManyFunctions:
+    thresholdInFiles: 5
+    thresholdInEnums: 5
+    thresholdInObjects: 5
+    thresholdInInterfaces: 5
+    thresholdInClasses: 5
   LargeClass:
     excludes: [ '**/test/**' ]
   LongMethod:

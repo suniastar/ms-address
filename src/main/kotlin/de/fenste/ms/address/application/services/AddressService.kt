@@ -18,7 +18,9 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.AddressInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.util.parseSortOrder
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.AddressRepository
 import de.fenste.ms.address.infrastructure.tables.AddressTable
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -35,6 +37,14 @@ class AddressService(
         addressRepository.count()
     }
 
+    fun find(
+        id: UUID,
+    ): AddressDto? = transaction {
+        addressRepository
+            .find(id)
+            ?.let { a -> AddressDto(a) }
+    }
+
     fun list(
         page: Int? = null,
         size: Int? = null,
@@ -49,12 +59,18 @@ class AddressService(
             .map { a -> AddressDto(a) }
     }
 
-    fun find(
+    fun getStreet(
         id: UUID,
-    ): AddressDto? = transaction {
-        addressRepository
-            .find(id)
-            ?.let { a -> AddressDto(a) }
+    ): StreetDto = transaction {
+        val address = addressRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The address ($id) does not exist.")
+
+        address
+            .street
+            .let { s -> StreetDto(s) }
     }
 
     fun create(

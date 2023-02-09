@@ -16,10 +16,14 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.PostCode
+import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.PostCodeTable
+import de.fenste.ms.address.infrastructure.tables.StreetTable
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
@@ -48,7 +52,7 @@ class PostCodeRepository {
                 .firstOrNull()
                 ?.let { r -> PostCode.wrapRow(r) }
 
-            require(postCode == null) { "This post code does already exist: $postCode" }
+            postCode?.let { throw DuplicateException("This post code does already exist: $postCode") }
         }
     }
 
@@ -56,6 +60,14 @@ class PostCodeRepository {
         .all()
         .count()
         .toInt()
+
+    fun find(
+        id: UUID,
+    ): PostCode? = PostCode
+        .find { PostCodeTable.id eq id }
+        .limit(1)
+        .notForUpdate()
+        .firstOrNull()
 
     fun list(
         page: Int? = null,
@@ -76,13 +88,25 @@ class PostCodeRepository {
                 .notForUpdate()
     }
 
-    fun find(
-        id: UUID,
-    ): PostCode? = PostCode
-        .find { PostCodeTable.id eq id }
-        .limit(1)
-        .notForUpdate()
-        .firstOrNull()
+    fun listStreets(
+        postCode: PostCode,
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<Street> = when (size) {
+        null ->
+            postCode
+                .streets
+                .orderBy(*order, StreetTable.id to SortOrder.ASC)
+                .notForUpdate()
+
+        else ->
+            postCode
+                .streets
+                .orderBy(*order, StreetTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
+                .notForUpdate()
+    }
 
     fun create(
         code: String,
@@ -93,8 +117,7 @@ class PostCodeRepository {
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(city) { "The city ($cityId) does not exist." }
+            ?: throw NotFoundException("The city ($cityId) does not exist.")
 
         checkDuplicate(
             code = code,
@@ -117,16 +140,14 @@ class PostCodeRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(postCode) { "The post code ($id) does not exist." }
+            ?: throw NotFoundException("The post code ($id) does not exist.")
 
         val city = City
             .find { CityTable.id eq cityId }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(city) { "The city ($cityId) does not exist." }
+            ?: throw NotFoundException("The city ($cityId) does not exist.")
 
         checkDuplicate(
             original = postCode,
@@ -147,8 +168,7 @@ class PostCodeRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(postCode) { "The post code ($id) does not exist." }
+            ?: throw NotFoundException("The post code ($id) does not exist.")
 
         postCode.delete()
     }

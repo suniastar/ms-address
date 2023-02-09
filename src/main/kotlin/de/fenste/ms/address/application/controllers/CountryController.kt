@@ -36,6 +36,26 @@ class CountryController(
     @Autowired private val countryService: CountryService,
 ) : CountryApi, CountryGraphql {
 
+    override fun restGetCountry(
+        id: UUID,
+    ): EntityModel<CountryDto> = countryService
+        .find(
+            id = id,
+        )
+        ?.let { c -> EntityModel.of(c) }
+        ?: throw NotFoundException("The country ($id) does not exist.")
+
+    override fun graphqlGetCountry(
+        id: UUID?,
+        alpha2: String?,
+        alpha3: String?,
+    ): CountryDto? = countryService
+        .find(
+            id = id,
+            alpha2 = alpha2,
+            alpha3 = alpha3,
+        )
+
     override fun restGetCountries(
         page: Int?,
         size: Int?,
@@ -67,74 +87,6 @@ class CountryController(
             page = page,
             size = size,
             sort = sort,
-        )
-
-    override fun restGetCountry(
-        id: UUID,
-    ): EntityModel<CountryDto> = countryService
-        .find(
-            id = id,
-        )
-        ?.let { c -> EntityModel.of(c) }
-        ?: throw NotFoundException("The country ($id) does not exist.")
-
-    override fun graphqlGetCountry(
-        id: UUID?,
-        alpha2: String?,
-        alpha3: String?,
-    ): CountryDto? = countryService
-        .find(
-            id = id,
-            alpha2 = alpha2,
-            alpha3 = alpha3,
-        )
-
-    override fun restCreateCountry(
-        country: CountryInputDto,
-    ): EntityModel<CountryDto> = countryService
-        .create(
-            country = country,
-        )
-        .let { c -> EntityModel.of(c) }
-
-    override fun graphqlCreateCountry(
-        country: CountryInputDto,
-    ): CountryDto = countryService
-        .create(
-            country = country,
-        )
-
-    override fun restUpdateCountry(
-        id: UUID,
-        country: CountryInputDto,
-    ): EntityModel<CountryDto> = countryService
-        .update(
-            id = id,
-            country = country,
-        )
-        .let { c -> EntityModel.of(c) }
-
-    override fun graphqlUpdateCountry(
-        id: UUID,
-        country: CountryInputDto,
-    ): CountryDto = countryService
-        .update(
-            id = id,
-            country = country,
-        )
-
-    override fun restDeleteCountry(
-        id: UUID,
-    ): Boolean = countryService
-        .delete(
-            id = id,
-        )
-
-    override fun graphqlDeleteCountry(
-        id: UUID,
-    ): Boolean = countryService
-        .delete(
-            id = id,
         )
 
     override fun restGetCountryStates(
@@ -188,7 +140,7 @@ class CountryController(
             PagedModel.of(
                 list,
                 PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                CountryApi.generateStatePageLinks(id),
+                CountryApi.generateCityPageLinks(id),
             )
         }
 
@@ -203,5 +155,53 @@ class CountryController(
             page = page,
             size = size,
             sort = sort,
+        )
+
+    override fun restCreateCountry(
+        country: CountryInputDto,
+    ): EntityModel<CountryDto> = countryService
+        .create(
+            country = country,
+        )
+        .let { c -> EntityModel.of(c) }
+
+    override fun graphqlCreateCountry(
+        country: CountryInputDto,
+    ): CountryDto = countryService
+        .create(
+            country = country,
+        )
+
+    override fun restUpdateCountry(
+        id: UUID,
+        country: CountryInputDto,
+    ): EntityModel<CountryDto> = countryService
+        .update(
+            id = id,
+            country = country,
+        )
+        .let { c -> EntityModel.of(c) }
+
+    override fun graphqlUpdateCountry(
+        id: UUID,
+        country: CountryInputDto,
+    ): CountryDto = countryService
+        .update(
+            id = id,
+            country = country,
+        )
+
+    override fun restDeleteCountry(
+        id: UUID,
+    ): Boolean = countryService
+        .delete(
+            id = id,
+        )
+
+    override fun graphqlDeleteCountry(
+        id: UUID,
+    ): Boolean = countryService
+        .delete(
+            id = id,
         )
 }
