@@ -17,6 +17,7 @@
 package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.InvalidArgumentException
 import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.Country
@@ -90,7 +91,7 @@ class CountryRepository {
                 .notForUpdate()
                 .firstOrNull()
 
-        else -> throw IllegalArgumentException("Either 'uuid', 'alpha2' or 'alpha3' must be specified.")
+        else -> throw InvalidArgumentException("Either 'uuid', 'alpha2' or 'alpha3' must be specified.")
     }
 
     fun list(

@@ -18,6 +18,7 @@ package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.InvalidArgumentException
 import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.infrastructure.tables.CityTable
@@ -99,7 +100,7 @@ class CountryRepositoryTest(
 
     @Test
     fun `test find by nothing on sample data`(): Unit = transaction {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<InvalidArgumentException> {
             repository.find()
         }
     }
@@ -116,7 +117,7 @@ class CountryRepositoryTest(
     @Test
     fun `test list on sample data with size`(): Unit = transaction {
         val expected = sampleData.countries
-            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
             .take(2)
         val actual = repository.list(
             order = arrayOf(CountryTable.name to SortOrder.ASC),
@@ -129,7 +130,7 @@ class CountryRepositoryTest(
     @Test
     fun `test list on sample data with options`(): Unit = transaction {
         val expected = sampleData.countries
-            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
         val actual = repository.list(
@@ -171,7 +172,7 @@ class CountryRepositoryTest(
         val expected = transaction {
             country
                 .states
-                .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+                .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
                 .take(2)
         }
 
@@ -192,7 +193,7 @@ class CountryRepositoryTest(
         val expected = transaction {
             country
                 .states
-                .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+                .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
                 .drop(1 * 2)
                 .take(2)
         }
@@ -231,7 +232,7 @@ class CountryRepositoryTest(
         val expected = transaction {
             country
                 .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
                 .take(2)
         }
 
@@ -252,7 +253,7 @@ class CountryRepositoryTest(
         val expected = transaction {
             country
                 .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
                 .drop(1 * 2)
                 .take(2)
         }

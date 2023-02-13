@@ -82,7 +82,7 @@ class CountryServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.countries
-            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { c -> CountryDto(c) }
@@ -127,7 +127,7 @@ class CountryServiceTest(
         val expected = transaction {
             country
                 .states
-                .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+                .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
                 .drop(1 * 2)
                 .take(2)
                 .map { s -> StateDto(s) }
@@ -168,7 +168,7 @@ class CountryServiceTest(
         val expected = transaction {
             country
                 .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
                 .drop(1 * 2)
                 .take(2)
                 .map { c -> CityDto(c) }

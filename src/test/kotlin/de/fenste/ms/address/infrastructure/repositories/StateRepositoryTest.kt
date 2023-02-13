@@ -17,6 +17,8 @@
 package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.config.SampleDataConfig
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
@@ -90,7 +92,7 @@ class StateRepositoryTest(
     @Test
     fun `test list on sample data with size`(): Unit = transaction {
         val expected = sampleData.states
-            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
             .take(2)
         val actual = repository.list(
             order = arrayOf(StateTable.name to SortOrder.ASC),
@@ -103,7 +105,7 @@ class StateRepositoryTest(
     @Test
     fun `test list on sample data with options`(): Unit = transaction {
         val expected = sampleData.states
-            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
         val actual = repository.list(
@@ -145,7 +147,7 @@ class StateRepositoryTest(
         val expected = transaction {
             state
                 .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
                 .take(2)
         }
 
@@ -166,7 +168,7 @@ class StateRepositoryTest(
         val expected = transaction {
             state
                 .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
                 .drop(1 * 2)
                 .take(2)
         }
@@ -203,7 +205,7 @@ class StateRepositoryTest(
         val country = sampleData.countries.filterNot { c -> c.states.empty() }.random()
         val name = country.states.toList().random().name
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<DuplicateException> {
             repository.create(
                 name = name,
                 countryId = country.id.value,
@@ -216,7 +218,7 @@ class StateRepositoryTest(
         val name = "Name"
         val countryId = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.create(
                 name = name,
                 countryId = countryId,
@@ -296,7 +298,7 @@ class StateRepositoryTest(
         val name = "doesn't matter"
         val countryId = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.update(
                 id = id,
                 name = name,
@@ -311,7 +313,7 @@ class StateRepositoryTest(
         val name = state.country.states.filterNot { s -> s == state }.random().name
         val country = state.country
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<DuplicateException> {
             repository.update(
                 id = state.id.value,
                 name = name,
@@ -326,7 +328,7 @@ class StateRepositoryTest(
         val name = state.name
         val countryId = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.update(
                 id = state.id.value,
                 name = name,
@@ -350,7 +352,7 @@ class StateRepositoryTest(
     fun `test delete not existing`(): Unit = transaction {
         val id = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.delete(id)
         }
     }

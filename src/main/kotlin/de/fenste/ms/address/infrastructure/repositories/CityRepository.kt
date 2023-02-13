@@ -133,8 +133,9 @@ class CityRepository {
                 .firstOrNull()
                 ?: throw NotFoundException("The state ($stateId) does not exist.")
 
-            if (!country.states.contains(s))
+            if (!country.states.contains(s)) {
                 throw InvalidArgumentException("The state ($stateId) does not belong to the country ($countryId).")
+            }
 
             s
         }
@@ -180,8 +181,9 @@ class CityRepository {
                 .firstOrNull()
                 ?: throw NotFoundException("The state ($stateId) does not exist.")
 
-            if (!country.states.contains(s))
+            if (!country.states.contains(s)) {
                 throw InvalidArgumentException("The state ($stateId) does not belong to the country ($countryId).")
+            }
 
             s
         }

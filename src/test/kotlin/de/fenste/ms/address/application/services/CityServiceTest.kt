@@ -19,6 +19,7 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
 import de.fenste.ms.address.application.dtos.CountryDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.City
@@ -56,6 +57,21 @@ class CityServiceTest(
     }
 
     @Test
+    fun `test find by id on sample data`() {
+        val expected = sampleData.cities.random().let { c -> CityDto(c) }
+        val actual = service.find(id = expected.id)
+
+        transaction { assertEquals(expected, actual) }
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`() {
+        val actual = service.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
     fun `test list on sample data`() {
         val expected = sampleData.cities
             .sortedBy { c -> c.id.value.toString() }
@@ -68,7 +84,7 @@ class CityServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.cities
-            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { c -> CityDto(c) }
@@ -91,18 +107,79 @@ class CityServiceTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.cities.random().let { c -> CityDto(c) }
-        val actual = service.find(id = expected.id)
+    fun `test get country on sample data`() {
+        val city = transaction { sampleData.cities.random() }
+        val expected = transaction { CountryDto(city.country) }
 
-        transaction { assertEquals(expected, actual) }
+        transaction {
+            val actual = service.getCountry(city.id.value)
+
+            assertEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by id on non existing sample data`() {
-        val actual = service.find(id = UUID.randomUUID())
+    fun `test get state on sample data`() {
+        val city = transaction { sampleData.cities.filterNot { c -> c.state == null }.random() }
+        val expected = transaction { StateDto(city.state!!) }
 
-        assertNull(actual)
+        transaction {
+            val actual = service.getState(city.id.value)
+
+            assertEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun `test get state non existing on sample data`() {
+        val city = transaction { sampleData.cities.filter { c -> c.state == null }.random() }
+
+        transaction {
+            val actual = service.getState(city.id.value)
+
+            assertNull(actual)
+        }
+    }
+
+    @Test
+    fun `test list post codes on sample data`() {
+        val city = transaction { sampleData.cities.filterNot { c -> c.postCodes.empty() }.random() }
+        val expected = transaction {
+            city
+                .postCodes
+                .sortedBy { p -> p.id.value.toString() }
+                .map { p -> PostCodeDto(p) }
+        }
+
+        transaction {
+            val actual = service.listPostCodes(city.id.value)
+
+            assertContentEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun `test list post codes on sample data with options`() {
+        val city = transaction { sampleData.cities.filterNot { c -> c.postCodes.empty() }.random() }
+        val expected = transaction {
+            city
+                .postCodes
+                .sortedWith(compareBy({ p -> p.code }, { p -> p.id.value.toString() }))
+                .drop(1 * 2)
+                .take(2)
+                .map { p -> PostCodeDto(p) }
+        }
+
+        transaction {
+            val actual = service.listPostCodes(
+                id = city.id.value,
+                sort = "code,asc",
+                page = 1,
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
@@ -121,8 +198,10 @@ class CityServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals((CountryDto(country)), actual.country) }
-        assertNull(actual.state)
+        transaction {
+            val created = City.findById(actual.id)
+            assertNotNull(created)
+        }
     }
 
     @Test
@@ -143,9 +222,10 @@ class CityServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals((CountryDto(country)), actual.country) }
-        assertNotNull(actual.state)
-        transaction { assertEquals(StateDto(state), actual.state) }
+        transaction {
+            val updated = City.findById(actual.id)
+            assertNotNull(updated)
+        }
     }
 
     @Test
@@ -170,9 +250,10 @@ class CityServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
-        assertNotNull(actual.state)
-        transaction { assertEquals(StateDto(state), actual.state) }
+        transaction {
+            val updated = City.findById(actual.id)
+            assertNotNull(updated)
+        }
     }
 
     @Test

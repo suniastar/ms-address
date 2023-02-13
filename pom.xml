@@ -193,6 +193,9 @@
                 <groupId>com.github.ozsie</groupId>
                 <artifactId>detekt-maven-plugin</artifactId>
                 <version>${detekt.version}</version>
+                <configuration>
+                    <config>${project.basedir}/detekt.yml</config>
+                </configuration>
                 <executions>
                     <execution>
                         <id>check</id>
@@ -200,6 +203,13 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
+                        <configuration>
+                            <report>
+                                <report>html:${project.build.directory}/site/detekt/index.html</report>
+                                <report>xml:${project.build.directory}/site/detekt/detekt.xml</report>
+                                <report>md:${project.build.directory}/site/detekt/detekt.md</report>
+                            </report>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
