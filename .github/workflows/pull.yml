@@ -23,6 +23,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
+          cache: 'maven'
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots test
       - name: JaCoCo Code Coverage Report
