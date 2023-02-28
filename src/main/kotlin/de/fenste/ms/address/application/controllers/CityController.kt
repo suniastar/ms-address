@@ -20,7 +20,6 @@ import de.fenste.ms.address.application.controllers.api.CityApi
 import de.fenste.ms.address.application.controllers.graphql.CityGraphql
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.services.CityService
@@ -87,33 +86,17 @@ class CityController(
             sort = sort,
         )
 
-    override fun restGetCityCountry(
-        id: UUID,
-    ): EntityModel<CountryDto> = cityService
-        .getCountry(
-            id = id,
-        )
-        .let { c -> EntityModel.of(c) }
-
-    override fun graphqlGetCityCountry(
-        city: CityDto,
-    ): CountryDto = cityService
-        .getCountry(
-            id = city.id,
-        )
-
     override fun restGetCityState(
         id: UUID,
     ): EntityModel<StateDto> = cityService
         .getState(
             id = id,
         )
-        ?.let { s -> EntityModel.of(s) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) is not associated with any state.")
+        .let { s -> EntityModel.of(s) }
 
     override fun graphqlGetCityState(
         city: CityDto,
-    ): StateDto? = cityService
+    ): StateDto = cityService
         .getState(
             id = city.id,
         )

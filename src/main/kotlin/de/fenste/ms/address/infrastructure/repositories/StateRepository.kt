@@ -111,6 +111,7 @@ class StateRepository {
     fun create(
         name: String,
         countryId: UUID,
+        isPrintedOnLabel: Boolean,
     ): State {
         val country = Country
             .find { CountryTable.id eq countryId }
@@ -127,6 +128,7 @@ class StateRepository {
         return State.new {
             this.name = name
             this.country = country
+            this.isPrintedOnLabel = isPrintedOnLabel
         }
     }
 
@@ -134,6 +136,7 @@ class StateRepository {
         id: UUID,
         name: String,
         countryId: UUID,
+        isPrintedOnLabel: Boolean,
     ): State {
         val state = State
             .find { StateTable.id eq id }
@@ -157,6 +160,7 @@ class StateRepository {
 
         state.name = name
         state.country = country
+        state.isPrintedOnLabel = isPrintedOnLabel
         return state
     }
 

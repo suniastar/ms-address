@@ -18,7 +18,6 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.util.parseSortOrder
@@ -62,23 +61,9 @@ class CityService(
             .map { c -> CityDto(c) }
     }
 
-    fun getCountry(
-        id: UUID,
-    ): CountryDto = transaction {
-        val city = cityRepository
-            .find(
-                id = id,
-            )
-            ?: throw NotFoundException("The city ($id) does not exist.")
-
-        city
-            .country
-            .let { c -> CountryDto(c) }
-    }
-
     fun getState(
         id: UUID,
-    ): StateDto? = transaction {
+    ): StateDto = transaction {
         val city = cityRepository
             .find(
                 id = id,
@@ -87,7 +72,7 @@ class CityService(
 
         city
             .state
-            ?.let { s -> StateDto(s) }
+            .let { s -> StateDto(s) }
     }
 
     fun listPostCodes(
@@ -118,7 +103,6 @@ class CityService(
         cityRepository
             .create(
                 name = city.name,
-                countryId = city.country,
                 stateId = city.state,
             )
             .let { c -> CityDto(c) }
@@ -132,7 +116,6 @@ class CityService(
             .update(
                 id = id,
                 name = city.name,
-                countryId = city.country,
                 stateId = city.state,
             )
             .let { c -> CityDto(c) }

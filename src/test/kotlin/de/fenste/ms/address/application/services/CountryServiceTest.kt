@@ -16,7 +16,6 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
@@ -135,47 +134,6 @@ class CountryServiceTest(
 
         transaction {
             val actual = service.listStates(
-                id = country.id.value,
-                sort = "name,asc",
-                page = 1,
-                size = 2,
-            )
-
-            assertContentEquals(expected, actual)
-        }
-    }
-
-    @Test
-    fun `test list cities on sample data`() {
-        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
-        val expected = transaction {
-            country
-                .cities
-                .sortedBy { c -> c.id.value.toString() }
-                .map { c -> CityDto(c) }
-        }
-
-        transaction {
-            val actual = service.listCities(country.id.value)
-
-            assertContentEquals(expected, actual)
-        }
-    }
-
-    @Test
-    fun `test list cities on sample data with options`() {
-        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
-        val expected = transaction {
-            country
-                .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
-                .drop(1 * 2)
-                .take(2)
-                .map { c -> CityDto(c) }
-        }
-
-        transaction {
-            val actual = service.listCities(
                 id = country.id.value,
                 sort = "name,asc",
                 page = 1,

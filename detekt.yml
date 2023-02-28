@@ -4,6 +4,3 @@ complexity:
     excludes: [ '**/test/**' ]
   LongMethod:
     excludes: [ '**/test/**' ]
-style:
-  ThrowsCount:
-    max: 5

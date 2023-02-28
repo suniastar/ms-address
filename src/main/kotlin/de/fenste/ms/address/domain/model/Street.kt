@@ -51,7 +51,7 @@ class Street(id: EntityID<UUID>) : UUIDEntity(id) {
     }
 
     override fun toString(): String = "Street(" +
-        "id='$id', " +
-        "postCode='${postCode.id}', " +
-        "name='$name')"
+        "id=$id, " +
+        "postCode=${postCode.id}, " +
+        "name=$name)"
 }

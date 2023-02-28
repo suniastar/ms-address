@@ -51,7 +51,7 @@ class PostCode(id: EntityID<UUID>) : UUIDEntity(id) {
     }
 
     override fun toString(): String = "PostCode(" +
-        "id='$id', " +
-        "city='${city.id}', " +
-        "code='$code')"
+        "id=$id, " +
+        "city=${city.id}, " +
+        "code=$code)"
 }

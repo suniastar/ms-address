@@ -24,15 +24,18 @@ import java.util.UUID
 data class StateInputDto(
     val name: String,
     val country: UUID,
+    val isPrintedOnLabel: Boolean,
 )
 
 data class StateDto(
     val id: UUID,
     val name: String,
+    val isPrintedOnLabel: Boolean,
 ) : RepresentationModel<StateDto>(generateEntityLinks(id)) {
 
     constructor(state: State) : this(
         id = state.id.value,
         name = state.name,
+        isPrintedOnLabel = state.isPrintedOnLabel,
     )
 }

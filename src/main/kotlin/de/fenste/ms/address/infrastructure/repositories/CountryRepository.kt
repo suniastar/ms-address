@@ -19,10 +19,8 @@ package de.fenste.ms.address.infrastructure.repositories
 import de.fenste.ms.address.domain.exception.DuplicateException
 import de.fenste.ms.address.domain.exception.InvalidArgumentException
 import de.fenste.ms.address.domain.exception.NotFoundException
-import de.fenste.ms.address.domain.model.City
 import de.fenste.ms.address.domain.model.Country
 import de.fenste.ms.address.domain.model.State
-import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.Expression
@@ -129,26 +127,6 @@ class CountryRepository {
             country
                 .states
                 .orderBy(*order, StateTable.id to SortOrder.ASC)
-                .limit(size, (page ?: 0).toLong() * size)
-                .notForUpdate()
-    }
-
-    fun listCities(
-        country: Country,
-        page: Int? = null,
-        size: Int? = null,
-        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
-    ): SizedIterable<City> = when (size) {
-        null ->
-            country
-                .cities
-                .orderBy(*order, CityTable.id to SortOrder.ASC)
-                .notForUpdate()
-
-        else ->
-            country
-                .cities
-                .orderBy(*order, CityTable.id to SortOrder.ASC)
                 .limit(size, (page ?: 0).toLong() * size)
                 .notForUpdate()
     }

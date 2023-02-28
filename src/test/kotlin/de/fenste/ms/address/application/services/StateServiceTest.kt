@@ -162,10 +162,12 @@ class StateServiceTest(
     fun `test create`() {
         val name = "Name"
         val country = sampleData.countries.random()
+        val isPrintedOnLabel = true
 
         val create = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         val actual = service.create(
@@ -174,6 +176,7 @@ class StateServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
         transaction {
             val created = State.findById(actual.id)
             assertNotNull(created)
@@ -185,10 +188,12 @@ class StateServiceTest(
         val state = sampleData.states.random()
         val name = "Name"
         val country = transaction { sampleData.countries.filter { c -> c.states.empty() }.random() }
+        val isPrintedOnLabel = !state.isPrintedOnLabel
 
         val update = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         val actual = service.update(
@@ -198,6 +203,7 @@ class StateServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
         transaction {
             val updated = State.findById(actual.id)
             assertNotNull(updated)

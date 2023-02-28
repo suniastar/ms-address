@@ -189,26 +189,32 @@ class StateRepositoryTest(
     fun `test create`(): Unit = transaction {
         val name = "Name"
         val country = sampleData.countries.random()
+        val isPrintedOnLabel = true
 
         val actual = repository.create(
             name = name,
             countryId = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
     }
 
     @Test
     fun `test create existing`(): Unit = transaction {
         val country = sampleData.countries.filterNot { c -> c.states.empty() }.random()
-        val name = country.states.toList().random().name
+        val state = country.states.toList().random()
+        val name = state.name
+        val isPrintedOnLabel = state.isPrintedOnLabel
 
         assertFailsWith<DuplicateException> {
             repository.create(
                 name = name,
                 countryId = country.id.value,
+                isPrintedOnLabel = isPrintedOnLabel,
             )
         }
     }
@@ -222,6 +228,7 @@ class StateRepositoryTest(
             repository.create(
                 name = name,
                 countryId = countryId,
+                isPrintedOnLabel = true,
             )
         }
     }
@@ -231,11 +238,13 @@ class StateRepositoryTest(
         val state = sampleData.states.random()
         val name = "Name"
         val country = state.country
+        val isPrintedOnLabel = state.isPrintedOnLabel
 
         val actual = repository.update(
             id = state.id.value,
             name = name,
             countryId = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         assertNotNull(actual)
@@ -247,11 +256,13 @@ class StateRepositoryTest(
         val state = sampleData.states.random()
         val name = state.name
         val country = sampleData.countries.filter { c -> c.states.empty() }.random()
+        val isPrintedOnLabel = state.isPrintedOnLabel
 
         val actual = repository.update(
             id = state.id.value,
             name = name,
             countryId = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         assertNotNull(actual)
@@ -263,16 +274,19 @@ class StateRepositoryTest(
         val state = sampleData.states.random()
         val name = "Name"
         val country = sampleData.countries.filter { c -> c.states.empty() }.random()
+        val isPrintedOnLabel = !state.isPrintedOnLabel
 
         val actual = repository.update(
             id = state.id.value,
             name = name,
             countryId = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
     }
 
     @Test
@@ -280,16 +294,19 @@ class StateRepositoryTest(
         val state = sampleData.states.random()
         val name = state.name
         val country = state.country
+        val isPrintedOnLabel = state.isPrintedOnLabel
 
         val actual = repository.update(
             id = state.id.value,
             name = name,
             countryId = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
         assertEquals(country, actual.country)
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
     }
 
     @Test
@@ -303,6 +320,7 @@ class StateRepositoryTest(
                 id = id,
                 name = name,
                 countryId = countryId,
+                isPrintedOnLabel = true,
             )
         }
     }
@@ -318,6 +336,7 @@ class StateRepositoryTest(
                 id = state.id.value,
                 name = name,
                 countryId = country.id.value,
+                isPrintedOnLabel = true,
             )
         }
     }
@@ -333,6 +352,7 @@ class StateRepositoryTest(
                 id = state.id.value,
                 name = name,
                 countryId = countryId,
+                isPrintedOnLabel = true,
             )
         }
     }

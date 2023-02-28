@@ -24,15 +24,12 @@ object CityTable : UUIDTable("cities") {
 
     private const val NAME_MAX_LENGTH = 255
 
-    val countryId = reference("country_id", CountryTable, onDelete = ReferenceOption.CASCADE)
-
-    val stateId = optReference("state_id", StateTable, onDelete = ReferenceOption.CASCADE)
+    val stateId = reference("state_id", StateTable, onDelete = ReferenceOption.CASCADE)
 
     val name = varchar("name", NAME_MAX_LENGTH)
 
     fun valueOf(value: String): Column<*> = when (value.lowercase()) {
         "id" -> id
-        "country_id", "countryid" -> countryId
         "state_id", "stateid" -> stateId
         "name" -> name
         else -> throw IllegalArgumentException("\"$value\" is not a valid column name.")

@@ -21,7 +21,6 @@ import de.fenste.ms.address.domain.exception.DuplicateException
 import de.fenste.ms.address.domain.exception.InvalidArgumentException
 import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.Country
-import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.SortOrder
@@ -202,66 +201,6 @@ class CountryRepositoryTest(
             val actual = repository.listStates(
                 country = country,
                 order = arrayOf(StateTable.name to SortOrder.ASC),
-                page = 1,
-                size = 2,
-            )
-
-            assertContentEquals(expected, actual)
-        }
-    }
-
-    @Test
-    fun `test list cities on sample data`() {
-        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
-        val expected = transaction {
-            country
-                .cities
-                .sortedBy { c -> c.id.value.toString() }
-        }
-
-        transaction {
-            val actual = repository.listCities(country)
-
-            assertContentEquals(expected, actual)
-        }
-    }
-
-    @Test
-    fun `test list cities on sample data with size`() {
-        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
-        val expected = transaction {
-            country
-                .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
-                .take(2)
-        }
-
-        transaction {
-            val actual = repository.listCities(
-                country = country,
-                order = arrayOf(CityTable.name to SortOrder.ASC),
-                size = 2,
-            )
-
-            assertContentEquals(expected, actual)
-        }
-    }
-
-    @Test
-    fun `test list cities on sample data with options`() {
-        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
-        val expected = transaction {
-            country
-                .cities
-                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
-                .drop(1 * 2)
-                .take(2)
-        }
-
-        transaction {
-            val actual = repository.listCities(
-                country = country,
-                order = arrayOf(CityTable.name to SortOrder.ASC),
                 page = 1,
                 size = 2,
             )

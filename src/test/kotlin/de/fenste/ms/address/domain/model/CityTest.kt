@@ -77,9 +77,8 @@ class CityTest(
     @Test
     fun `test toString`(): Unit = transaction {
         val cId = copy.id
-        val pIdC = copy.country.id
-        val pIdS = copy.state?.id
-        val cExpected = "City(id='$cId', country='$pIdC', state='$pIdS', name='City One')"
+        val pIdS = copy.state.id
+        val cExpected = "City(id=$cId, state=$pIdS, name=City One)"
         val cActual = sampleData.cities[0].toString()
         assertEquals(cExpected, cActual)
     }

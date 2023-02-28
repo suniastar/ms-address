@@ -104,6 +104,7 @@ class StateService(
             .create(
                 name = state.name,
                 countryId = state.country,
+                isPrintedOnLabel = state.isPrintedOnLabel,
             )
             .let { s -> StateDto(s) }
     }
@@ -117,6 +118,7 @@ class StateService(
                 id = id,
                 name = state.name,
                 countryId = state.country,
+                isPrintedOnLabel = state.isPrintedOnLabel,
             )
             .let { s -> StateDto(s) }
     }

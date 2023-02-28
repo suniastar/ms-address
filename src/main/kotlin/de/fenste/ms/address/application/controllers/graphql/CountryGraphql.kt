@@ -16,7 +16,6 @@
 
 package de.fenste.ms.address.application.controllers.graphql
 
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
@@ -47,14 +46,6 @@ interface CountryGraphql {
         @Argument size: Int? = null,
         @Argument sort: String? = null,
     ): List<StateDto>
-
-    @SchemaMapping(typeName = "Country", field = "cities")
-    fun graphqlGetCountryCities(
-        country: CountryDto,
-        @Argument page: Int? = null,
-        @Argument size: Int? = null,
-        @Argument sort: String? = null,
-    ): List<CityDto>
 
     @SchemaMapping(typeName = "Mutation", field = "createCountry")
     fun graphqlCreateCountry(

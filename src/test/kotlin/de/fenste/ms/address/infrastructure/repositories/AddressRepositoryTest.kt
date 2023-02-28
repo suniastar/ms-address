@@ -252,9 +252,7 @@ class AddressRepositoryTest(
         val address = sampleData.addresses.random()
         val houseNumber = address.houseNumber
         val extra = address.extra
-        val street = sampleData.streets
-            .filter { s -> s.addresses.none { a -> a.houseNumber == address.houseNumber && a.extra == a.extra } }
-            .random()
+        val street = sampleData.streets.filter { s -> s.addresses.empty() }.random()
 
         val actual = repository.update(
             id = address.id.value,

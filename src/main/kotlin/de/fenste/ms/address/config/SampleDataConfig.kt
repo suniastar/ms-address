@@ -103,102 +103,81 @@ class SampleDataConfig : InitializingBean {
             val state11 = State.new(UUID.fromString("12345678-1234-1234-1234-000000110000")) {
                 name = "State One"
                 country = country1
+                isPrintedOnLabel = true
             }
             val state12 = State.new(UUID.fromString("12345678-1234-1234-1234-000000120000")) {
                 name = "State Two"
                 country = country1
+                isPrintedOnLabel = true
             }
             val state13 = State.new(UUID.fromString("12345678-1234-1234-1234-000000130000")) {
                 name = "State Three"
                 country = country1
+                isPrintedOnLabel = true
             }
             val state21 = State.new(UUID.fromString("12345678-1234-1234-1234-000000210000")) {
                 name = "State One"
                 country = country2
+                isPrintedOnLabel = false
             }
             val state22 = State.new(UUID.fromString("12345678-1234-1234-1234-000000220000")) {
                 name = "State Two"
                 country = country2
+                isPrintedOnLabel = false
             }
             val state23 = State.new(UUID.fromString("12345678-1234-1234-1234-000000230000")) {
                 name = "State Three"
                 country = country2
+                isPrintedOnLabel = false
             }
 
             val city111 = City.new(UUID.fromString("12345678-1234-1234-1234-000000111000")) {
                 name = "City One"
-                country = country1
                 state = state11
             }
             val city112 = City.new(UUID.fromString("12345678-1234-1234-1234-000000112000")) {
                 name = "City Two"
-                country = country1
                 state = state11
             }
             val city113 = City.new(UUID.fromString("12345678-1234-1234-1234-000000113000")) {
                 name = "City Three"
-                country = country1
                 state = state11
             }
             val city121 = City.new(UUID.fromString("12345678-1234-1234-1234-000000121000")) {
                 name = "City One"
-                country = country1
                 state = state12
             }
             val city122 = City.new(UUID.fromString("12345678-1234-1234-1234-000000122000")) {
                 name = "City Two"
-                country = country1
                 state = state12
             }
             val city123 = City.new(UUID.fromString("12345678-1234-1234-1234-000000123000")) {
                 name = "City Three"
-                country = country1
                 state = state12
             }
             val city131 = City.new(UUID.fromString("12345678-1234-1234-1234-000000131000")) {
                 name = "City One"
-                country = country1
                 state = state13
             }
             val city132 = City.new(UUID.fromString("12345678-1234-1234-1234-000000132000")) {
                 name = "City Two"
-                country = country1
                 state = state13
             }
             val city133 = City.new(UUID.fromString("12345678-1234-1234-1234-000000133000")) {
                 name = "City Three"
-                country = country1
                 state = state13
             }
             val city211 = City.new(UUID.fromString("12345678-1234-1234-1234-000000211000")) {
                 name = "City One"
-                country = country2
                 state = state21
             }
             val city212 = City.new(UUID.fromString("12345678-1234-1234-1234-000000212000")) {
                 name = "City Two"
-                country = country2
                 state = state21
             }
             val city213 = City.new(UUID.fromString("12345678-1234-1234-1234-000000213000")) {
                 name = "City Three"
-                country = country2
                 state = state21
-            }
-            val city301 = City.new(UUID.fromString("12345678-1234-1234-1234-000000301000")) {
-                name = "City One"
-                country = country3
-                state = null
-            }
-            val city302 = City.new(UUID.fromString("12345678-1234-1234-1234-000000302000")) {
-                name = "City Two"
-                country = country3
-                state = null
-            }
-            val city303 = City.new(UUID.fromString("12345678-1234-1234-1234-000000303000")) {
-                name = "City Three"
-                country = country3
-                state = null
             }
 
             val postCode1111 = PostCode.new(UUID.fromString("12345678-1234-1234-1234-000000111100")) {
@@ -350,9 +329,6 @@ class SampleDataConfig : InitializingBean {
                 city211,
                 city212,
                 city213,
-                city301,
-                city302,
-                city303,
             )
 
             pPostCodes = listOf(

@@ -16,14 +16,12 @@
 
 package de.fenste.ms.address.application.services
 
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.util.parseSortOrder
 import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.CountryRepository
-import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -88,28 +86,6 @@ class CountryService(
                 order = sort.parseSortOrder(StateTable::valueOf),
             )
             .map { s -> StateDto(s) }
-    }
-
-    fun listCities(
-        id: UUID,
-        page: Int? = null,
-        size: Int? = null,
-        sort: String? = null,
-    ): List<CityDto> = transaction {
-        val country = countryRepository
-            .find(
-                id = id,
-            )
-            ?: throw NotFoundException("The country ($id) does not exist.")
-
-        countryRepository
-            .listCities(
-                country = country,
-                page = page,
-                size = size,
-                order = sort.parseSortOrder(CityTable::valueOf),
-            )
-            .map { c -> CityDto(c) }
     }
 
     fun create(

@@ -28,10 +28,13 @@ object StateTable : UUIDTable("states") {
 
     val name = varchar("name", NAME_MAX_LENGTH)
 
+    val isPrintedOnLabel = bool("print")
+
     fun valueOf(value: String): Column<*> = when (value.lowercase()) {
         "id" -> id
         "country_id", "countryid" -> countryId
         "name" -> name
+        "print", "isprintedonlabel", "is_printed_on_label" -> isPrintedOnLabel
         else -> throw IllegalArgumentException("\"$value\" is not a valid column name.")
     }
 }

@@ -16,7 +16,6 @@
 
 package de.fenste.ms.address.application.controllers.api
 
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
@@ -117,15 +116,6 @@ interface CountryApi {
         @RequestParam size: Int? = null,
         @RequestParam sort: String? = null,
     ): PagedModel<StateDto>
-
-    @ResponseBody
-    @GetMapping("/{id}/cities")
-    fun restGetCountryCities(
-        @PathVariable id: UUID,
-        @RequestParam page: Int? = null,
-        @RequestParam size: Int? = null,
-        @RequestParam sort: String? = null,
-    ): PagedModel<CityDto>
 
     @ResponseBody
     @PostMapping

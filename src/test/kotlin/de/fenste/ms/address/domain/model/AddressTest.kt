@@ -78,7 +78,7 @@ class AddressTest(
     fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val pId = copy.street.id
-        val cExpected = "Address(id='$cId', street='$pId', houseNumber='1', extra='null')"
+        val cExpected = "Address(id=$cId, street=$pId, houseNumber=1, extra=null)"
         val cActual = sampleData.addresses[0].toString()
         assertEquals(cExpected, cActual)
     }

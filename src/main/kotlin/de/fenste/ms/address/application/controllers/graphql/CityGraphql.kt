@@ -18,7 +18,6 @@ package de.fenste.ms.address.application.controllers.graphql
 
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StateDto
 import org.springframework.graphql.data.method.annotation.Argument
@@ -39,15 +38,10 @@ interface CityGraphql {
         @Argument sort: String? = null,
     ): List<CityDto>
 
-    @SchemaMapping(typeName = "City", field = "country")
-    fun graphqlGetCityCountry(
-        city: CityDto,
-    ): CountryDto
-
     @SchemaMapping(typeName = "City", field = "state")
     fun graphqlGetCityState(
         city: CityDto,
-    ): StateDto?
+    ): StateDto
 
     @SchemaMapping(typeName = "City", field = "postCodes")
     fun graphqlGetCityPostCodes(

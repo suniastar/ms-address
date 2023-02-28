@@ -305,36 +305,6 @@ class CountryControllerTest(
 
     @Test
     @kotlin.test.Ignore
-    fun `rest test get country cities on sample data`() {
-        val country = transaction { sampleData.countries.filterNot { c -> c.cities.empty() }.random() }
-        val expected = transaction {
-            country.cities
-                .sortedBy { s -> s.id.value.toString() }
-                .map { s -> s.id.value.toString() }
-        }
-
-        mockMvc
-            .get("$BASE_URI/api/country/${country.id.value}/cities") {
-                contentType = MediaType.APPLICATION_JSON
-            }
-            .andExpect {
-                status { isOk() }
-                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
-            }
-            .andExpect { jsonPath("page.size") { value(expected.count()) } }
-            .andExpect { jsonPath("page.totalElements") { value(expected.count()) } }
-            .andExpect { jsonPath("page.number") { value(0) } }
-            .andExpect { jsonPath("page.totalPages") { value(1) } }
-            .andExpect { jsonPath("_links.first.href") { doesNotExist() } }
-            .andExpect { jsonPath("_links.prev.href") { doesNotExist() } }
-            .andExpect { jsonPath("_links.self.href") { exists() } }
-            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
-            .andExpect { jsonPath("_links.last.href") { doesNotExist() } }
-            .andExpect { jsonPath("_embedded.cityDtoes.[*].id") { value(expected) } }
-    }
-
-    @Test
-    @kotlin.test.Ignore
     fun `rest test get country cities on non existing sample data`() {
         mockMvc
             .get("$BASE_URI/api/country/${UUID.randomUUID()}/cities") {

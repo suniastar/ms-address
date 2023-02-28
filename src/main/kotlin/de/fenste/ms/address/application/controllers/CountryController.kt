@@ -18,7 +18,6 @@ package de.fenste.ms.address.application.controllers
 
 import de.fenste.ms.address.application.controllers.api.CountryApi
 import de.fenste.ms.address.application.controllers.graphql.CountryGraphql
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
@@ -117,40 +116,6 @@ class CountryController(
         sort: String?,
     ): List<StateDto> = countryService
         .listStates(
-            id = country.id,
-            page = page,
-            size = size,
-            sort = sort,
-        )
-
-    override fun restGetCountryCities(
-        id: UUID,
-        page: Int?,
-        size: Int?,
-        sort: String?,
-    ): PagedModel<CityDto> = countryService
-        .listCities(
-            id = id,
-            page = page,
-            size = size,
-            sort = sort,
-        )
-        .let { list ->
-            val count = list.count()
-            PagedModel.of(
-                list,
-                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                CountryApi.generateCityPageLinks(id),
-            )
-        }
-
-    override fun graphqlGetCountryCities(
-        country: CountryDto,
-        page: Int?,
-        size: Int?,
-        sort: String?,
-    ): List<CityDto> = countryService
-        .listCities(
             id = country.id,
             page = page,
             size = size,

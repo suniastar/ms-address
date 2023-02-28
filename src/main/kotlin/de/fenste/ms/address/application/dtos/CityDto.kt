@@ -23,8 +23,7 @@ import java.util.UUID
 
 data class CityInputDto(
     val name: String,
-    val country: UUID,
-    val state: UUID? = null,
+    val state: UUID,
 )
 
 data class CityDto(
