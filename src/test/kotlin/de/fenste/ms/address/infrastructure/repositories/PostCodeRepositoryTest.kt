@@ -246,7 +246,7 @@ class PostCodeRepositoryTest(
     fun `test update city`(): Unit = transaction {
         val postCode = sampleData.postCodes.random()
         val code = postCode.code
-        val city = sampleData.cities.filterNot { c -> c.postCodes.contains(postCode) }.random()
+        val city = sampleData.cities.filter { c -> c.postCodes.empty() }.random()
 
         val actual = repository.update(
             id = postCode.id.value,

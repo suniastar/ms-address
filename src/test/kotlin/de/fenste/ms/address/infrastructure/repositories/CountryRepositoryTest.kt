@@ -272,10 +272,10 @@ class CountryRepositoryTest(
 
     @Test
     fun `test create`(): Unit = transaction {
-        val alpha2 = "CZ"
-        val alpha3 = "CZE"
-        val name = "Czechia"
-        val localizedName = "Tschechien"
+        val alpha2 = "C9"
+        val alpha3 = "C09"
+        val name = "Country Nine"
+        val localizedName = "земля"
 
         val actual = repository.create(
             alpha2 = alpha2,

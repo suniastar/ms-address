@@ -78,7 +78,7 @@ class PostCodeTest(
     fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val pId = copy.city.id
-        val cExpected = "PostCode(id='$cId', city='$pId', code='10557')"
+        val cExpected = "PostCode(id='$cId', city='$pId', code='111')"
         val cActual = sampleData.postCodes[0].toString()
         assertEquals(cExpected, cActual)
     }

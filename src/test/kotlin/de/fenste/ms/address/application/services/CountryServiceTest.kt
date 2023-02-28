@@ -188,10 +188,10 @@ class CountryServiceTest(
 
     @Test
     fun `test create`() {
-        val alpha2 = "CZ"
-        val alpha3 = "CZE"
-        val name = "Czechia"
-        val localizedName = "Tschechien"
+        val alpha2 = "C9"
+        val alpha3 = "C09"
+        val name = "Country Nine"
+        val localizedName = "земля"
 
         val create = CountryInputDto(
             alpha2 = alpha2,

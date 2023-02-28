@@ -246,7 +246,7 @@ class StateRepositoryTest(
     fun `test update country`(): Unit = transaction {
         val state = sampleData.states.random()
         val name = state.name
-        val country = sampleData.countries.filterNot { c -> c.states.contains(state) }.random()
+        val country = sampleData.countries.filter { c -> c.states.empty() }.random()
 
         val actual = repository.update(
             id = state.id.value,
@@ -262,7 +262,7 @@ class StateRepositoryTest(
     fun `test update all`(): Unit = transaction {
         val state = sampleData.states.random()
         val name = "Name"
-        val country = sampleData.countries.filterNot { c -> c.states.contains(state) }.random()
+        val country = sampleData.countries.filter { c -> c.states.empty() }.random()
 
         val actual = repository.update(
             id = state.id.value,

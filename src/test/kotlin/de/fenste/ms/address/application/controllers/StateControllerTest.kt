@@ -167,7 +167,7 @@ class StateControllerTest(
             .andExpect { jsonPath("_links.first.href") { exists() } }
             .andExpect { jsonPath("_links.prev.href") { exists() } }
             .andExpect { jsonPath("_links.self.href") { exists() } }
-            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.next.href") { exists() } }
             .andExpect { jsonPath("_links.last.href") { exists() } }
             .andExpect { jsonPath("_embedded.stateDtoes.[*].id") { value(expected) } }
     }

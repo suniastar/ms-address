@@ -83,7 +83,7 @@ class StateTest(
     fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val pId = copy.country.id
-        val cExpected = "State(id='$cId', country='$pId', name='Berlin')"
+        val cExpected = "State(id='$cId', country='$pId', name='State One')"
         val cActual = sampleData.states[0].toString()
         assertEquals(cExpected, cActual)
     }

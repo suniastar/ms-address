@@ -50,7 +50,13 @@ class CityRepository {
             val city = CityTable
                 .slice(CityTable.columns)
                 .select { (CityTable.name eq name) and (CityTable.countryId eq country.id) }
-                .apply { state?.let { andWhere { CityTable.stateId eq state.id } } }
+                .apply {
+                    if (state != null) {
+                        andWhere { CityTable.stateId eq state.id }
+                    } else {
+                        andWhere { CityTable.stateId.isNull() }
+                    }
+                }
                 .apply { original?.let { andWhere { CityTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()

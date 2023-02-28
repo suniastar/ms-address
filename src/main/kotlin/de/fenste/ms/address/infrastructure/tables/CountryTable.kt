@@ -26,9 +26,9 @@ object CountryTable : UUIDTable("countries") {
     private const val NAME_MAX_LENGTH = 255
     private const val LOCALIZED_NAME_MAX_LENGTH = 255
 
-    val alpha2 = varchar("alpha2", ALPHA2_MAX_LENGTH).uniqueIndex()
+    val alpha2 = char("alpha2", ALPHA2_MAX_LENGTH).uniqueIndex()
 
-    val alpha3 = varchar("alpha3", ALPHA3_MAX_LENGTH).uniqueIndex()
+    val alpha3 = char("alpha3", ALPHA3_MAX_LENGTH).uniqueIndex()
 
     val name = varchar("name", NAME_MAX_LENGTH)
 

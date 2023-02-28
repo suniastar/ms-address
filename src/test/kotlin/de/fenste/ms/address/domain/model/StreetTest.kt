@@ -78,7 +78,7 @@ class StreetTest(
     fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val pId = copy.postCode.id
-        val cExpected = "Street(id='$cId', postCode='$pId', name='Platz der Republik')"
+        val cExpected = "Street(id='$cId', postCode='$pId', name='Street One')"
         val cActual = sampleData.streets[0].toString()
         assertEquals(cExpected, cActual)
     }

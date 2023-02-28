@@ -184,7 +184,7 @@ class StateServiceTest(
     fun `test update all`() {
         val state = sampleData.states.random()
         val name = "Name"
-        val country = transaction { sampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val country = transaction { sampleData.countries.filter { c -> c.states.empty() }.random() }
 
         val update = StateInputDto(
             name = name,
