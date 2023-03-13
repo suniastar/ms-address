@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
       - name: Cache Local Maven Build
-        uses: actions/cache@v3.2.6
+        uses: actions/cache@v3.3.1
         with:
           path: target
           key: release-build-${{ github.ref }}
@@ -114,14 +114,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
       - name: Cache Local Maven Build
-        uses: actions/cache@v3.2.6
+        uses: actions/cache@v3.3.1
         with:
           path: target
           key: ${{ github.workflow }}-build-${{ github.ref }}
           restore-keys: |
             ${{ github.workflow }}-build-${{ github.ref }}
       - name: Cache Local Docker
-        uses: actions/cache@v3.2.6
+        uses: actions/cache@v3.3.1
         with:
           path: /var/lib/docker
           key: ${{ github.workflow }}-docker-${{ github.ref }}
