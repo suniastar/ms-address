@@ -23,16 +23,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.0.0
       - name: Cache Local Maven Build
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: target
           key: release-build-${{ github.ref }}
           restore-keys: |
             release-build-${{ github.ref }}
       - name: Set up Java JDK
-        uses: actions/setup-java@v3.11.0
+        uses: actions/setup-java@v3.12.0
         with:
           java-version: '17'
           distribution: 'zulu'
@@ -100,35 +100,35 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3.0.6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1.0.9
+        uses: actions/upload-pages-artifact@v2.0.0
         with:
           path: target/dokka
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2.0.2
+        uses: actions/deploy-pages@v2.0.4
 
   image:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.0.0
       - name: Cache Local Maven Build
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: target
           key: ${{ github.workflow }}-build-${{ github.ref }}
           restore-keys: |
             ${{ github.workflow }}-build-${{ github.ref }}
       - name: Cache Local Docker
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3.3.2
         with:
           path: /var/lib/docker
           key: ${{ github.workflow }}-docker-${{ github.ref }}
           restore-keys: |
             ${{ github.workflow }}-docker-${{ github.ref }}
       - name: Set up Java JDK
-        uses: actions/setup-java@v3.11.0
+        uses: actions/setup-java@v3.12.0
         with:
           java-version: '17'
           distribution: 'zulu'
