@@ -38,7 +38,7 @@
         <kotlin.version>1.9.10</kotlin.version>
         <exposed.version>0.44.1</exposed.version>
         <ktlint.version>2.0.0</ktlint.version>
-        <detekt.version>1.23.1</detekt.version>
+        <detekt.version>1.23.4</detekt.version>
         <dokka.version>1.9.10</dokka.version>
         <jacoco.version>0.8.11</jacoco.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
