@@ -27,7 +27,7 @@ jobs:
       - name: Build with Maven
         run: mvn --batch-mode --update-snapshots test
       - name: JaCoCo Code Coverage Report
-        uses: PavanMudigonda/jacoco-reporter@v4.9
+        uses: PavanMudigonda/jacoco-reporter@v5.0
         with:
           coverage_results_path: target/site/jacoco/jacoco.xml
           coverage_report_name: Coverage
