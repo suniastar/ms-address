@@ -18,7 +18,6 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.AddressInputDto
-import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Address
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -55,6 +54,21 @@ class AddressServiceTest(
     }
 
     @Test
+    fun `test find by id on sample data`() {
+        val expected = sampleData.addresses.random().let { a -> AddressDto(a) }
+        val actual = service.find(id = expected.id)
+
+        transaction { assertEquals(expected, actual) }
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`() {
+        val actual = service.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
     fun `test list on sample data`() {
         val expected = sampleData.addresses
             .sortedBy { a -> a.id.value.toString() }
@@ -67,7 +81,7 @@ class AddressServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.addresses
-            .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id }))
+            .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { a -> AddressDto(a) }
@@ -90,21 +104,6 @@ class AddressServiceTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.addresses.random().let { a -> AddressDto(a) }
-        val actual = service.find(id = expected.id)
-
-        transaction { assertEquals(expected, actual) }
-    }
-
-    @Test
-    fun `test find by id on non existing sample data`() {
-        val actual = service.find(id = UUID.randomUUID())
-
-        assertNull(actual)
-    }
-
-    @Test
     fun `test create`() {
         val houseNumber = "42"
         val street = sampleData.streets.random()
@@ -121,7 +120,10 @@ class AddressServiceTest(
         assertNotNull(actual)
         assertEquals(houseNumber, actual.houseNumber)
         assertNull(actual.extra)
-        transaction { assertEquals(StreetDto(street), actual.street) }
+        transaction {
+            val created = Address.findById(actual.id)
+            assertNotNull(created)
+        }
     }
 
     @Test
@@ -146,7 +148,10 @@ class AddressServiceTest(
         assertEquals(houseNumber, actual.houseNumber)
         assertNotNull(actual.extra)
         assertEquals(extra, actual.extra)
-        transaction { assertEquals(StreetDto(street), actual.street) }
+        transaction {
+            val updated = Address.findById(actual.id)
+            assertNotNull(updated)
+        }
     }
 
     @Test

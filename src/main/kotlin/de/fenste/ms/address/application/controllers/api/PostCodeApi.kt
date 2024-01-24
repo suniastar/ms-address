@@ -87,6 +87,12 @@ interface PostCodeApi {
     }
 
     @ResponseBody
+    @GetMapping("/{id}")
+    fun restGetPostCode(
+        @PathVariable id: UUID,
+    ): EntityModel<PostCodeDto>
+
+    @ResponseBody
     @GetMapping
     fun restGetPostCodes(
         @RequestParam page: Int? = null,
@@ -95,10 +101,19 @@ interface PostCodeApi {
     ): PagedModel<PostCodeDto>
 
     @ResponseBody
-    @GetMapping("/{id}")
-    fun restGetPostCode(
+    @GetMapping("/{id}/city")
+    fun restGetPostCodeCity(
         @PathVariable id: UUID,
-    ): EntityModel<PostCodeDto>
+    ): EntityModel<CityDto>
+
+    @ResponseBody
+    @GetMapping("/{id}/streets")
+    fun restGetPostCodeStreets(
+        @PathVariable id: UUID,
+        @RequestParam page: Int? = null,
+        @RequestParam size: Int? = null,
+        @RequestParam sort: String? = null,
+    ): PagedModel<StreetDto>
 
     @ResponseBody
     @PostMapping
@@ -118,19 +133,4 @@ interface PostCodeApi {
     fun restDeletePostCode(
         @PathVariable id: UUID,
     ): Boolean
-
-    @ResponseBody
-    @GetMapping("/{id}/city")
-    fun restGetPostCodeCity(
-        @PathVariable id: UUID,
-    ): EntityModel<CityDto>
-
-    @ResponseBody
-    @GetMapping("/{id}/streets")
-    fun restGetPostCodeStreets(
-        @PathVariable id: UUID,
-        @RequestParam page: Int? = null,
-        @RequestParam size: Int? = null,
-        @RequestParam sort: String? = null,
-    ): PagedModel<StreetDto>
 }

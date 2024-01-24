@@ -16,11 +16,15 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.util.parseSortOrder
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.PostCodeRepository
 import de.fenste.ms.address.infrastructure.tables.PostCodeTable
+import de.fenste.ms.address.infrastructure.tables.StreetTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -33,6 +37,14 @@ class PostCodeService(
 
     fun count(): Int = transaction {
         postCodeRepository.count()
+    }
+
+    fun find(
+        id: UUID,
+    ): PostCodeDto? = transaction {
+        postCodeRepository
+            .find(id)
+            ?.let { p -> PostCodeDto(p) }
     }
 
     fun list(
@@ -49,12 +61,40 @@ class PostCodeService(
             .map { p -> PostCodeDto(p) }
     }
 
-    fun find(
+    fun getCity(
         id: UUID,
-    ): PostCodeDto? = transaction {
+    ): CityDto = transaction {
+        val postCode = postCodeRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The post code ($id) does not exist.")
+
+        postCode
+            .city
+            .let { c -> CityDto(c) }
+    }
+
+    fun listStreets(
+        id: UUID,
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<StreetDto> = transaction {
+        val postCode = postCodeRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The post code ($id) does not exist.")
+
         postCodeRepository
-            .find(id)
-            ?.let { p -> PostCodeDto(p) }
+            .listStreets(
+                postCode = postCode,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(StreetTable::valueOf),
+            )
+            .map { s -> StreetDto(s) }
     }
 
     fun create(

@@ -16,11 +16,13 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.City
-import de.fenste.ms.address.domain.model.Country
+import de.fenste.ms.address.domain.model.PostCode
 import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.infrastructure.tables.CityTable
-import de.fenste.ms.address.infrastructure.tables.CountryTable
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
@@ -39,20 +41,18 @@ class CityRepository {
         private fun checkDuplicate(
             original: City? = null,
             name: String,
-            country: Country,
-            state: State?,
+            state: State,
         ) {
             val city = CityTable
                 .slice(CityTable.columns)
-                .select { (CityTable.name eq name) and (CityTable.countryId eq country.id) }
-                .apply { state?.let { andWhere { CityTable.stateId eq state.id } } }
+                .select { (CityTable.name eq name) and (CityTable.stateId eq state.id) }
                 .apply { original?.let { andWhere { CityTable.id neq original.id } } }
                 .limit(1)
                 .notForUpdate()
                 .map { r -> City.wrapRow(r) }
                 .firstOrNull()
 
-            require(city == null) { "The city does already exist: $city" }
+            city?.let { throw DuplicateException("The city does already exist: $city") }
         }
     }
 
@@ -60,6 +60,14 @@ class CityRepository {
         .all()
         .count()
         .toInt()
+
+    fun find(
+        id: UUID,
+    ): City? = City
+        .find { CityTable.id eq id }
+        .limit(1)
+        .notForUpdate()
+        .firstOrNull()
 
     fun list(
         page: Int? = null,
@@ -80,49 +88,44 @@ class CityRepository {
                 .notForUpdate()
     }
 
-    fun find(
-        id: UUID,
-    ): City? = City
-        .find { CityTable.id eq id }
-        .limit(1)
-        .notForUpdate()
-        .firstOrNull()
+    fun listPostCodes(
+        city: City,
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<PostCode> = when (size) {
+        null ->
+            city
+                .postCodes
+                .orderBy(*order, PostCodeTable.id to SortOrder.ASC)
+                .notForUpdate()
+
+        else ->
+            city
+                .postCodes
+                .orderBy(*order, PostCodeTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
+                .notForUpdate()
+    }
 
     fun create(
         name: String,
-        countryId: UUID,
-        stateId: UUID?,
+        stateId: UUID,
     ): City {
-        val country = Country
-            .find { CountryTable.id eq countryId }
+        val state = State
+            .find { StateTable.id eq stateId }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($countryId) does not exist." }
-
-        val state = stateId?.let {
-            val s = State
-                .find { StateTable.id eq stateId }
-                .limit(1)
-                .notForUpdate()
-                .firstOrNull()
-
-            requireNotNull(s) { "The state ($stateId) does not exist." }
-            require(country.states.contains(s)) { "The state ($stateId) does not belong to the country ($countryId)." }
-
-            s
-        }
+            ?: throw NotFoundException("The state ($stateId) does not exist.")
 
         checkDuplicate(
             name = name,
-            country = country,
             state = state,
         )
 
         return City.new {
             this.name = name
-            this.country = country
             this.state = state
         }
     }
@@ -130,7 +133,6 @@ class CityRepository {
     fun update(
         id: UUID,
         name: String,
-        countryId: UUID,
         stateId: UUID?,
     ): City {
         val city = City
@@ -138,39 +140,22 @@ class CityRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
+            ?: throw NotFoundException("The city ($id) does not exist.")
 
-        requireNotNull(city) { "The city ($id) does not exist." }
-
-        val country = Country
-            .find { CountryTable.id eq countryId }
+        val state = State
+            .find { StateTable.id eq stateId }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($countryId) does not exist." }
-
-        val state = stateId?.let {
-            val s = State
-                .find { StateTable.id eq stateId }
-                .limit(1)
-                .notForUpdate()
-                .firstOrNull()
-
-            requireNotNull(s) { "The state ($stateId) does not exist." }
-            require(country.states.contains(s)) { "The state ($stateId) does not belong to the country ($countryId)." }
-
-            s
-        }
+            ?: throw NotFoundException("The state ($stateId) does not exist.")
 
         checkDuplicate(
             original = city,
             name = name,
-            country = country,
             state = state,
         )
 
         city.name = name
-        city.country = country
         city.state = state
         return city
     }
@@ -183,8 +168,7 @@ class CityRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(city) { "The city ($id) does not exist. " }
+            ?: throw NotFoundException("The city ($id) does not exist. ")
 
         city.delete()
     }

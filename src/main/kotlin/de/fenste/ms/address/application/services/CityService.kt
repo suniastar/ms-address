@@ -18,9 +18,13 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
+import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.util.parseSortOrder
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.CityRepository
 import de.fenste.ms.address.infrastructure.tables.CityTable
+import de.fenste.ms.address.infrastructure.tables.PostCodeTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -33,6 +37,14 @@ class CityService(
 
     fun count(): Int = transaction {
         cityRepository.count()
+    }
+
+    fun find(
+        id: UUID,
+    ): CityDto? = transaction {
+        cityRepository
+            .find(id)
+            ?.let { c -> CityDto(c) }
     }
 
     fun list(
@@ -49,12 +61,40 @@ class CityService(
             .map { c -> CityDto(c) }
     }
 
-    fun find(
+    fun getState(
         id: UUID,
-    ): CityDto? = transaction {
+    ): StateDto = transaction {
+        val city = cityRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The city ($id) does not exist.")
+
+        city
+            .state
+            .let { s -> StateDto(s) }
+    }
+
+    fun listPostCodes(
+        id: UUID,
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<PostCodeDto> = transaction {
+        val city = cityRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The city ($id) does not exist.")
+
         cityRepository
-            .find(id)
-            ?.let { c -> CityDto(c) }
+            .listPostCodes(
+                city = city,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(PostCodeTable::valueOf),
+            )
+            .map { p -> PostCodeDto(p) }
     }
 
     fun create(
@@ -63,7 +103,6 @@ class CityService(
         cityRepository
             .create(
                 name = city.name,
-                countryId = city.country,
                 stateId = city.state,
             )
             .let { c -> CityDto(c) }
@@ -77,7 +116,6 @@ class CityService(
             .update(
                 id = id,
                 name = city.name,
-                countryId = city.country,
                 stateId = city.state,
             )
             .let { c -> CityDto(c) }

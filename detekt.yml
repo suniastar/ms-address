@@ -1,3 +1,4 @@
+# rules are found here: https://detekt.dev/docs/rules/comments
 complexity:
   LargeClass:
     excludes: [ '**/test/**' ]

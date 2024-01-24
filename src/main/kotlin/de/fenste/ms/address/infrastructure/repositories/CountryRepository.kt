@@ -16,8 +16,13 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.InvalidArgumentException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.Country
+import de.fenste.ms.address.domain.model.State
 import de.fenste.ms.address.infrastructure.tables.CountryTable
+import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SortOrder
@@ -49,7 +54,7 @@ class CountryRepository {
                 .firstOrNull()
                 ?.let { r -> Country.wrapRow(r) }
 
-            require(country == null) { "This country does already exist: $country" }
+            country?.let { throw DuplicateException("This country does already exist: $country") }
         }
     }
 
@@ -57,25 +62,6 @@ class CountryRepository {
         .all()
         .count()
         .toInt()
-
-    fun list(
-        page: Int? = null,
-        size: Int? = null,
-        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
-    ): SizedIterable<Country> = when (size) {
-        null ->
-            Country
-                .all()
-                .orderBy(*order, CountryTable.id to SortOrder.ASC)
-                .notForUpdate()
-
-        else ->
-            Country
-                .all()
-                .orderBy(*order, CountryTable.id to SortOrder.ASC)
-                .limit(size, (page ?: 0).toLong() * size)
-                .notForUpdate()
-    }
 
     fun find(
         id: UUID? = null,
@@ -103,7 +89,46 @@ class CountryRepository {
                 .notForUpdate()
                 .firstOrNull()
 
-        else -> throw IllegalArgumentException("Either 'uuid', 'alpha2' or 'alpha3' must be specified.")
+        else -> throw InvalidArgumentException("Either 'uuid', 'alpha2' or 'alpha3' must be specified.")
+    }
+
+    fun list(
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<Country> = when (size) {
+        null ->
+            Country
+                .all()
+                .orderBy(*order, CountryTable.id to SortOrder.ASC)
+                .notForUpdate()
+
+        else ->
+            Country
+                .all()
+                .orderBy(*order, CountryTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
+                .notForUpdate()
+    }
+
+    fun listStates(
+        country: Country,
+        page: Int? = null,
+        size: Int? = null,
+        vararg order: Pair<Expression<*>, SortOrder> = emptyArray(),
+    ): SizedIterable<State> = when (size) {
+        null ->
+            country
+                .states
+                .orderBy(*order, StateTable.id to SortOrder.ASC)
+                .notForUpdate()
+
+        else ->
+            country
+                .states
+                .orderBy(*order, StateTable.id to SortOrder.ASC)
+                .limit(size, (page ?: 0).toLong() * size)
+                .notForUpdate()
     }
 
     fun create(
@@ -138,8 +163,7 @@ class CountryRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($id) does not exist." }
+            ?: throw NotFoundException("The country ($id) does not exist.")
 
         checkDuplicate(
             original = country,
@@ -163,8 +187,7 @@ class CountryRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(country) { "The country ($id) does not exist." }
+            ?: throw NotFoundException("The country ($id) does not exist.")
 
         country.delete()
     }

@@ -14,25 +14,9 @@
  * limitations under the License.
  */
 
-package de.fenste.ms.address.application.dtos
+package de.fenste.ms.address.domain.exception
 
-import de.fenste.ms.address.application.controllers.api.CityApi.LINKER.generateEntityLinks
-import de.fenste.ms.address.domain.model.City
-import org.springframework.hateoas.RepresentationModel
-import java.util.UUID
-
-data class CityInputDto(
-    val name: String,
-    val state: UUID,
-)
-
-data class CityDto(
-    val id: UUID,
-    val name: String,
-) : RepresentationModel<CityDto>(generateEntityLinks(id)) {
-
-    constructor(city: City) : this(
-        id = city.id.value,
-        name = city.name,
-    )
-}
+class DuplicateException(
+    message: String? = null,
+    cause: Throwable? = null,
+) : RuntimeException(message, cause)

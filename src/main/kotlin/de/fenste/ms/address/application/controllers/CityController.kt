@@ -20,7 +20,6 @@ import de.fenste.ms.address.application.controllers.api.CityApi
 import de.fenste.ms.address.application.controllers.graphql.CityGraphql
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.services.CityService
@@ -38,15 +37,32 @@ class CityController(
     @Autowired private val cityService: CityService,
 ) : CityApi, CityGraphql {
 
+    override fun restGetCity(
+        id: UUID,
+    ): EntityModel<CityDto> = cityService
+        .find(
+            id = id,
+        )
+        ?.let { c -> EntityModel.of(c) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
+
+    override fun graphqlGetCity(
+        id: UUID,
+    ): CityDto? = cityService
+        .find(
+            id = id,
+        )
+
     override fun restGetCities(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<CityDto> = graphqlGetCities(
-        page = page,
-        size = size,
-        sort = sort,
-    )
+    ): PagedModel<CityDto> = cityService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
         .let { list ->
             val e = cityService.count()
             val p = page ?: 0L
@@ -70,26 +86,61 @@ class CityController(
             sort = sort,
         )
 
-    override fun restGetCity(
+    override fun restGetCityState(
         id: UUID,
-    ): EntityModel<CityDto> = graphqlGetCity(
-        id = id,
-    )
-        ?.let { c -> EntityModel.of(c) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
-
-    override fun graphqlGetCity(
-        id: UUID,
-    ): CityDto? = cityService
-        .find(
+    ): EntityModel<StateDto> = cityService
+        .getState(
             id = id,
+        )
+        .let { s -> EntityModel.of(s) }
+
+    override fun graphqlGetCityState(
+        city: CityDto,
+    ): StateDto = cityService
+        .getState(
+            id = city.id,
+        )
+
+    override fun restGetCityPostCodes(
+        id: UUID,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<PostCodeDto> = cityService
+        .listPostCodes(
+            id = id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
+        .let { list ->
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                CityApi.generatePostCodesPageLinks(id),
+            )
+        }
+
+    override fun graphqlGetCityPostCodes(
+        city: CityDto,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<PostCodeDto> = cityService
+        .listPostCodes(
+            id = city.id,
+            page = page,
+            size = size,
+            sort = sort,
         )
 
     override fun restCreateCity(
         city: CityInputDto,
-    ): EntityModel<CityDto> = graphqlCreateCity(
-        city = city,
-    )
+    ): EntityModel<CityDto> = cityService
+        .create(
+            city = city,
+        )
         .let { c -> EntityModel.of(c) }
 
     override fun graphqlCreateCity(
@@ -102,10 +153,11 @@ class CityController(
     override fun restUpdateCity(
         id: UUID,
         city: CityInputDto,
-    ): EntityModel<CityDto> = graphqlUpdateCity(
-        id = id,
-        city = city,
-    )
+    ): EntityModel<CityDto> = cityService
+        .update(
+            id = id,
+            city = city,
+        )
         .let { c -> EntityModel.of(c) }
 
     override fun graphqlUpdateCity(
@@ -119,9 +171,10 @@ class CityController(
 
     override fun restDeleteCity(
         id: UUID,
-    ): Boolean = graphqlDeleteCity(
-        id = id,
-    )
+    ): Boolean = cityService
+        .delete(
+            id = id,
+        )
 
     override fun graphqlDeleteCity(
         id: UUID,
@@ -129,42 +182,4 @@ class CityController(
         .delete(
             id = id,
         )
-
-    override fun restGetCityCountry(
-        id: UUID,
-    ): EntityModel<CountryDto> = graphqlGetCity(
-        id = id,
-    )
-        ?.let { c -> EntityModel.of(c.country) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
-
-    override fun restGetCityStates(
-        id: UUID,
-    ): EntityModel<StateDto> = graphqlGetCity(
-        id = id,
-    )
-        ?.let { c ->
-            c.state?.let { s -> EntityModel.of(s) }
-                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not ly within a state")
-        }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
-
-    override fun restGetCityPostCodes(
-        id: UUID,
-        page: Int?,
-        size: Int?,
-        sort: String?,
-    ): PagedModel<PostCodeDto> = graphqlGetCity(
-        id = id,
-    )
-        ?.let { c ->
-            val list = c.postCodes
-            val count = list.count()
-            PagedModel.of(
-                list,
-                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                CityApi.generatePostCodesPageLinks(id),
-            )
-        }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The city ($id) does not exist.")
 }
