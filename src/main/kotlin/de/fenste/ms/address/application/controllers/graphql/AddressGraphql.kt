@@ -18,11 +18,17 @@ package de.fenste.ms.address.application.controllers.graphql
 
 import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.AddressInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import java.util.UUID
 
 interface AddressGraphql {
+
+    @SchemaMapping(typeName = "Query", field = "address")
+    fun graphqlGetAddress(
+        @Argument id: UUID,
+    ): AddressDto?
 
     @SchemaMapping(typeName = "Query", field = "addresses")
     fun graphqlGetAddresses(
@@ -31,10 +37,10 @@ interface AddressGraphql {
         @Argument sort: String? = null,
     ): List<AddressDto>
 
-    @SchemaMapping(typeName = "Query", field = "address")
-    fun graphqlGetAddress(
-        @Argument id: UUID,
-    ): AddressDto?
+    @SchemaMapping(typeName = "Address", field = "street")
+    fun graphqlGetAddressStreet(
+        address: AddressDto,
+    ): StreetDto
 
     @SchemaMapping(typeName = "Mutation", field = "createAddress")
     fun graphqlCreateAddress(

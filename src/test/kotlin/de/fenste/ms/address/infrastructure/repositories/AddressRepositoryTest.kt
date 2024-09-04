@@ -17,6 +17,8 @@
 package de.fenste.ms.address.infrastructure.repositories
 
 import de.fenste.ms.address.config.SampleDataConfig
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.Address
 import de.fenste.ms.address.infrastructure.tables.AddressTable
 import org.jetbrains.exposed.sql.SortOrder
@@ -66,7 +68,7 @@ class AddressRepositoryTest(
     @Test
     fun `test list on sample data with size`(): Unit = transaction {
         val expected = sampleData.addresses
-            .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id }))
+            .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id.value.toString() }))
             .take(2)
         val actual = repository.list(
             order = arrayOf(AddressTable.houseNumber to SortOrder.ASC),
@@ -79,7 +81,7 @@ class AddressRepositoryTest(
     @Test
     fun `test list on sample data with options`(): Unit = transaction {
         val expected = sampleData.addresses
-            .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id }))
+            .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
         val actual = repository.list(
@@ -163,7 +165,7 @@ class AddressRepositoryTest(
         val street = sampleData.streets.filterNot { s -> s.addresses.empty() }.random()
         val (houseNumber, extra) = street.addresses.toList().random().let { a -> a.houseNumber to a.extra }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<DuplicateException> {
             repository.create(
                 houseNumber = houseNumber,
                 extra = extra,
@@ -177,7 +179,7 @@ class AddressRepositoryTest(
         val houseNumber = "42"
         val streetId = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.create(
                 houseNumber = houseNumber,
                 extra = null,
@@ -250,9 +252,7 @@ class AddressRepositoryTest(
         val address = sampleData.addresses.random()
         val houseNumber = address.houseNumber
         val extra = address.extra
-        val street = sampleData.streets
-            .filter { s -> s.addresses.none { a -> a.houseNumber == address.houseNumber && a.extra == a.extra } }
-            .random()
+        val street = sampleData.streets.filter { s -> s.addresses.empty() }.random()
 
         val actual = repository.update(
             id = address.id.value,
@@ -313,7 +313,7 @@ class AddressRepositoryTest(
         val houseNumber = "doesn't matter"
         val streetId = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.update(
                 id = id,
                 houseNumber = houseNumber,
@@ -332,7 +332,7 @@ class AddressRepositoryTest(
             .random()
             .let { a -> a.houseNumber to a.extra }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<DuplicateException> {
             repository.update(
                 id = address.id.value,
                 houseNumber = houseNumber,
@@ -349,7 +349,7 @@ class AddressRepositoryTest(
         val extra = address.extra
         val streetId = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.update(
                 id = address.id.value,
                 houseNumber = houseNumber,
@@ -374,7 +374,7 @@ class AddressRepositoryTest(
     fun `test delete not existing`(): Unit = transaction {
         val id = UUID.randomUUID()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<NotFoundException> {
             repository.delete(id)
         }
     }

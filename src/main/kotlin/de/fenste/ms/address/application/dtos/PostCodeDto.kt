@@ -16,12 +16,8 @@
 
 package de.fenste.ms.address.application.dtos
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import de.fenste.ms.address.application.controllers.api.PostCodeApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.PostCode
-import de.fenste.ms.address.infrastructure.tables.StreetTable
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
 
@@ -31,25 +27,12 @@ data class PostCodeInputDto(
 )
 
 data class PostCodeDto(
-    private val postCode: PostCode,
-) : RepresentationModel<PostCodeDto>(generateEntityLinks(postCode.id.value)) {
+    val id: UUID,
+    val code: String,
+) : RepresentationModel<PostCodeDto>(generateEntityLinks(id)) {
 
-    val id: UUID
-        get() = postCode.id.value
-
-    val code: String
-        get() = postCode.code
-
-    @get:JsonIgnore
-    val city: CityDto
-        get() = transaction { CityDto(postCode.city) }
-
-    @get:JsonIgnore
-    val streets: List<StreetDto>
-        get() = transaction {
-            postCode.streets
-                .orderBy(StreetTable.id to SortOrder.ASC)
-                .notForUpdate()
-                .map { s -> StreetDto(s) }
-        }
+    constructor(postCode: PostCode) : this(
+        id = postCode.id.value,
+        code = postCode.code,
+    )
 }

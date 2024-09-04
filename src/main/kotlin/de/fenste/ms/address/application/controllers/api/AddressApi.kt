@@ -76,6 +76,12 @@ interface AddressApi {
     }
 
     @ResponseBody
+    @GetMapping("/{id}")
+    fun restGetAddress(
+        @PathVariable id: UUID,
+    ): EntityModel<AddressDto>
+
+    @ResponseBody
     @GetMapping
     fun restGetAddresses(
         @RequestParam page: Int? = null,
@@ -84,10 +90,10 @@ interface AddressApi {
     ): PagedModel<AddressDto>
 
     @ResponseBody
-    @GetMapping("/{id}")
-    fun restGetAddress(
+    @GetMapping("/{id}/street")
+    fun restGetAddressStreet(
         @PathVariable id: UUID,
-    ): EntityModel<AddressDto>
+    ): EntityModel<StreetDto>
 
     @ResponseBody
     @PostMapping
@@ -107,10 +113,4 @@ interface AddressApi {
     fun restDeleteAddress(
         @PathVariable id: UUID,
     ): Boolean
-
-    @ResponseBody
-    @GetMapping("/{id}/street")
-    fun restGetAddressStreet(
-        @PathVariable id: UUID,
-    ): EntityModel<StreetDto>
 }

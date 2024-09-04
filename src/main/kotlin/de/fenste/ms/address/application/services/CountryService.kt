@@ -18,9 +18,12 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
+import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.util.parseSortOrder
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.CountryRepository
 import de.fenste.ms.address.infrastructure.tables.CountryTable
+import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -33,6 +36,20 @@ class CountryService(
 
     fun count(): Int = transaction {
         countryRepository.count()
+    }
+
+    fun find(
+        id: UUID? = null,
+        alpha2: String? = null,
+        alpha3: String? = null,
+    ): CountryDto? = transaction {
+        countryRepository
+            .find(
+                id = id,
+                alpha2 = alpha2,
+                alpha3 = alpha3,
+            )
+            ?.let { c -> CountryDto(c) }
     }
 
     fun list(
@@ -49,18 +66,26 @@ class CountryService(
             .map { c -> CountryDto(c) }
     }
 
-    fun find(
-        id: UUID? = null,
-        alpha2: String? = null,
-        alpha3: String? = null,
-    ): CountryDto? = transaction {
-        countryRepository
+    fun listStates(
+        id: UUID,
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<StateDto> = transaction {
+        val country = countryRepository
             .find(
                 id = id,
-                alpha2 = alpha2,
-                alpha3 = alpha3,
             )
-            ?.let { c -> CountryDto(c) }
+            ?: throw NotFoundException("The country ($id) does not exist.")
+
+        countryRepository
+            .listStates(
+                country = country,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(StateTable::valueOf),
+            )
+            .map { s -> StateDto(s) }
     }
 
     fun create(

@@ -16,6 +16,8 @@
 
 package de.fenste.ms.address.infrastructure.repositories
 
+import de.fenste.ms.address.domain.exception.DuplicateException
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.domain.model.Address
 import de.fenste.ms.address.domain.model.Street
 import de.fenste.ms.address.infrastructure.tables.AddressTable
@@ -50,7 +52,7 @@ class AddressRepository {
                 .map { r -> Address.wrapRow(r) }
                 .firstOrNull()
 
-            require(address == null) { "This address does already exist: $address" }
+            address?.let { throw DuplicateException("This address does already exist: $address") }
         }
     }
 
@@ -58,6 +60,14 @@ class AddressRepository {
         .all()
         .count()
         .toInt()
+
+    fun find(
+        id: UUID,
+    ): Address? = Address
+        .find { AddressTable.id eq id }
+        .limit(1)
+        .notForUpdate()
+        .firstOrNull()
 
     fun list(
         page: Int? = null,
@@ -78,14 +88,6 @@ class AddressRepository {
                 .notForUpdate()
     }
 
-    fun find(
-        id: UUID,
-    ): Address? = Address
-        .find { AddressTable.id eq id }
-        .limit(1)
-        .notForUpdate()
-        .firstOrNull()
-
     fun create(
         houseNumber: String,
         extra: String?,
@@ -96,8 +98,7 @@ class AddressRepository {
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(street) { "The street ($streetId) does not exist." }
+            ?: throw NotFoundException("The street ($streetId) does not exist.")
 
         checkDuplicate(
             houseNumber = houseNumber,
@@ -123,16 +124,14 @@ class AddressRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(address) { "The Address ($id) does not exist." }
+            ?: throw NotFoundException("The Address ($id) does not exist.")
 
         val street = Street
             .find { StreetTable.id eq streetId }
             .limit(1)
             .notForUpdate()
             .firstOrNull()
-
-        requireNotNull(street) { "The street ($streetId) does not exist." }
+            ?: throw NotFoundException("The street ($streetId) does not exist.")
 
         checkDuplicate(
             original = address,
@@ -155,8 +154,7 @@ class AddressRepository {
             .limit(1)
             .forUpdate()
             .firstOrNull()
-
-        requireNotNull(address) { "The Address ($id) does not exist." }
+            ?: throw NotFoundException("The Address ($id) does not exist.")
 
         address.delete()
     }

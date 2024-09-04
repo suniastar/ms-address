@@ -37,15 +37,32 @@ class StateController(
     @Autowired private val stateService: StateService,
 ) : StateApi, StateGraphql {
 
+    override fun restGetState(
+        id: UUID,
+    ): EntityModel<StateDto> = stateService
+        .find(
+            id = id,
+        )
+        ?.let { s -> EntityModel.of(s) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
+
+    override fun graphqlGetState(
+        id: UUID,
+    ): StateDto? = stateService
+        .find(
+            id = id,
+        )
+
     override fun restGetStates(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<StateDto> = graphqlGetStates(
-        page = page,
-        size = size,
-        sort = sort,
-    )
+    ): PagedModel<StateDto> = stateService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
         .let { list ->
             val e = stateService.count()
             val p = page ?: 0L
@@ -69,26 +86,61 @@ class StateController(
             sort = sort,
         )
 
-    override fun restGetState(
+    override fun restGetStateCountry(
         id: UUID,
-    ): EntityModel<StateDto> = graphqlGetState(
-        id = id,
-    )
-        ?.let { s -> EntityModel.of(s) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
-
-    override fun graphqlGetState(
-        id: UUID,
-    ): StateDto? = stateService
-        .find(
+    ): EntityModel<CountryDto> = stateService
+        .getCountry(
             id = id,
+        )
+        .let { c -> EntityModel.of(c) }
+
+    override fun graphqlGetStateCountry(
+        state: StateDto,
+    ): CountryDto = stateService
+        .getCountry(
+            id = state.id,
+        )
+
+    override fun restGetStateCities(
+        id: UUID,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<CityDto> = stateService
+        .listCities(
+            id = id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
+        .let { list ->
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                StateApi.generateCityPageLinks(id),
+            )
+        }
+
+    override fun graphqlGetStateCities(
+        state: StateDto,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<CityDto> = stateService
+        .listCities(
+            id = state.id,
+            page = page,
+            size = size,
+            sort = sort,
         )
 
     override fun restCreateState(
         state: StateInputDto,
-    ): EntityModel<StateDto> = graphqlCreateState(
-        state = state,
-    )
+    ): EntityModel<StateDto> = stateService
+        .create(
+            state = state,
+        )
         .let { s -> EntityModel.of(s) }
 
     override fun graphqlCreateState(
@@ -101,10 +153,11 @@ class StateController(
     override fun restUpdateState(
         id: UUID,
         state: StateInputDto,
-    ): EntityModel<StateDto> = graphqlUpdateState(
-        id = id,
-        state = state,
-    )
+    ): EntityModel<StateDto> = stateService
+        .update(
+            id = id,
+            state = state,
+        )
         .let { s -> EntityModel.of(s) }
 
     override fun graphqlUpdateState(
@@ -118,9 +171,10 @@ class StateController(
 
     override fun restDeleteState(
         id: UUID,
-    ): Boolean = graphqlDeleteState(
-        id = id,
-    )
+    ): Boolean = stateService
+        .delete(
+            id = id,
+        )
 
     override fun graphqlDeleteState(
         id: UUID,
@@ -128,31 +182,4 @@ class StateController(
         .delete(
             id = id,
         )
-
-    override fun restGetStateCountry(
-        id: UUID,
-    ): EntityModel<CountryDto> = graphqlGetState(
-        id = id,
-    )
-        ?.let { s -> EntityModel.of(s.country) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
-
-    override fun restGetStateCities(
-        id: UUID,
-        page: Int?,
-        size: Int?,
-        sort: String?,
-    ): PagedModel<CityDto> = graphqlGetState(
-        id = id,
-    )
-        ?.let { s ->
-            val list = s.cities
-            val count = list.count()
-            PagedModel.of(
-                list,
-                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                StateApi.generateCityPageLinks(id),
-            )
-        }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The state ($id) does not exist.")
 }

@@ -19,7 +19,6 @@ package de.fenste.ms.address.application.controllers
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CityInputDto
-import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.City
@@ -246,7 +245,7 @@ class CityControllerTest(
     @Test
     fun `graphql test create`() {
         val name = "Name"
-        val country = transaction { sampleData.countries.filter { c -> c.states.empty() }.random() }
+        val state = transaction { sampleData.states.random() }
 
         val mutation = """
             mutation CreateCityMutation(${D}city: CityInput!) {
@@ -257,7 +256,7 @@ class CityControllerTest(
         """.trimIndent()
         val create = CityInputDto(
             name = name,
-            country = country.id.value,
+            state = state.id.value,
         )
 
         val created = graphQlTester
@@ -275,19 +274,18 @@ class CityControllerTest(
             val actual = City.findById(UUID.fromString(created))
             assertNotNull(actual)
             assertEquals(name, actual.name)
-            assertEquals(country, actual.country)
-            assertNull(actual.state)
+            assertEquals(state, actual.state)
         }
     }
 
     @Test
     fun `rest test create`() {
         val name = "Name"
-        val country = transaction { sampleData.countries.filter { c -> c.states.empty() }.random() }
+        val state = transaction { sampleData.states.random() }
 
         val create = CityInputDto(
             name = name,
-            country = country.id.value,
+            state = state.id.value,
         )
         val result = mockMvc
             .post("$BASE_URI/api/city") {
@@ -313,19 +311,15 @@ class CityControllerTest(
             val actual = City.findById(UUID.fromString(created))
             assertNotNull(actual)
             assertEquals(name, actual.name)
-            assertEquals(country, actual.country)
-            assertNull(actual.state)
+            assertEquals(state, actual.state)
         }
     }
 
     @Test
     fun `graphql test update all`() {
-        val city = transaction { sampleData.cities.filterNot { c -> c.state == null }.random() }
+        val city = transaction { sampleData.cities.random() }
         val name = "Name"
-        val country = transaction {
-            sampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
-        }
-        val state = transaction { country.states.toList().random() }
+        val state = transaction { sampleData.states.filter { s -> s.cities.empty() }.random() }
 
         val mutation = """
             mutation UpdateCityMutation(${D}city: CityInput!) {
@@ -336,7 +330,6 @@ class CityControllerTest(
         """.trimIndent()
         val update = CityInputDto(
             name = name,
-            country = country.id.value,
             state = state.id.value,
         )
 
@@ -354,7 +347,6 @@ class CityControllerTest(
             val actual = City.findById(UUID.fromString(updated))
             assertNotNull(actual)
             assertEquals(name, actual.name)
-            assertEquals(country, actual.country)
             assertNotNull(actual.state)
             assertEquals(state, actual.state)
         }
@@ -362,16 +354,12 @@ class CityControllerTest(
 
     @Test
     fun `rest test update all`() {
-        val city = transaction { sampleData.cities.filterNot { c -> c.state == null }.random() }
+        val city = transaction { sampleData.cities.random() }
         val name = "Name"
-        val country = transaction {
-            sampleData.countries.filterNot { c -> c == city.country || c.states.empty() }.random()
-        }
-        val state = transaction { country.states.toList().random() }
+        val state = transaction { sampleData.states.filter { s -> s.cities.empty() }.random() }
 
         val update = CityInputDto(
             name = name,
-            country = country.id.value,
             state = state.id.value,
         )
         val result = mockMvc
@@ -397,7 +385,6 @@ class CityControllerTest(
             val actual = City.findById(UUID.fromString(updated))
             assertNotNull(actual)
             assertEquals(name, actual.name)
-            assertEquals(country, actual.country)
             assertNotNull(actual.state)
             assertEquals(state, actual.state)
         }
@@ -448,29 +435,6 @@ class CityControllerTest(
     }
 
     @Test
-    fun `rest test get city country on sample data`() {
-        val city = transaction { sampleData.cities.random() }
-        val expected = transaction { CountryDto(city.country) }
-
-        mockMvc
-            .get("$BASE_URI/api/city/${city.id.value}/country") {
-                contentType = MediaType.APPLICATION_JSON
-            }
-            .andExpect {
-                status { isOk() }
-                content { contentType(MEDIA_TYPE_APPLICATION_HAL_JSON) }
-            }
-            .andExpect { jsonPath("name") { value(expected.name) } }
-            .andExpect { jsonPath("id") { value(expected.id.toString()) } }
-            .andExpect { jsonPath("localizedName") { value(expected.localizedName) } }
-            .andExpect { jsonPath("alpha2") { value(expected.alpha2) } }
-            .andExpect { jsonPath("alpha3") { value(expected.alpha3) } }
-            .andExpect { jsonPath("_links.self") { exists() } }
-            .andExpect { jsonPath("_links.states") { exists() } }
-            .andExpect { jsonPath("_links.cities") { exists() } }
-    }
-
-    @Test
     fun `rest test get city country on non existing sample data`() {
         mockMvc
             .get("$BASE_URI/api/city/${UUID.randomUUID()}/country") {
@@ -483,8 +447,8 @@ class CityControllerTest(
 
     @Test
     fun `rest test get city state on sample data`() {
-        val city = transaction { sampleData.cities.filterNot { c -> c.state == null }.random() }
-        val expected = transaction { StateDto(city.state!!) }
+        val city = transaction { sampleData.cities.random() }
+        val expected = transaction { StateDto(city.state) }
 
         mockMvc
             .get("$BASE_URI/api/city/${city.id.value}/state") {
@@ -499,30 +463,6 @@ class CityControllerTest(
             .andExpect { jsonPath("_links.self") { exists() } }
             .andExpect { jsonPath("_links.country") { exists() } }
             .andExpect { jsonPath("_links.cities") { exists() } }
-    }
-
-    @Test
-    fun `rest test get city state on sample data with no state`() {
-        val city = transaction { sampleData.cities.filter { c -> c.state == null }.random() }
-
-        mockMvc
-            .get("$BASE_URI/api/city/${city.id.value}/state") {
-                contentType = MediaType.APPLICATION_JSON
-            }
-            .andExpect {
-                status { isNotFound() }
-            }
-    }
-
-    @Test
-    fun `rest test get city state on non existing sample data`() {
-        mockMvc
-            .get("$BASE_URI/api/city/${UUID.randomUUID()}/state") {
-                contentType = MediaType.APPLICATION_JSON
-            }
-            .andExpect {
-                status { isNotFound() }
-            }
     }
 
     @Test

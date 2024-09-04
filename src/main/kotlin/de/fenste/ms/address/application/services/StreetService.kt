@@ -16,10 +16,14 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.AddressDto
+import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
 import de.fenste.ms.address.application.util.parseSortOrder
+import de.fenste.ms.address.domain.exception.NotFoundException
 import de.fenste.ms.address.infrastructure.repositories.StreetRepository
+import de.fenste.ms.address.infrastructure.tables.AddressTable
 import de.fenste.ms.address.infrastructure.tables.StreetTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,6 +37,14 @@ class StreetService(
 
     fun count(): Int = transaction {
         streetRepository.count()
+    }
+
+    fun find(
+        id: UUID,
+    ): StreetDto? = transaction {
+        streetRepository
+            .find(id)
+            ?.let { s -> StreetDto(s) }
     }
 
     fun list(
@@ -49,12 +61,40 @@ class StreetService(
             .map { s -> StreetDto(s) }
     }
 
-    fun find(
+    fun getPostCode(
         id: UUID,
-    ): StreetDto? = transaction {
+    ): PostCodeDto = transaction {
+        val street = streetRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The street ($id) does not exist.")
+
+        street
+            .postCode
+            .let { p -> PostCodeDto(p) }
+    }
+
+    fun listAddresses(
+        id: UUID,
+        page: Int? = null,
+        size: Int? = null,
+        sort: String? = null,
+    ): List<AddressDto> = transaction {
+        val street = streetRepository
+            .find(
+                id = id,
+            )
+            ?: throw NotFoundException("The street ($id) does not exist.")
+
         streetRepository
-            .find(id)
-            ?.let { s -> StreetDto(s) }
+            .listAddresses(
+                street = street,
+                page = page,
+                size = size,
+                order = sort.parseSortOrder(AddressTable::valueOf),
+            )
+            .map { a -> AddressDto(a) }
     }
 
     fun create(

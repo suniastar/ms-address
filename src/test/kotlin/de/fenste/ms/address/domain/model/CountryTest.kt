@@ -83,7 +83,7 @@ class CountryTest(
     fun `test toString`(): Unit = transaction {
         val cId = copy.id
         val cExpected =
-            "Country(id='$cId', alpha2='DE', alpha3='DEU', name='Germany', localizedName='Deutschland')"
+            "Country(id=$cId, alpha2=C1, alpha3=C01, name=Country One, localizedName=Sample Country)"
         val cActual = sampleData.countries[0].toString()
         assertEquals(cExpected, cActual)
     }

@@ -18,6 +18,7 @@ package de.fenste.ms.address.application.services
 
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
+import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.Country
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -53,6 +54,21 @@ class CountryServiceTest(
     }
 
     @Test
+    fun `test find by id on sample data`() {
+        val expected = sampleData.countries.random().let { c -> CountryDto(c) }
+        val actual = service.find(id = expected.id)
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `test find by alpha2 on non existing sample data`() {
+        val actual = service.find(alpha2 = "XX")
+
+        assertNull(actual)
+    }
+
+    @Test
     fun `list on sample data`() {
         val expected = sampleData.countries
             .sortedBy { c -> c.id.value.toString() }
@@ -65,7 +81,7 @@ class CountryServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.countries
-            .sortedWith(compareBy({ c -> c.name }, { c -> c.id }))
+            .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { c -> CountryDto(c) }
@@ -88,26 +104,52 @@ class CountryServiceTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.countries.random().let { c -> CountryDto(c) }
-        val actual = service.find(id = expected.id)
+    fun `test list states on sample data`() {
+        val country = transaction { sampleData.countries.filterNot { c -> c.states.empty() }.random() }
+        val expected = transaction {
+            country
+                .states
+                .sortedBy { c -> c.id.value.toString() }
+                .map { s -> StateDto(s) }
+        }
 
-        assertEquals(expected, actual)
+        transaction {
+            val actual = service.listStates(country.id.value)
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by alpha2 on non existing sample data`() {
-        val actual = service.find(alpha2 = "XX")
+    fun `test list states on sample data with options`() {
+        val country = transaction { sampleData.countries.filterNot { c -> c.states.empty() }.random() }
+        val expected = transaction {
+            country
+                .states
+                .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
+                .drop(1 * 2)
+                .take(2)
+                .map { s -> StateDto(s) }
+        }
 
-        assertNull(actual)
+        transaction {
+            val actual = service.listStates(
+                id = country.id.value,
+                sort = "name,asc",
+                page = 1,
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
     fun `test create`() {
-        val alpha2 = "CZ"
-        val alpha3 = "CZE"
-        val name = "Czechia"
-        val localizedName = "Tschechien"
+        val alpha2 = "C9"
+        val alpha3 = "C09"
+        val name = "Country Nine"
+        val localizedName = "земля"
 
         val create = CountryInputDto(
             alpha2 = alpha2,

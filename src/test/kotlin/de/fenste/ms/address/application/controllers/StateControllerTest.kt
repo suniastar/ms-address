@@ -167,7 +167,7 @@ class StateControllerTest(
             .andExpect { jsonPath("_links.first.href") { exists() } }
             .andExpect { jsonPath("_links.prev.href") { exists() } }
             .andExpect { jsonPath("_links.self.href") { exists() } }
-            .andExpect { jsonPath("_links.next.href") { doesNotExist() } }
+            .andExpect { jsonPath("_links.next.href") { exists() } }
             .andExpect { jsonPath("_links.last.href") { exists() } }
             .andExpect { jsonPath("_embedded.stateDtoes.[*].id") { value(expected) } }
     }
@@ -245,6 +245,7 @@ class StateControllerTest(
     fun `graphql test create`() {
         val name = "Name"
         val country = sampleData.countries.random()
+        val isPrintedOnLabel = true
 
         val mutation = """
             mutation CreateStateMutation(${D}state: StateInput!) {
@@ -256,6 +257,7 @@ class StateControllerTest(
         val create = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         val created = graphQlTester
@@ -281,10 +283,12 @@ class StateControllerTest(
     fun `rest test create`() {
         val name = "Name"
         val country = sampleData.countries.random()
+        val isPrintedOnLabel = true
 
         val create = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
         val result = mockMvc
             .post("$BASE_URI/api/state") {
@@ -310,6 +314,7 @@ class StateControllerTest(
             assertNotNull(actual)
             assertEquals(name, actual.name)
             assertEquals(country, actual.country)
+            assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
         }
     }
 
@@ -318,6 +323,7 @@ class StateControllerTest(
         val state = sampleData.states.random()
         val name = "Name"
         val country = transaction { sampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val isPrintedOnLabel = !state.isPrintedOnLabel
 
         val mutation = """
             mutation UpdateStateMutation(${D}state: StateInput!) {
@@ -329,6 +335,7 @@ class StateControllerTest(
         val update = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         val updated = graphQlTester
@@ -346,6 +353,7 @@ class StateControllerTest(
             assertNotNull(actual)
             assertEquals(name, actual.name)
             assertEquals(country, actual.country)
+            assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
         }
     }
 
@@ -354,10 +362,12 @@ class StateControllerTest(
         val state = sampleData.states.random()
         val name = "Name"
         val country = transaction { sampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val isPrintedOnLabel = !state.isPrintedOnLabel
 
         val update = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
         val result = mockMvc
             .put("$BASE_URI/api/state/${state.id.value}") {
@@ -382,6 +392,7 @@ class StateControllerTest(
             assertNotNull(actual)
             assertEquals(name, actual.name)
             assertEquals(country, actual.country)
+            assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
         }
     }
 

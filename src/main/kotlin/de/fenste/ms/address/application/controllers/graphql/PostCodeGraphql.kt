@@ -16,13 +16,20 @@
 
 package de.fenste.ms.address.application.controllers.graphql
 
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import java.util.UUID
 
 interface PostCodeGraphql {
+
+    @SchemaMapping(typeName = "Query", field = "postCode")
+    fun graphqlGetPostCode(
+        @Argument id: UUID,
+    ): PostCodeDto?
 
     @SchemaMapping(typeName = "Query", field = "postCodes")
     fun graphqlGetPostCodes(
@@ -31,10 +38,18 @@ interface PostCodeGraphql {
         @Argument sort: String? = null,
     ): List<PostCodeDto>
 
-    @SchemaMapping(typeName = "Query", field = "postCode")
-    fun graphqGetlPostCode(
-        @Argument id: UUID,
-    ): PostCodeDto?
+    @SchemaMapping(typeName = "PostCode", field = "city")
+    fun graphqlGetPostCodeCity(
+        postCode: PostCodeDto,
+    ): CityDto
+
+    @SchemaMapping(typeName = "PostCode", field = "streets")
+    fun graphqlGetPostCodeStreets(
+        postCode: PostCodeDto,
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<StreetDto>
 
     @SchemaMapping(typeName = "Mutation", field = "createPostCode")
     fun graphqlCreatePostCode(

@@ -18,11 +18,19 @@ package de.fenste.ms.address.application.controllers.graphql
 
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
+import de.fenste.ms.address.application.dtos.StateDto
 import org.springframework.graphql.data.method.annotation.Argument
 import org.springframework.graphql.data.method.annotation.SchemaMapping
 import java.util.UUID
 
 interface CountryGraphql {
+
+    @SchemaMapping(typeName = "Query", field = "country")
+    fun graphqlGetCountry(
+        @Argument id: UUID? = null,
+        @Argument alpha2: String? = null,
+        @Argument alpha3: String? = null,
+    ): CountryDto?
 
     @SchemaMapping(typeName = "Query", field = "countries")
     fun graphqlGetCountries(
@@ -31,12 +39,13 @@ interface CountryGraphql {
         @Argument sort: String? = null,
     ): List<CountryDto>
 
-    @SchemaMapping(typeName = "Query", field = "country")
-    fun graphqlGetCountry(
-        @Argument id: UUID? = null,
-        @Argument alpha2: String? = null,
-        @Argument alpha3: String? = null,
-    ): CountryDto?
+    @SchemaMapping(typeName = "Country", field = "states")
+    fun graphqlGetCountryStates(
+        country: CountryDto,
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<StateDto>
 
     @SchemaMapping(typeName = "Mutation", field = "createCountry")
     fun graphqlCreateCountry(

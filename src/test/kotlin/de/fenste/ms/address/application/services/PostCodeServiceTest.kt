@@ -19,6 +19,7 @@ package de.fenste.ms.address.application.services
 import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.PostCodeInputDto
+import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.config.SampleDataConfig
 import de.fenste.ms.address.domain.model.PostCode
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -55,6 +56,21 @@ class PostCodeServiceTest(
     }
 
     @Test
+    fun `test find by id on sample data`() {
+        val expected = sampleData.postCodes.random().let { p -> PostCodeDto(p) }
+        val actual = service.find(id = expected.id)
+
+        transaction { assertEquals(expected, actual) }
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`() {
+        val actual = service.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
     fun `test list on sample data`() {
         val expected = sampleData.postCodes
             .sortedBy { p -> p.id.value.toString() }
@@ -67,7 +83,7 @@ class PostCodeServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.postCodes
-            .sortedWith(compareBy({ p -> p.code }, { p -> p.id }))
+            .sortedWith(compareBy({ p -> p.code }, { p -> p.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { p -> PostCodeDto(p) }
@@ -90,18 +106,56 @@ class PostCodeServiceTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.postCodes.random().let { p -> PostCodeDto(p) }
-        val actual = service.find(id = expected.id)
+    fun `test get city on sample data`() {
+        val postCode = transaction { sampleData.postCodes.random() }
+        val expected = transaction { CityDto(postCode.city) }
 
-        transaction { assertEquals(expected, actual) }
+        transaction {
+            val actual = service.getCity(postCode.id.value)
+
+            assertEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by id on non existing sample data`() {
-        val actual = service.find(id = UUID.randomUUID())
+    fun `test list streets on sample data`() {
+        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.empty() }.random() }
+        val expected = transaction {
+            postCode
+                .streets
+                .sortedBy { s -> s.id.value.toString() }
+                .map { s -> StreetDto(s) }
+        }
 
-        assertNull(actual)
+        transaction {
+            val actual = service.listStreets(postCode.id.value)
+
+            assertContentEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun `test list streets on sample data with options`() {
+        val postCode = transaction { sampleData.postCodes.filterNot { p -> p.streets.empty() }.random() }
+        val expected = transaction {
+            postCode
+                .streets
+                .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
+                .drop(1 * 2)
+                .take(2)
+                .map { s -> StreetDto(s) }
+        }
+
+        transaction {
+            val actual = service.listStreets(
+                id = postCode.id.value,
+                sort = "name,asc",
+                page = 1,
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
@@ -119,7 +173,10 @@ class PostCodeServiceTest(
 
         assertNotNull(actual)
         assertEquals(code, actual.code)
-        transaction { assertEquals(CityDto(city), actual.city) }
+        transaction {
+            val created = PostCode.findById(actual.id)
+            assertNotNull(created)
+        }
     }
 
     @Test
@@ -141,7 +198,10 @@ class PostCodeServiceTest(
 
         assertNotNull(actual)
         assertEquals(code, actual.code)
-        transaction { assertEquals(CityDto(city), actual.city) }
+        transaction {
+            val updated = PostCode.findById(actual.id)
+            assertNotNull(updated)
+        }
     }
 
     @Test

@@ -16,6 +16,7 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.AddressDto
 import de.fenste.ms.address.application.dtos.PostCodeDto
 import de.fenste.ms.address.application.dtos.StreetDto
 import de.fenste.ms.address.application.dtos.StreetInputDto
@@ -55,6 +56,21 @@ class StreetServiceTest(
     }
 
     @Test
+    fun `test find by id on sample data`() {
+        val expected = sampleData.streets.random().let { s -> StreetDto(s) }
+        val actual = service.find(id = expected.id)
+
+        transaction { assertEquals(expected, actual) }
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`() {
+        val actual = service.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
     fun `test list on sample data`() {
         val expected = sampleData.streets
             .sortedBy { s -> s.id.value.toString() }
@@ -67,7 +83,7 @@ class StreetServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.streets
-            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { s -> StreetDto(s) }
@@ -90,18 +106,56 @@ class StreetServiceTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.streets.random().let { s -> StreetDto(s) }
-        val actual = service.find(id = expected.id)
+    fun `test get post code on sample data`() {
+        val street = transaction { sampleData.streets.random() }
+        val expected = transaction { PostCodeDto(street.postCode) }
 
-        transaction { assertEquals(expected, actual) }
+        transaction {
+            val actual = service.getPostCode(street.id.value)
+
+            assertEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by id on non existing sample data`() {
-        val actual = service.find(id = UUID.randomUUID())
+    fun `test list addresses on sample data`() {
+        val street = transaction { sampleData.streets.filterNot { s -> s.addresses.empty() }.random() }
+        val expected = transaction {
+            street
+                .addresses
+                .sortedBy { a -> a.id.value.toString() }
+                .map { a -> AddressDto(a) }
+        }
 
-        assertNull(actual)
+        transaction {
+            val actual = service.listAddresses(street.id.value)
+
+            assertContentEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun `test list addresses on sample data with options`() {
+        val street = transaction { sampleData.streets.filterNot { s -> s.addresses.empty() }.random() }
+        val expected = transaction {
+            street
+                .addresses
+                .sortedWith(compareBy({ a -> a.houseNumber }, { a -> a.id.value.toString() }))
+                .drop(1 * 2)
+                .take(2)
+                .map { a -> AddressDto(a) }
+        }
+
+        transaction {
+            val actual = service.listAddresses(
+                id = street.id.value,
+                sort = "houseNumber,asc",
+                page = 1,
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
@@ -120,7 +174,10 @@ class StreetServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals(PostCodeDto(postCode), actual.postCode) }
+        transaction {
+            val created = Street.findById(actual.id)
+            assertNotNull(created)
+        }
     }
 
     @Test
@@ -141,7 +198,10 @@ class StreetServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals(PostCodeDto(postCode), actual.postCode) }
+        transaction {
+            val updated = Street.findById(actual.id)
+            assertNotNull(updated)
+        }
     }
 
     @Test

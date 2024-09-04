@@ -16,6 +16,8 @@
 
 package de.fenste.ms.address.application.controllers.graphql
 
+import de.fenste.ms.address.application.dtos.CityDto
+import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.dtos.StateInputDto
 import org.springframework.graphql.data.method.annotation.Argument
@@ -24,6 +26,11 @@ import java.util.UUID
 
 interface StateGraphql {
 
+    @SchemaMapping(typeName = "Query", field = "state")
+    fun graphqlGetState(
+        @Argument id: UUID,
+    ): StateDto?
+
     @SchemaMapping(typeName = "Query", field = "states")
     fun graphqlGetStates(
         @Argument page: Int? = null,
@@ -31,10 +38,18 @@ interface StateGraphql {
         @Argument sort: String? = null,
     ): List<StateDto>
 
-    @SchemaMapping(typeName = "Query", field = "state")
-    fun graphqlGetState(
-        @Argument id: UUID,
-    ): StateDto?
+    @SchemaMapping(typeName = "State", field = "country")
+    fun graphqlGetStateCountry(
+        state: StateDto,
+    ): CountryDto
+
+    @SchemaMapping(typeName = "State", field = "cities")
+    fun graphqlGetStateCities(
+        state: StateDto,
+        @Argument page: Int? = null,
+        @Argument size: Int? = null,
+        @Argument sort: String? = null,
+    ): List<CityDto>
 
     @SchemaMapping(typeName = "Mutation", field = "createState")
     fun graphqlCreateState(

@@ -37,15 +37,32 @@ class PostCodeController(
     @Autowired private val postCodeService: PostCodeService,
 ) : PostCodeApi, PostCodeGraphql {
 
+    override fun restGetPostCode(
+        id: UUID,
+    ): EntityModel<PostCodeDto> = postCodeService
+        .find(
+            id = id,
+        )
+        ?.let { p -> EntityModel.of(p) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
+
+    override fun graphqlGetPostCode(
+        id: UUID,
+    ): PostCodeDto? = postCodeService
+        .find(
+            id = id,
+        )
+
     override fun restGetPostCodes(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<PostCodeDto> = graphqlGetPostCodes(
-        page = page,
-        size = size,
-        sort = sort,
-    )
+    ): PagedModel<PostCodeDto> = postCodeService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
         .let { list ->
             val e = postCodeService.count()
             val p = page ?: 0L
@@ -69,26 +86,61 @@ class PostCodeController(
             sort = sort,
         )
 
-    override fun restGetPostCode(
+    override fun restGetPostCodeCity(
         id: UUID,
-    ): EntityModel<PostCodeDto> = graphqGetlPostCode(
-        id = id,
-    )
-        ?.let { p -> EntityModel.of(p) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
-
-    override fun graphqGetlPostCode(
-        id: UUID,
-    ): PostCodeDto? = postCodeService
-        .find(
+    ): EntityModel<CityDto> = postCodeService
+        .getCity(
             id = id,
+        )
+        .let { c -> EntityModel.of(c) }
+
+    override fun graphqlGetPostCodeCity(
+        postCode: PostCodeDto,
+    ): CityDto = postCodeService
+        .getCity(
+            id = postCode.id,
+        )
+
+    override fun restGetPostCodeStreets(
+        id: UUID,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<StreetDto> = postCodeService
+        .listStreets(
+            id = id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
+        .let { list ->
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                PostCodeApi.generateStreetsPageLinks(id),
+            )
+        }
+
+    override fun graphqlGetPostCodeStreets(
+        postCode: PostCodeDto,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<StreetDto> = postCodeService
+        .listStreets(
+            id = postCode.id,
+            page = page,
+            size = size,
+            sort = sort,
         )
 
     override fun restCreatePostCode(
         postCode: PostCodeInputDto,
-    ): EntityModel<PostCodeDto> = graphqlCreatePostCode(
-        postCode = postCode,
-    )
+    ): EntityModel<PostCodeDto> = postCodeService
+        .create(
+            postCode = postCode,
+        )
         .let { p -> EntityModel.of(p) }
 
     override fun graphqlCreatePostCode(
@@ -101,10 +153,11 @@ class PostCodeController(
     override fun restUpdatePostCode(
         id: UUID,
         postCode: PostCodeInputDto,
-    ): EntityModel<PostCodeDto> = graphqlUpdatePostCode(
-        id = id,
-        postCode = postCode,
-    )
+    ): EntityModel<PostCodeDto> = postCodeService
+        .update(
+            id = id,
+            postCode = postCode,
+        )
         .let { p -> EntityModel.of(p) }
 
     override fun graphqlUpdatePostCode(
@@ -118,9 +171,10 @@ class PostCodeController(
 
     override fun restDeletePostCode(
         id: UUID,
-    ): Boolean = graphqlDeletePostCode(
-        id = id,
-    )
+    ): Boolean = postCodeService
+        .delete(
+            id = id,
+        )
 
     override fun graphqlDeletePostCode(
         id: UUID,
@@ -128,31 +182,4 @@ class PostCodeController(
         .delete(
             id = id,
         )
-
-    override fun restGetPostCodeCity(
-        id: UUID,
-    ): EntityModel<CityDto> = graphqGetlPostCode(
-        id = id,
-    )
-        ?.let { p -> EntityModel.of(p.city) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
-
-    override fun restGetPostCodeStreets(
-        id: UUID,
-        page: Int?,
-        size: Int?,
-        sort: String?,
-    ): PagedModel<StreetDto> = graphqGetlPostCode(
-        id = id,
-    )
-        ?.let { p ->
-            val list = p.streets
-            val count = list.count()
-            PagedModel.of(
-                list,
-                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                PostCodeApi.generateStreetsPageLinks(id),
-            )
-        }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The post code ($id) does not exist.")
 }

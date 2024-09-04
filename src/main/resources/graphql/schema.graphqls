@@ -14,12 +14,12 @@ type Country {
     name: String!
     localizedName: String
 
-    states: [State!]!
-    cities: [City!]!
+    states(page: Int, size: Int, sort: String): [State!]!
 }
 
 input StateInput {
     name: String!
+    isPrintedOnLabel: Boolean!
 
     country: UUID!
 }
@@ -27,25 +27,24 @@ input StateInput {
 type State {
     id: UUID!
     name: String!
+    isPrintedOnLabel: Boolean!
 
     country: Country!
-    cities: [City!]!
+    cities(page: Int, size: Int, sort: String): [City!]!
 }
 
 input CityInput {
     name: String!
 
-    country: UUID!
-    state: UUID
+    state: UUID!
 }
 
 type City {
     id: UUID!
     name: String!
 
-    country: Country!
-    state: State
-    postCodes: [PostCode!]!
+    state: State!
+    postCodes(page: Int, size: Int, sort: String): [PostCode!]!
 }
 
 input PostCodeInput {
@@ -59,7 +58,7 @@ type PostCode {
     code: String!
 
     city: City!
-    streets: [Street!]!
+    streets(page: Int, size: Int, sort: String): [Street!]!
 }
 
 input StreetInput {
@@ -73,7 +72,7 @@ type Street {
     name: String!
 
     postCode: PostCode!
-    addresses: [Address!]!
+    addresses(page: Int, size: Int, sort: String): [Address!]!
 }
 
 input AddressInput {

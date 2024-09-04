@@ -16,7 +16,6 @@
 
 package de.fenste.ms.address.domain.model
 
-import de.fenste.ms.address.infrastructure.tables.CityTable
 import de.fenste.ms.address.infrastructure.tables.CountryTable
 import de.fenste.ms.address.infrastructure.tables.StateTable
 import org.jetbrains.exposed.dao.UUIDEntity
@@ -36,8 +35,6 @@ class Country(id: EntityID<UUID>) : UUIDEntity(id) {
     var localizedName by CountryTable.localizedName
 
     val states by State referrersOn StateTable.countryId
-
-    val cities by City referrersOn CityTable.countryId
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
@@ -62,9 +59,9 @@ class Country(id: EntityID<UUID>) : UUIDEntity(id) {
     }
 
     override fun toString(): String = "Country(" +
-        "id='$id', " +
-        "alpha2='$alpha2', " +
-        "alpha3='$alpha3', " +
-        "name='$name', " +
-        "localizedName='$localizedName')"
+        "id=$id, " +
+        "alpha2=$alpha2, " +
+        "alpha3=$alpha3, " +
+        "name=$name, " +
+        "localizedName=$localizedName)"
 }

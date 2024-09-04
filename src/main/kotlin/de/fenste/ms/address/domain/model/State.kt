@@ -30,7 +30,9 @@ class State(id: EntityID<UUID>) : UUIDEntity(id) {
 
     var name by StateTable.name
 
-    val cities by City optionalReferrersOn CityTable.stateId
+    var isPrintedOnLabel by StateTable.isPrintedOnLabel
+
+    val cities by City referrersOn CityTable.stateId
 
     override fun equals(other: Any?): Boolean = when {
         other === null -> false
@@ -38,7 +40,8 @@ class State(id: EntityID<UUID>) : UUIDEntity(id) {
         other is State ->
             id == other.id &&
                 country.id == other.country.id &&
-                name == other.name
+                name == other.name &&
+                isPrintedOnLabel == other.isPrintedOnLabel
 
         else -> false
     }
@@ -47,11 +50,13 @@ class State(id: EntityID<UUID>) : UUIDEntity(id) {
         var result = id.hashCode()
         result = 31 * result + country.id.hashCode()
         result = 31 * result + name.hashCode()
+        result = 31 * result + isPrintedOnLabel.hashCode()
         return result
     }
 
     override fun toString(): String = "State(" +
-        "id='$id', " +
-        "country='${country.id}', " +
-        "name='$name')"
+        "id=$id, " +
+        "country=${country.id}, " +
+        "name=$name, " +
+        "isPrintedOnLabel=$isPrintedOnLabel)"
 }

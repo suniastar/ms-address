@@ -26,9 +26,7 @@ import java.util.UUID
 class City(id: EntityID<UUID>) : UUIDEntity(id) {
     companion object EntityClass : UUIDEntityClass<City>(CityTable)
 
-    var country by Country referencedOn CityTable.countryId
-
-    var state by State optionalReferencedOn CityTable.stateId
+    var state by State referencedOn CityTable.stateId
 
     var name by CityTable.name
 
@@ -39,8 +37,7 @@ class City(id: EntityID<UUID>) : UUIDEntity(id) {
         other === this -> true
         other is City ->
             id == other.id &&
-                country.id == other.country.id &&
-                state?.id == other.state?.id &&
+                state.id == other.state.id &&
                 name == other.name
 
         else -> false
@@ -48,15 +45,13 @@ class City(id: EntityID<UUID>) : UUIDEntity(id) {
 
     override fun hashCode(): Int {
         var result = id.hashCode()
-        result = 31 * result + country.id.hashCode()
-        result = 31 * result + state?.id.hashCode()
+        result = 31 * result + state.id.hashCode()
         result = 31 * result + name.hashCode()
         return result
     }
 
     override fun toString(): String = "City(" +
-        "id='$id', " +
-        "country='${country.id}', " +
-        "state='${state?.id}', " +
-        "name='$name')"
+        "id=$id, " +
+        "state=${state.id}, " +
+        "name=$name)"
 }

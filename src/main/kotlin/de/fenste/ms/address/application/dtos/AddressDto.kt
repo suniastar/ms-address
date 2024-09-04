@@ -16,10 +16,8 @@
 
 package de.fenste.ms.address.application.dtos
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import de.fenste.ms.address.application.controllers.api.AddressApi.LINKER.generateEntityLinks
 import de.fenste.ms.address.domain.model.Address
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.hateoas.RepresentationModel
 import java.util.UUID
 
@@ -30,19 +28,14 @@ data class AddressInputDto(
 )
 
 data class AddressDto(
-    private val address: Address,
-) : RepresentationModel<AddressDto>(generateEntityLinks(address.id.value)) {
+    val id: UUID,
+    val houseNumber: String,
+    val extra: String?,
+) : RepresentationModel<AddressDto>(generateEntityLinks(id)) {
 
-    val id: UUID
-        get() = address.id.value
-
-    val houseNumber: String
-        get() = address.houseNumber
-
-    val extra: String?
-        get() = address.extra
-
-    @get:JsonIgnore
-    val street: StreetDto
-        get() = transaction { StreetDto(address.street) }
+    constructor(address: Address) : this(
+        id = address.id.value,
+        houseNumber = address.houseNumber,
+        extra = address.extra,
+    )
 }

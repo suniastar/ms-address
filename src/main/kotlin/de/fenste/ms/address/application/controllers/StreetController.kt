@@ -37,15 +37,32 @@ class StreetController(
     @Autowired private val streetService: StreetService,
 ) : StreetApi, StreetGraphql {
 
+    override fun restGetStreet(
+        id: UUID,
+    ): EntityModel<StreetDto> = streetService
+        .find(
+            id = id,
+        )
+        ?.let { s -> EntityModel.of(s) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The street ($id) does not exist.")
+
+    override fun graphqlGetStreet(
+        id: UUID,
+    ): StreetDto? = streetService
+        .find(
+            id = id,
+        )
+
     override fun restGetStreets(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<StreetDto> = graphqlGetStreets(
-        page = page,
-        size = size,
-        sort = sort,
-    )
+    ): PagedModel<StreetDto> = streetService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
         .let { list ->
             val e = streetService.count()
             val p = page ?: 0L
@@ -69,26 +86,61 @@ class StreetController(
             sort = sort,
         )
 
-    override fun restGetStreet(
+    override fun restGetStreetPostCode(
         id: UUID,
-    ): EntityModel<StreetDto> = graphqlGetStreet(
-        id = id,
-    )
-        ?.let { s -> EntityModel.of(s) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The street ($id) does not exist.")
-
-    override fun graphqlGetStreet(
-        id: UUID,
-    ): StreetDto? = streetService
-        .find(
+    ): EntityModel<PostCodeDto> = streetService
+        .getPostCode(
             id = id,
+        )
+        .let { p -> EntityModel.of(p) }
+
+    override fun graphqlGetStreetPostCode(
+        street: StreetDto,
+    ): PostCodeDto = streetService
+        .getPostCode(
+            id = street.id,
+        )
+
+    override fun restGetStreetAddresses(
+        id: UUID,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): PagedModel<AddressDto> = streetService
+        .listAddresses(
+            id = id,
+            page = page,
+            size = size,
+            sort = sort,
+        )
+        .let { list ->
+            val count = list.count()
+            PagedModel.of(
+                list,
+                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
+                StreetApi.generateAddressPageLinks(id),
+            )
+        }
+
+    override fun graphqlGetStreetAddresses(
+        street: StreetDto,
+        page: Int?,
+        size: Int?,
+        sort: String?,
+    ): List<AddressDto> = streetService
+        .listAddresses(
+            id = street.id,
+            page = page,
+            size = size,
+            sort = sort,
         )
 
     override fun restCreateStreet(
         street: StreetInputDto,
-    ): EntityModel<StreetDto> = graphqlCreateStreet(
-        street = street,
-    )
+    ): EntityModel<StreetDto> = streetService
+        .create(
+            street = street,
+        )
         .let { s -> EntityModel.of(s) }
 
     override fun graphqlCreateStreet(
@@ -101,10 +153,11 @@ class StreetController(
     override fun restUpdateStreet(
         id: UUID,
         street: StreetInputDto,
-    ): EntityModel<StreetDto> = graphqlUpdateStreet(
-        id = id,
-        street = street,
-    )
+    ): EntityModel<StreetDto> = streetService
+        .update(
+            id = id,
+            street = street,
+        )
         .let { s -> EntityModel.of(s) }
 
     override fun graphqlUpdateStreet(
@@ -118,9 +171,10 @@ class StreetController(
 
     override fun restDeleteStreet(
         id: UUID,
-    ): Boolean = graphqlDeleteStreet(
-        id = id,
-    )
+    ): Boolean = streetService
+        .delete(
+            id = id,
+        )
 
     override fun graphqlDeleteStreet(
         id: UUID,
@@ -128,31 +182,4 @@ class StreetController(
         .delete(
             id = id,
         )
-
-    override fun restGetStreetPostCode(
-        id: UUID,
-    ): EntityModel<PostCodeDto> = graphqlGetStreet(
-        id = id,
-    )
-        ?.let { s -> EntityModel.of(s.postCode) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The street ($id) does not exist.")
-
-    override fun restGetStreetAddresses(
-        id: UUID,
-        page: Int?,
-        size: Int?,
-        sort: String?,
-    ): PagedModel<AddressDto> = graphqlGetStreet(
-        id = id,
-    )
-        ?.let { s ->
-            val list = s.addresses
-            val count = list.count()
-            PagedModel.of(
-                list,
-                PagedModel.PageMetadata(count.toLong(), 0, count.toLong(), 1),
-                StreetApi.generateAddressPageLinks(id),
-            )
-        }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The street ($id) does not exist.")
 }

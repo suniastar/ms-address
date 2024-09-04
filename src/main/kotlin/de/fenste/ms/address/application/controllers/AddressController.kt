@@ -36,15 +36,32 @@ class AddressController(
     @Autowired private val addressService: AddressService,
 ) : AddressApi, AddressGraphql {
 
+    override fun restGetAddress(
+        id: UUID,
+    ): EntityModel<AddressDto> = addressService
+        .find(
+            id = id,
+        )
+        ?.let { a -> EntityModel.of(a) }
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The address ($id) does not exist.")
+
+    override fun graphqlGetAddress(
+        id: UUID,
+    ): AddressDto? = addressService
+        .find(
+            id = id,
+        )
+
     override fun restGetAddresses(
         page: Int?,
         size: Int?,
         sort: String?,
-    ): PagedModel<AddressDto> = graphqlGetAddresses(
-        page = page,
-        size = size,
-        sort = sort,
-    )
+    ): PagedModel<AddressDto> = addressService
+        .list(
+            page = page,
+            size = size,
+            sort = sort,
+        )
         .let { list ->
             val e = addressService.count()
             val p = page ?: 0L
@@ -68,26 +85,27 @@ class AddressController(
             sort = sort,
         )
 
-    override fun restGetAddress(
+    override fun restGetAddressStreet(
         id: UUID,
-    ): EntityModel<AddressDto> = graphqlGetAddress(
-        id = id,
-    )
-        ?.let { a -> EntityModel.of(a) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The address ($id) does not exist.")
-
-    override fun graphqlGetAddress(
-        id: UUID,
-    ): AddressDto? = addressService
-        .find(
+    ): EntityModel<StreetDto> = addressService
+        .getStreet(
             id = id,
+        )
+        .let { a -> EntityModel.of(a) }
+
+    override fun graphqlGetAddressStreet(
+        address: AddressDto,
+    ): StreetDto = addressService
+        .getStreet(
+            id = address.id,
         )
 
     override fun restCreateAddress(
         address: AddressInputDto,
-    ): EntityModel<AddressDto> = graphqlCreateAddress(
-        address = address,
-    )
+    ): EntityModel<AddressDto> = addressService
+        .create(
+            address = address,
+        )
         .let { a -> EntityModel.of(a) }
 
     override fun graphqlCreateAddress(
@@ -100,10 +118,11 @@ class AddressController(
     override fun restUpdateAddress(
         id: UUID,
         address: AddressInputDto,
-    ): EntityModel<AddressDto> = graphqlUpdateAddress(
-        id = id,
-        address = address,
-    )
+    ): EntityModel<AddressDto> = addressService
+        .update(
+            id = id,
+            address = address,
+        )
         .let { a -> EntityModel.of(a) }
 
     override fun graphqlUpdateAddress(
@@ -117,9 +136,10 @@ class AddressController(
 
     override fun restDeleteAddress(
         id: UUID,
-    ): Boolean = graphqlDeleteAddress(
-        id = id,
-    )
+    ): Boolean = addressService
+        .delete(
+            id = id,
+        )
 
     override fun graphqlDeleteAddress(
         id: UUID,
@@ -127,12 +147,4 @@ class AddressController(
         .delete(
             id = id,
         )
-
-    override fun restGetAddressStreet(
-        id: UUID,
-    ): EntityModel<StreetDto> = graphqlGetAddress(
-        id = id,
-    )
-        ?.let { a -> EntityModel.of(a.street) }
-        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "The address ($id) does not exist.")
 }

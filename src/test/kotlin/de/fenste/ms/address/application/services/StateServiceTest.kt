@@ -16,6 +16,7 @@
 
 package de.fenste.ms.address.application.services
 
+import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.StateDto
 import de.fenste.ms.address.application.dtos.StateInputDto
@@ -55,6 +56,21 @@ class StateServiceTest(
     }
 
     @Test
+    fun `test find by id on sample data`() {
+        val expected = sampleData.states.random().let { s -> StateDto(s) }
+        val actual = service.find(id = expected.id)
+
+        transaction { assertEquals(expected, actual) }
+    }
+
+    @Test
+    fun `test find by id on non existing sample data`() {
+        val actual = service.find(id = UUID.randomUUID())
+
+        assertNull(actual)
+    }
+
+    @Test
     fun `test list on sample data`() {
         val expected = sampleData.states
             .sortedBy { s -> s.id.value.toString() }
@@ -67,7 +83,7 @@ class StateServiceTest(
     @Test
     fun `test list on sample data with options`() {
         val expected = sampleData.states
-            .sortedWith(compareBy({ s -> s.name }, { s -> s.id }))
+            .sortedWith(compareBy({ s -> s.name }, { s -> s.id.value.toString() }))
             .drop(1 * 2)
             .take(2)
             .map { s -> StateDto(s) }
@@ -90,28 +106,68 @@ class StateServiceTest(
     }
 
     @Test
-    fun `test find by id on sample data`() {
-        val expected = sampleData.states.random().let { s -> StateDto(s) }
-        val actual = service.find(id = expected.id)
+    fun `test get country on sample data`() {
+        val state = transaction { sampleData.states.random() }
+        val expected = transaction { CountryDto(state.country) }
 
-        transaction { assertEquals(expected, actual) }
+        transaction {
+            val actual = service.getCountry(state.id.value)
+
+            assertEquals(expected, actual)
+        }
     }
 
     @Test
-    fun `test find by id on non existing sample data`() {
-        val actual = service.find(id = UUID.randomUUID())
+    fun `test list cities on sample data`() {
+        val state = transaction { sampleData.states.filterNot { s -> s.cities.empty() }.random() }
+        val expected = transaction {
+            state
+                .cities
+                .sortedBy { c -> c.id.value.toString() }
+                .map { c -> CityDto(c) }
+        }
 
-        assertNull(actual)
+        transaction {
+            val actual = service.listCities(state.id.value)
+
+            assertContentEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun `test list cities on sample data with options`() {
+        val state = transaction { sampleData.states.filterNot { s -> s.cities.empty() }.random() }
+        val expected = transaction {
+            state
+                .cities
+                .sortedWith(compareBy({ c -> c.name }, { c -> c.id.value.toString() }))
+                .drop(1 * 2)
+                .take(2)
+                .map { c -> CityDto(c) }
+        }
+
+        transaction {
+            val actual = service.listCities(
+                id = state.id.value,
+                sort = "name,asc",
+                page = 1,
+                size = 2,
+            )
+
+            assertContentEquals(expected, actual)
+        }
     }
 
     @Test
     fun `test create`() {
         val name = "Name"
         val country = sampleData.countries.random()
+        val isPrintedOnLabel = true
 
         val create = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         val actual = service.create(
@@ -120,18 +176,24 @@ class StateServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
+        transaction {
+            val created = State.findById(actual.id)
+            assertNotNull(created)
+        }
     }
 
     @Test
     fun `test update all`() {
         val state = sampleData.states.random()
         val name = "Name"
-        val country = transaction { sampleData.countries.filterNot { c -> c.states.contains(state) }.random() }
+        val country = transaction { sampleData.countries.filter { c -> c.states.empty() }.random() }
+        val isPrintedOnLabel = !state.isPrintedOnLabel
 
         val update = StateInputDto(
             name = name,
             country = country.id.value,
+            isPrintedOnLabel = isPrintedOnLabel,
         )
 
         val actual = service.update(
@@ -141,7 +203,11 @@ class StateServiceTest(
 
         assertNotNull(actual)
         assertEquals(name, actual.name)
-        transaction { assertEquals(CountryDto(country), actual.country) }
+        assertEquals(isPrintedOnLabel, actual.isPrintedOnLabel)
+        transaction {
+            val updated = State.findById(actual.id)
+            assertNotNull(updated)
+        }
     }
 
     @Test

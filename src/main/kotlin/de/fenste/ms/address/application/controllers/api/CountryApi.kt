@@ -16,7 +16,6 @@
 
 package de.fenste.ms.address.application.controllers.api
 
-import de.fenste.ms.address.application.dtos.CityDto
 import de.fenste.ms.address.application.dtos.CountryDto
 import de.fenste.ms.address.application.dtos.CountryInputDto
 import de.fenste.ms.address.application.dtos.StateDto
@@ -96,6 +95,12 @@ interface CountryApi {
     }
 
     @ResponseBody
+    @GetMapping("/{id}")
+    fun restGetCountry(
+        @PathVariable id: UUID,
+    ): EntityModel<CountryDto>
+
+    @ResponseBody
     @GetMapping
     fun restGetCountries(
         @RequestParam page: Int? = null,
@@ -104,10 +109,13 @@ interface CountryApi {
     ): PagedModel<CountryDto>
 
     @ResponseBody
-    @GetMapping("/{id}")
-    fun restGetCountry(
+    @GetMapping("/{id}/states")
+    fun restGetCountryStates(
         @PathVariable id: UUID,
-    ): EntityModel<CountryDto>
+        @RequestParam page: Int? = null,
+        @RequestParam size: Int? = null,
+        @RequestParam sort: String? = null,
+    ): PagedModel<StateDto>
 
     @ResponseBody
     @PostMapping
@@ -127,22 +135,4 @@ interface CountryApi {
     fun restDeleteCountry(
         @PathVariable id: UUID,
     ): Boolean
-
-    @ResponseBody
-    @GetMapping("/{id}/states")
-    fun restGetCountryStates(
-        @PathVariable id: UUID,
-        @RequestParam page: Int? = null,
-        @RequestParam size: Int? = null,
-        @RequestParam sort: String? = null,
-    ): PagedModel<StateDto>
-
-    @ResponseBody
-    @GetMapping("/{id}/cities")
-    fun restGetCountryCities(
-        @PathVariable id: UUID,
-        @RequestParam page: Int? = null,
-        @RequestParam size: Int? = null,
-        @RequestParam sort: String? = null,
-    ): PagedModel<CityDto>
 }

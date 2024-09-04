@@ -29,10 +29,8 @@ class CityTableTest {
     @Test
     fun `test valueOf`() {
         assertEquals(CityTable.id, CityTable.valueOf("id"))
-        assertEquals(CityTable.countryId, CityTable.valueOf("country_id"))
-        assertEquals(CityTable.countryId, CityTable.valueOf("countryId"))
         assertEquals(CityTable.stateId, CityTable.valueOf("state_id"))
-        assertEquals(CityTable.stateId, CityTable.valueOf("state_id"))
+        assertEquals(CityTable.stateId, CityTable.valueOf("stateid"))
         assertEquals(CityTable.name, CityTable.valueOf("name"))
 
         assertEquals(CityTable.name, CityTable.valueOf("NAME"))

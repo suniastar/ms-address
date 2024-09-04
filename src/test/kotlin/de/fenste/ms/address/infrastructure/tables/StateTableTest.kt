@@ -32,6 +32,9 @@ class StateTableTest {
         assertEquals(StateTable.countryId, StateTable.valueOf("countryId"))
         assertEquals(StateTable.countryId, StateTable.valueOf("country_id"))
         assertEquals(StateTable.name, StateTable.valueOf("name"))
+        assertEquals(StateTable.isPrintedOnLabel, StateTable.valueOf("print"))
+        assertEquals(StateTable.isPrintedOnLabel, StateTable.valueOf("isPrintedOnLabel"))
+        assertEquals(StateTable.isPrintedOnLabel, StateTable.valueOf("is_printed_on_label"))
 
         assertEquals(StateTable.name, StateTable.valueOf("NAME"))
         assertEquals(StateTable.name, StateTable.valueOf("NaMe"))
